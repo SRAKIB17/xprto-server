@@ -176,3 +176,46 @@ CREATE INDEX idx_health_flag_followup ON health_data (flagged_for_followup, meas
 --     old_data JSON DEFAULT NULL COMMENT 'আপডেট পূর্বের ডেটা (JSON)',
 --     new_data JSON DEFAULT NULL COMMENT 'আপডেট পরবর্তী ডেটা (JSON)'
 -- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE
+    disputes (
+        dispute_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        booking_id VARCHAR(64) NULL,
+        attendance_id VARCHAR(64) NULL,
+        gym_id BIGINT NULL,
+        trainer_id BIGINT NULL,
+        dispute_type ENUM (
+            'attendance',
+            'payment',
+            'behavior',
+            'safety',
+            'other'
+        ) NOT NULL,
+        reason_category VARCHAR(100) NOT NULL,
+        description TEXT,
+        preferred_resolution ENUM (
+            'correction',
+            'refund',
+            'reschedule',
+            'warning',
+            'other'
+        ) DEFAULT 'correction',
+        evidence JSON DEFAULT NULL, -- array of {url, type, size, meta}
+        status ENUM (
+            'submitted',
+            'needs_info',
+            'under_review',
+            'accepted',
+            'partial',
+            'rejected',
+            'cancelled',
+            'appealed'
+        ) DEFAULT 'submitted',
+        priority ENUM ('low', 'normal', 'high') DEFAULT 'normal',
+        assigned_to BIGINT NULL, -- staff id
+        review_notes TEXT,
+        resolution JSON DEFAULT NULL, -- {action, amount, admin_id, date}
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        closed_at TIMESTAMP NULL
+    );
