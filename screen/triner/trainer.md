@@ -61,6 +61,182 @@ This will cover trainer + admin contexts (since shifts often involve assignment 
 
 ---
 
+## Module B — Trainer Home Dashboard (your #2)
+
+**Screens**
+
+* B1. Home (summary)
+
+  * Components: today’s sessions list (card per session), earnings summary (today/month), attendance badge, notifications feed, quick action buttons
+  * Actions: open session → Session Detail; quick actions call endpoints below
+  * APIs: `GET /trainer/dashboard` returns sessions, earnings, notifications, attendanceState
+* B2. Notifications Center (full)
+
+  * Filter by type; mark read/unread; bulk actions
+  * `GET /notifications?scope=trainer`
+  * `POST /notifications/mark-read`
+* B3. Quick Action Flows
+
+  * “Mark Attendance” → opens Attendance module flow
+  * “View Clients” → Clients list
+  * “View Earnings” → Earnings dashboard (Module H)
+
+**UX Notes**
+
+* Real-time updates via WebSocket for incoming bookings and live check-in state.
+* Show skeleton loaders for network-dependent widgets.
+
+---
+
+# **Attendance & Shift — Full Screens**
+
+---
+
+## **C1. GPS Live Status Screen**
+
+* **Top Card (always visible in dashboard)**
+
+  * Status: ✅ Inside Gym / ❌ Outside Gym
+  * Distance: “You are 125m away from gym”
+  * Battery % + GPS Permission toggle
+  * Timestamp of last sync
+
+* **Expanded View**
+
+  * Map view with trainer pin + gym radius
+  * Live WebSocket status → Auto-updates without refresh
+  * Error states:
+
+    * "GPS disabled, enable location to continue"
+    * "Weak GPS signal"
+
+---
+
+## **C2. Auto Check-in / Check-out Flow**
+
+* **UI Behavior:**
+
+  * Floating toast card → “✅ Auto checked-in at 10:02am”
+  * Badge changes on top status bar: *“You’re Checked In”*
+  * Exit → “⏹ Checked out at 6:01pm”
+
+* **Logs Section (in same screen):**
+
+  * Last 3 auto check-ins/out with timestamps
+  * API fallback if WebSocket lost
+
+---
+
+## **C3. Manual Check-in Modal**
+
+* **Modal Fields:**
+
+  * Dropdown → Reason for manual check-in (GPS Off, Outside Gym, Device Issue)
+  * Upload photo (optional)
+  * PIN field (if gym requires extra auth)
+  * Submit button
+
+* **Validation States:**
+
+  * If outside radius → Reason becomes **mandatory**
+  * Error toast: “Please provide a reason before submitting”
+
+* **Success State:**
+
+  * “Manual Check-in requested. Pending admin approval.”
+
+---
+
+## **C4. Shift Schedule Calendar**
+
+* **Views:**
+
+  * **Day / Week / Month toggle**
+  * Calendar grid with shifts as colored blocks
+  * Trainers’ initials/photos in assigned slot
+
+* **Actions:**
+
+  * **Drag & Drop shifts**
+  * **+ Add Shift Button** → Create Shift Modal
+
+    * Title: Morning / Evening / Night
+    * Time: Start–End
+    * Assign Trainers (multi-select)
+  * Edit/Delete shift → via long press / right-click
+
+* **UX Enhancements:**
+
+  * Color coding:
+
+    * Morning = yellow
+    * Evening = blue
+    * Night = purple
+  * Recurrence editor: repeat daily, weekly
+
+---
+
+## **C5. Attendance History Screen**
+
+* **Filters:**
+
+  * Date range picker
+  * Status filter → Qualified / Not-qualified / Manual override
+  * Export → CSV / PDF
+
+* **List View (mobile friendly):**
+
+  * Row → Date | Entry | Exit | Duration | Status badge
+  * Badge → ✅ Qualified / ⚠ Not Qualified / 📝 Corrected
+
+* **Calendar View:**
+
+  * Days highlighted by attendance status
+  * Tap → detail modal
+
+---
+
+## **C6. Attendance Detail Screen (per day/session)**
+
+* **Header:** Date (20 Aug, Tue) + Status Badge
+
+* **Sections:**
+
+  * Entry Time → Exit Time
+  * Total Hours worked (with qualified % rule applied)
+  * Map snapshot → GPS route/heatmap
+  * Device Metadata → IP, Device ID, OS
+  * Notes: Manual override log
+
+* **Actions:**
+
+  * “➕ Add Note”
+  * “Request Correction” → triggers workflow to admin
+
+---
+
+## **C7. Shift Editor (Full-Screen Advanced Tool)**
+
+* **Grid View:**
+
+  * Trainers on Y-axis, Time on X-axis
+  * Shifts = draggable blocks
+  * Resize by dragging ends
+
+* **Shift Rules Section:**
+
+  * Min hours (e.g. 4h)
+  * Grace period (e.g. 10 mins late ok)
+  * Auto-mark absent if < X minutes
+
+* **Bulk Tools:**
+
+  * Apply template → (Morning 6–12 for all trainers this week)
+  * Copy shifts from last week
+  * Delete multiple shifts
+
+---
+
 ## Module D — Client Management (your #4) — expanded
 
 **Screens**
