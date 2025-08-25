@@ -31,6 +31,26 @@ CREATE TABLE
         FOREIGN KEY (gym_owner_id) REFERENCES gym_owners (gym_owner_id) ON DELETE CASCADE
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE
+    health_data (
+        health_id BIGINT AUTO_INCREMENT PRIMARY KEY, -- ইউনিক হেলথ আইডি
+        client_id BIGINT NOT NULL, -- কোন ক্লায়েন্টের ডেটা
+        weight_kg DECIMAL(5, 2), -- ওজন
+        height_cm DECIMAL(5, 2), -- উচ্চতা
+        bmi DECIMAL(4, 2), -- বডি মাস ইনডেক্স
+        fat_kg DECIMAL(5, 2), -- মোট ফ্যাট কেজি
+        visceral_fat_percent DECIMAL(5, 2), -- ভিসেরাল ফ্যাট %
+        subcutaneous_fat_percent DECIMAL(5, 2), -- সাবকিউটেনিয়াস ফ্যাট %
+        muscle_mass_kg DECIMAL(5, 2), -- মোট মাংসপেশির ওজন
+        skeletal_muscle_percent DECIMAL(5, 2), -- স্কেলেটাল মাসল %
+        body_age INT, -- দেহের অনুমিত বয়স
+        resting_metabolism_kcal DECIMAL(6, 2), -- বেসাল মেটাবলিজম (ক্যালোরি)
+        water_percent DECIMAL(5, 2), -- শরীরে পানির %
+        bone_mass_kg DECIMAL(5, 2), -- হাড়ের ওজন
+        recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- কবে মাপা হয়েছে
+        FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE CASCADE
+    );
+
 -- পারফরম্যান্স বৃদ্ধির জন্য ইনডেক্স
 CREATE INDEX idx_clients_gym_owner_id ON clients (gym_owner_id);
 

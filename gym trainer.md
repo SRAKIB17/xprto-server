@@ -3,7 +3,7 @@
 
 ---
 
-## **Module 1 — Trainer Dashboard / Home**
+## **Module 1 — Trainer Dashboard / Home** -> DONE
 
 **Purpose:** Overview of trainer’s daily activity, client sessions, payments, notices.
 
@@ -91,7 +91,7 @@
 
 ---
 
-## **Module 3 — Session Management**
+## **Module 3 — Session Management** -> DONE
 
 **Purpose:** Manage workout sessions, live tracking, approvals, feedback.
 
@@ -199,7 +199,7 @@
 
 ---
 
-## **Module 6 — Payments & Earnings**
+## **Module 6 — Payments & Earnings** -> DONE
 
 **Purpose:** Track trainer’s revenue, pending / upcoming payments.
 
@@ -256,7 +256,7 @@
 
 ---
 
-## **Module 8 — Attendance & Shift Management**
+## **Module 8 — Attendance & Shift Management** -> DONE
 
 **Purpose:** Track attendance of Trainer & Clients.
 
@@ -289,7 +289,7 @@
 
 ---
 
-## **Module 9 — Leave & Requests**
+## **Module 9 — Leave & Requests** -> DONE
 
 **Purpose:** Trainer leave management.
 
