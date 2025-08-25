@@ -178,11 +178,11 @@
 
 ---
 
-### 16) Access Control & Audit Log
+<!-- ### 16) Access Control & Audit Log
 
 **UI:** Role management, permission matrix, audit log for deletes/edits (who/when/what).
 **Action:** View audit, rollback soft-deletes, force export.
-**DB fields:** `audit.id, entity_type, entity_id, action, performed_by, timestamp, old_value, new_value`
+**DB fields:** `audit.id, entity_type, entity_id, action, performed_by, timestamp, old_value, new_value` -->
 
 ---
 
