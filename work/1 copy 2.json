@@ -1,0 +1,1365 @@
+{
+    "strength": {
+        "fields": [
+            {
+                "key": "training_maxs",
+                "label": "Training Max / 1RM per lift",
+                "type": "object",
+                "required": true,
+                "widget": "group",
+                "note": "Provide 1RM for main lifts",
+                "properties": {
+                    "squat_1rm": {
+                        "type": "number",
+                        "label": "Squat 1RM (kg)",
+                        "required": false,
+                        "placeholder": "e.g. 140",
+                        "validation": {
+                            "min": 0
+                        }
+                    },
+                    "bench_1rm": {
+                        "type": "number",
+                        "label": "Bench 1RM (kg)",
+                        "required": false,
+                        "validation": {
+                            "min": 0
+                        }
+                    },
+                    "deadlift_1rm": {
+                        "type": "number",
+                        "label": "Deadlift 1RM (kg)",
+                        "required": false,
+                        "validation": {
+                            "min": 0
+                        }
+                    },
+                    "ohp_1rm": {
+                        "type": "number",
+                        "label": "Overhead press 1RM (kg)",
+                        "required": false,
+                        "validation": {
+                            "min": 0
+                        }
+                    }
+                }
+            },
+            {
+                "key": "progression_scheme",
+                "label": "Progression Scheme",
+                "type": "select",
+                "widget": "select",
+                "required": true,
+                "options": [
+                    "Linear",
+                    "5x5",
+                    "3x5",
+                    "5/3/1",
+                    "Undulating",
+                    "Block Periodization"
+                ],
+                "placeholder": "Choose scheme"
+            },
+            {
+                "key": "intensity_topset",
+                "label": "Intensity (Top Set) %1RM",
+                "type": "number",
+                "widget": "slider",
+                "required": true,
+                "validation": {
+                    "min": 1,
+                    "max": 100
+                },
+                "placeholder": "e.g. 85",
+                "note": "Intensity for top working set (as % of 1RM)"
+            },
+            {
+                "key": "backoff_sets",
+                "label": "Back-off Sets / Percentages",
+                "type": "array",
+                "widget": "list",
+                "required": false,
+                "itemSchema": {
+                    "type": "object",
+                    "properties": {
+                        "sets": {
+                            "type": "number",
+                            "label": "Sets",
+                            "required": true,
+                            "validation": {
+                                "min": 1
+                            }
+                        },
+                        "reps": {
+                            "type": "number",
+                            "label": "Reps",
+                            "required": true,
+                            "validation": {
+                                "min": 1
+                            }
+                        },
+                        "percent": {
+                            "type": "number",
+                            "label": "Intensity %1RM",
+                            "required": true,
+                            "validation": {
+                                "min": 1,
+                                "max": 100
+                            }
+                        }
+                    }
+                },
+                "note": "e.g. [{sets: 2, reps:5, percent:70}]"
+            },
+            {
+                "key": "tempo",
+                "label": "Tempo (optional)",
+                "type": "text",
+                "widget": "input",
+                "required": false,
+                "placeholder": "e.g. 3-1-1"
+            },
+            {
+                "key": "rest_seconds",
+                "label": "Rest (seconds)",
+                "type": "number",
+                "required": true,
+                "validation": {
+                    "min": 0
+                },
+                "placeholder": "e.g. 120"
+            },
+            {
+                "key": "notes",
+                "label": "Coach Notes / Cues",
+                "type": "textarea",
+                "required": false,
+                "placeholder": "Technique cues, progression notes..."
+            }
+        ]
+    },
+    "hypertrophy": {
+        "fields": [
+            {
+                "key": "split_type",
+                "label": "Split Type",
+                "type": "select",
+                "options": [
+                    "Full Body",
+                    "Upper/Lower",
+                    "Push/Pull/Legs",
+                    "Bodypart (Bro Split)"
+                ],
+                "required": true,
+                "widget": "select"
+            },
+            {
+                "key": "rep_range_target",
+                "label": "Rep Range Target",
+                "type": "object",
+                "widget": "group",
+                "required": true,
+                "properties": {
+                    "min_reps": {
+                        "type": "number",
+                        "label": "Min Reps",
+                        "required": true,
+                        "validation": {
+                            "min": 1
+                        }
+                    },
+                    "max_reps": {
+                        "type": "number",
+                        "label": "Max Reps",
+                        "required": true,
+                        "validation": {
+                            "min": 1
+                        }
+                    }
+                },
+                "note": "Typical: 8-15"
+            },
+            {
+                "key": "proximity_failure",
+                "label": "Proximity to Failure (RIR)",
+                "type": "number",
+                "widget": "slider",
+                "required": true,
+                "validation": {
+                    "min": 0,
+                    "max": 10
+                },
+                "placeholder": "e.g. 1-3 RIR"
+            },
+            {
+                "key": "weekly_volume",
+                "label": "Target Weekly Volume (sets per muscle)",
+                "type": "text",
+                "required": false,
+                "placeholder": "e.g. 10-20 sets/week"
+            },
+            {
+                "key": "exercise_selection",
+                "label": "Exercise List (main & isolation)",
+                "type": "array",
+                "itemSchema": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "label": "Exercise Name",
+                            "required": true
+                        },
+                        "sets": {
+                            "type": "number",
+                            "label": "Sets",
+                            "required": true,
+                            "validation": {
+                                "min": 1
+                            }
+                        },
+                        "reps": {
+                            "type": "string",
+                            "label": "Reps (range)",
+                            "required": true,
+                            "placeholder": "e.g. 8-12"
+                        },
+                        "rest_sec": {
+                            "type": "number",
+                            "label": "Rest seconds",
+                            "required": false
+                        }
+                    }
+                },
+                "required": false
+            },
+            {
+                "key": "notes",
+                "label": "Hypertrophy Notes",
+                "type": "textarea",
+                "required": false,
+                "placeholder": "Tempo, muscle-mind connection, superset ideas..."
+            }
+        ]
+    },
+    "power_olympic": {
+        "fields": [
+            {
+                "key": "lift_variations",
+                "label": "Lift Variations",
+                "type": "array",
+                "required": true,
+                "itemSchema": {
+                    "type": "string"
+                },
+                "placeholder": "e.g. Power Clean, Hang Snatch"
+            },
+            {
+                "key": "bar_speed_notes",
+                "label": "Bar Speed / Cueing Notes",
+                "type": "textarea",
+                "required": false,
+                "placeholder": "Explosiveness cues, bar path focus..."
+            },
+            {
+                "key": "sets_reps_scheme",
+                "label": "Sets / Reps Scheme",
+                "type": "text",
+                "required": true,
+                "placeholder": "e.g. 5×3 (singles/clusters allowed)"
+            },
+            {
+                "key": "technical_priority",
+                "label": "Technical Priority",
+                "type": "toggle",
+                "required": false,
+                "note": "If true, emphasize technique over load"
+            },
+            {
+                "key": "rest_seconds",
+                "label": "Rest (s)",
+                "type": "number",
+                "required": true,
+                "validation": {
+                    "min": 10
+                }
+            },
+            {
+                "key": "warmup_protocol",
+                "label": "Warm-up Protocol",
+                "type": "textarea",
+                "required": false,
+                "placeholder": "Progressive sets to working weight"
+            }
+        ]
+    },
+    "cardio_endurance": {
+        "fields": [
+            {
+                "key": "modality",
+                "label": "Modality",
+                "type": "select",
+                "options": [
+                    "Run",
+                    "Row",
+                    "Bike",
+                    "Swim",
+                    "Elliptical",
+                    "Stairmill"
+                ],
+                "required": true
+            },
+            {
+                "key": "target_type",
+                "label": "Target",
+                "type": "select",
+                "options": [
+                    "Steady",
+                    "Tempo",
+                    "Long",
+                    "Intervals",
+                    "Fartlek"
+                ],
+                "required": true
+            },
+            {
+                "key": "hr_zone_or_pace",
+                "label": "HR Zone or Pace",
+                "type": "text",
+                "required": false,
+                "placeholder": "HR zone e.g. Z2 or pace e.g. 4:30/km"
+            },
+            {
+                "key": "duration_min",
+                "label": "Duration (minutes)",
+                "type": "number",
+                "required": true,
+                "validation": {
+                    "min": 1
+                }
+            },
+            {
+                "key": "distance",
+                "label": "Distance (optional)",
+                "type": "number",
+                "required": false,
+                "validation": {
+                    "min": 0
+                },
+                "placeholder": "e.g. 10 (km)"
+            },
+            {
+                "key": "intervals",
+                "label": "Intervals (optional)",
+                "type": "array",
+                "itemSchema": {
+                    "type": "object",
+                    "properties": {
+                        "work": {
+                            "type": "string",
+                            "label": "Work (time/pace/distance)",
+                            "required": true
+                        },
+                        "rest": {
+                            "type": "string",
+                            "label": "Rest",
+                            "required": true
+                        },
+                        "rounds": {
+                            "type": "number",
+                            "label": "Rounds",
+                            "required": true
+                        }
+                    }
+                },
+                "required": false
+            }
+        ]
+    },
+    "hiit": {
+        "fields": [
+            {
+                "key": "protocol",
+                "label": "Protocol",
+                "type": "select",
+                "options": [
+                    "Tabata",
+                    "EMOM",
+                    "AMRAP",
+                    "Custom"
+                ],
+                "required": true
+            },
+            {
+                "key": "work_rest",
+                "label": "Work : Rest",
+                "type": "text",
+                "required": true,
+                "placeholder": "e.g. 30:30"
+            },
+            {
+                "key": "rounds",
+                "label": "Rounds",
+                "type": "number",
+                "required": true,
+                "validation": {
+                    "min": 1
+                }
+            },
+            {
+                "key": "target_hr_or_rpe",
+                "label": "Target HR / RPE",
+                "type": "text",
+                "required": false,
+                "placeholder": "e.g. Zone 4 or RPE 8"
+            },
+            {
+                "key": "movement_pool",
+                "label": "Movement Pool (list)",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": true,
+                "placeholder": "e.g. Sprint, Burpee, KB Swing"
+            },
+            {
+                "key": "scaling_options",
+                "label": "Scaling Options",
+                "type": "textarea",
+                "required": false,
+                "placeholder": "Easier/harder options per movement"
+            }
+        ]
+    },
+    "functional": {
+        "fields": [
+            {
+                "key": "movement_patterns",
+                "label": "Movement Patterns",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": true,
+                "placeholder": "Hinge, Squat, Pull, Push, Carry, Rotate"
+            },
+            {
+                "key": "circuit_stations",
+                "label": "Circuit Stations & Time-cap",
+                "type": "array",
+                "required": true,
+                "itemSchema": {
+                    "type": "object",
+                    "properties": {
+                        "station_name": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "movement": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "time_or_reps": {
+                            "type": "string",
+                            "required": true
+                        }
+                    }
+                },
+                "note": "List each station and duration/reps"
+            },
+            {
+                "key": "transition_time_sec",
+                "label": "Transition Time (sec)",
+                "type": "number",
+                "required": false,
+                "validation": {
+                    "min": 0
+                }
+            },
+            {
+                "key": "notes",
+                "label": "Functional Notes",
+                "type": "textarea",
+                "required": false
+            }
+        ]
+    },
+    "calisthenics": {
+        "fields": [
+            {
+                "key": "skill_level_per_move",
+                "label": "Skill Level per Move",
+                "type": "array",
+                "itemSchema": {
+                    "type": "object",
+                    "properties": {
+                        "move": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "progression_stage": {
+                            "type": "select",
+                            "options": [
+                                "Assisted",
+                                "Partial",
+                                "Strict",
+                                "Advanced"
+                            ],
+                            "required": true
+                        }
+                    }
+                },
+                "required": false
+            },
+            {
+                "key": "time_under_tension",
+                "label": "Time Under Tension / Holds",
+                "type": "text",
+                "required": false,
+                "placeholder": "e.g. 3×30s holds"
+            },
+            {
+                "key": "progression_plan",
+                "label": "Progression Plan (band→strict)",
+                "type": "textarea",
+                "required": false,
+                "placeholder": "Steps to progress the athlete"
+            }
+        ]
+    },
+    "rehab_mobility": {
+        "fields": [
+            {
+                "key": "region_focus",
+                "label": "Region Focus",
+                "type": "select",
+                "options": [
+                    "Shoulder",
+                    "Lower Back",
+                    "Knee",
+                    "Hip",
+                    "Ankle",
+                    "Neck",
+                    "Full Body"
+                ],
+                "required": true
+            },
+            {
+                "key": "pain_scale",
+                "label": "Pain Scale (0-10)",
+                "type": "number",
+                "required": false,
+                "validation": {
+                    "min": 0,
+                    "max": 10
+                }
+            },
+            {
+                "key": "rom_targets",
+                "label": "ROM Targets",
+                "type": "textarea",
+                "required": false,
+                "placeholder": "e.g. Improve knee flexion to 110°"
+            },
+            {
+                "key": "contraindicated_moves",
+                "label": "Contraindicated Moves Checklist",
+                "type": "textarea",
+                "required": false,
+                "placeholder": "List movements to avoid"
+            },
+            {
+                "key": "therapist_notes",
+                "label": "Therapist Notes / Prescription",
+                "type": "textarea",
+                "required": false
+            }
+        ]
+    },
+    "group_class": {
+        "fields": [
+            {
+                "key": "class_cap",
+                "label": "Class Capacity",
+                "type": "number",
+                "required": true,
+                "validation": {
+                    "min": 1
+                }
+            },
+            {
+                "key": "required_space_m2",
+                "label": "Required Space (m²)",
+                "type": "number",
+                "required": false,
+                "validation": {
+                    "min": 0
+                }
+            },
+            {
+                "key": "music_bpm",
+                "label": "Music BPM (optional)",
+                "type": "number",
+                "required": false
+            },
+            {
+                "key": "coach_script_flow",
+                "label": "Coach Script / Flow Timing",
+                "type": "textarea",
+                "required": false,
+                "placeholder": "Minute-by-minute script"
+            },
+            {
+                "key": "equipment_list",
+                "label": "Equipment Required",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": false
+            }
+        ]
+    },
+    "circuit_crossfit": {
+        "fields": [
+            {
+                "key": "station_list",
+                "label": "Station List",
+                "type": "array",
+                "itemSchema": {
+                    "type": "object",
+                    "properties": {
+                        "station_number": {
+                            "type": "number",
+                            "required": true
+                        },
+                        "movement": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "work": {
+                            "type": "string",
+                            "required": true
+                        }
+                    }
+                },
+                "required": true
+            },
+            {
+                "key": "time_rep_per_station",
+                "label": "Time/Rep per Station",
+                "type": "text",
+                "required": true,
+                "placeholder": "e.g. 45s or 12 reps"
+            },
+            {
+                "key": "transition_time",
+                "label": "Transition Time (sec)",
+                "type": "number",
+                "required": false
+            },
+            {
+                "key": "time_cap",
+                "label": "Time-cap",
+                "type": "text",
+                "required": false,
+                "placeholder": "e.g. 20:00"
+            },
+            {
+                "key": "scoring_method",
+                "label": "Scoring (time/reps)",
+                "type": "select",
+                "options": [
+                    "Time",
+                    "Reps",
+                    "Rounds & Reps"
+                ],
+                "required": true
+            }
+        ]
+    },
+    "sport_specific": {
+        "fields": [
+            {
+                "key": "sport",
+                "label": "Sport",
+                "type": "text",
+                "required": true,
+                "placeholder": "e.g. Football, Badminton"
+            },
+            {
+                "key": "position",
+                "label": "Position (optional)",
+                "type": "text",
+                "required": false
+            },
+            {
+                "key": "drill_library",
+                "label": "Drill Library (list)",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": false
+            },
+            {
+                "key": "speed_agility_blocks",
+                "label": "Speed / Agility Blocks",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "testing_metrics",
+                "label": "Testing Metrics",
+                "type": "array",
+                "itemSchema": {
+                    "type": "object",
+                    "properties": {
+                        "metric": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "value": {
+                            "type": "string",
+                            "required": false
+                        }
+                    }
+                },
+                "required": false,
+                "note": "e.g. {metric: '10m sprint', value: '1.75s'}"
+            }
+        ]
+    },
+    "powerlifting": {
+        "fields": [
+            {
+                "key": "lift_day",
+                "label": "Lift Day",
+                "type": "select",
+                "options": [
+                    "Squat",
+                    "Bench",
+                    "Deadlift",
+                    "Accessory"
+                ],
+                "required": true
+            },
+            {
+                "key": "percent_waves",
+                "label": "Percent Waves / Block Plan",
+                "type": "array",
+                "itemSchema": {
+                    "type": "object",
+                    "properties": {
+                        "week": {
+                            "type": "number",
+                            "required": true
+                        },
+                        "percent": {
+                            "type": "number",
+                            "required": true,
+                            "validation": {
+                                "min": 1,
+                                "max": 100
+                            }
+                        },
+                        "sets": {
+                            "type": "number",
+                            "required": true
+                        },
+                        "reps": {
+                            "type": "number",
+                            "required": true
+                        }
+                    }
+                },
+                "required": false,
+                "note": "Macro cycle percent waves"
+            },
+            {
+                "key": "accessory_categories",
+                "label": "Accessory Categories",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": false,
+                "placeholder": "Hypertrophy, Weak-point, Posterior chain"
+            },
+            {
+                "key": "deload_week_flag",
+                "label": "Include Deload Week",
+                "type": "toggle",
+                "required": false
+            }
+        ]
+    },
+    "active_recovery": {
+        "fields": [
+            {
+                "key": "focus",
+                "label": "Recovery Focus",
+                "type": "select",
+                "options": [
+                    "Low Impact Cardio",
+                    "Mobility",
+                    "Light Strength",
+                    "Breathwork"
+                ],
+                "required": true
+            },
+            {
+                "key": "duration_min",
+                "label": "Duration (minutes)",
+                "type": "number",
+                "required": true,
+                "validation": {
+                    "min": 5
+                }
+            },
+            {
+                "key": "intensity_notes",
+                "label": "Intensity Notes",
+                "type": "textarea",
+                "required": false,
+                "placeholder": "Keep < 60% HRmax / conversational pace"
+            },
+            {
+                "key": "modalities",
+                "label": "Modalities",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": false
+            },
+            {
+                "key": "cooldown",
+                "label": "Cooldown / Stretch",
+                "type": "textarea",
+                "required": false
+            }
+        ]
+    },
+    "mobility_prehab": {
+        "fields": [
+            {
+                "key": "primary_focus",
+                "label": "Primary Focus",
+                "type": "select",
+                "options": [
+                    "Hip",
+                    "Shoulder",
+                    "Thoracic",
+                    "Ankle",
+                    "Knee",
+                    "Full Body"
+                ],
+                "required": true
+            },
+            {
+                "key": "session_length",
+                "label": "Session Length (min)",
+                "type": "number",
+                "required": true,
+                "validation": {
+                    "min": 5
+                }
+            },
+            {
+                "key": "exercises",
+                "label": "Exercises / Drills",
+                "type": "array",
+                "itemSchema": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "reps_or_time": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "notes": {
+                            "type": "string",
+                            "required": false
+                        }
+                    }
+                },
+                "required": true
+            },
+            {
+                "key": "progression_criteria",
+                "label": "Progression Criteria",
+                "type": "textarea",
+                "required": false,
+                "placeholder": "e.g., ROM improved, pain reduced"
+            },
+            {
+                "key": "contraindications",
+                "label": "Contraindications",
+                "type": "textarea",
+                "required": false
+            }
+        ]
+    },
+    "prenatal_postnatal": {
+        "fields": [
+            {
+                "key": "phase",
+                "label": "Phase",
+                "type": "select",
+                "options": [
+                    "First Trimester",
+                    "Second Trimester",
+                    "Third Trimester",
+                    "Postnatal (0-6w)",
+                    "Postnatal (6w+)"
+                ],
+                "required": true
+            },
+            {
+                "key": "clearance",
+                "label": "Medical Clearance",
+                "type": "toggle",
+                "required": true,
+                "note": "Confirm client's medical clearance"
+            },
+            {
+                "key": "avoid_list",
+                "label": "Exercises to Avoid",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "safe_alternatives",
+                "label": "Safe Alternatives",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "pelvic_floor_focus",
+                "label": "Pelvic Floor / Core Focus",
+                "type": "textarea",
+                "required": false
+            }
+        ]
+    },
+    "senior_fitness": {
+        "fields": [
+            {
+                "key": "age_group",
+                "label": "Age Group",
+                "type": "select",
+                "options": [
+                    "60-69",
+                    "70-79",
+                    "80+"
+                ],
+                "required": false
+            },
+            {
+                "key": "balance_focus",
+                "label": "Balance & Fall Prevention",
+                "type": "toggle",
+                "required": false
+            },
+            {
+                "key": "intensity",
+                "label": "Intensity Guidance",
+                "type": "text",
+                "required": false,
+                "placeholder": "Low–Moderate; HR% or RPE"
+            },
+            {
+                "key": "mobility_exercises",
+                "label": "Mobility Exercises",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": false
+            },
+            {
+                "key": "safety_notes",
+                "label": "Safety Notes / Contraindications",
+                "type": "textarea",
+                "required": false
+            }
+        ]
+    },
+    "youth_fitness": {
+        "fields": [
+            {
+                "key": "age_group",
+                "label": "Age Group",
+                "type": "select",
+                "options": [
+                    "6-9",
+                    "10-13",
+                    "14-17"
+                ],
+                "required": true
+            },
+            {
+                "key": "skill_focus",
+                "label": "Skill Focus",
+                "type": "select",
+                "options": [
+                    "Fundamentals",
+                    "Movement Quality",
+                    "Strength (light)",
+                    "Sport Prep"
+                ],
+                "required": true
+            },
+            {
+                "key": "max_load_guidance",
+                "label": "Max Load Guidance",
+                "type": "text",
+                "required": false,
+                "placeholder": "Relative load guidance (bodyweight emphasis)"
+            },
+            {
+                "key": "parental_consent",
+                "label": "Parental Consent",
+                "type": "toggle",
+                "required": true
+            }
+        ]
+    },
+    "low_impact": {
+        "fields": [
+            {
+                "key": "modality",
+                "label": "Modality",
+                "type": "select",
+                "options": [
+                    "Elliptical",
+                    "Walking",
+                    "Water Aerobics",
+                    "Chair-based"
+                ],
+                "required": true
+            },
+            {
+                "key": "duration_min",
+                "label": "Duration (min)",
+                "type": "number",
+                "required": true,
+                "validation": {
+                    "min": 5
+                }
+            },
+            {
+                "key": "intensity_target",
+                "label": "Intensity Target (HR/RPE)",
+                "type": "text",
+                "required": false
+            },
+            {
+                "key": "notes",
+                "label": "Instructor Notes",
+                "type": "textarea",
+                "required": false
+            }
+        ]
+    },
+    "dance_movement": {
+        "fields": [
+            {
+                "key": "style",
+                "label": "Style",
+                "type": "select",
+                "options": [
+                    "Zumba",
+                    "Dance Cardio",
+                    "Ballet Conditioning",
+                    "Contemporary"
+                ],
+                "required": true
+            },
+            {
+                "key": "bpm_range",
+                "label": "Music BPM Range",
+                "type": "text",
+                "required": false,
+                "placeholder": "e.g. 120-140"
+            },
+            {
+                "key": "choreography_level",
+                "label": "Choreography Level",
+                "type": "select",
+                "options": [
+                    "Beginner",
+                    "Intermediate",
+                    "Advanced"
+                ],
+                "required": false
+            },
+            {
+                "key": "flow_script",
+                "label": "Coach Script / Flow",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "space_requirements",
+                "label": "Space Requirements (m²)",
+                "type": "number",
+                "required": false
+            }
+        ]
+    },
+    "aquatic": {
+        "fields": [
+            {
+                "key": "pool_depth_required",
+                "label": "Pool Depth Required (m)",
+                "type": "number",
+                "required": false
+            },
+            {
+                "key": "modality",
+                "label": "Modality",
+                "type": "select",
+                "options": [
+                    "Water Running",
+                    "Aqua Aerobics",
+                    "Swim Intervals"
+                ],
+                "required": true
+            },
+            {
+                "key": "duration_min",
+                "label": "Duration (min)",
+                "type": "number",
+                "required": true,
+                "validation": {
+                    "min": 5
+                }
+            },
+            {
+                "key": "safety_procedures",
+                "label": "Safety Procedures / Lifeguard",
+                "type": "textarea",
+                "required": true
+            }
+        ]
+    },
+    "martial_arts": {
+        "fields": [
+            {
+                "key": "combat_style",
+                "label": "Style",
+                "type": "select",
+                "options": [
+                    "Boxing",
+                    "Muay Thai",
+                    "BJJ",
+                    "Taekwondo",
+                    "MMA"
+                ],
+                "required": true
+            },
+            {
+                "key": "drill_types",
+                "label": "Drill Types",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": false
+            },
+            {
+                "key": "contact_level",
+                "label": "Contact Level",
+                "type": "select",
+                "options": [
+                    "No Contact",
+                    "Light Contact",
+                    "Full Contact"
+                ],
+                "required": true
+            },
+            {
+                "key": "protective_equipment",
+                "label": "Protective Equipment",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": false
+            },
+            {
+                "key": "sparring_protocol",
+                "label": "Sparring Protocol / Rules",
+                "type": "textarea",
+                "required": false
+            }
+        ]
+    },
+    "tactical": {
+        "fields": [
+            {
+                "key": "occupation",
+                "label": "Occupation / Role",
+                "type": "text",
+                "required": false,
+                "placeholder": "e.g. Military, Firefighter, Police"
+            },
+            {
+                "key": "task_specific_drills",
+                "label": "Task-specific Drills",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "load_carriage",
+                "label": "Load Carriage (kg)",
+                "type": "number",
+                "required": false
+            },
+            {
+                "key": "conditioning_focus",
+                "label": "Conditioning Focus",
+                "type": "select",
+                "options": [
+                    "Load Carriage",
+                    "Sprint Endurance",
+                    "Repeated Effort"
+                ],
+                "required": true
+            },
+            {
+                "key": "testing_standards",
+                "label": "Testing Standards",
+                "type": "textarea",
+                "required": false
+            }
+        ]
+    },
+    "cross_training": {
+        "fields": [
+            {
+                "key": "components",
+                "label": "Components",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": true,
+                "placeholder": "e.g. Strength, Rowing, Gymnastics"
+            },
+            {
+                "key": "session_structure",
+                "label": "Session Structure",
+                "type": "textarea",
+                "required": true,
+                "placeholder": "E.g., Strength + Metcon + Accessory"
+            },
+            {
+                "key": "scaling_guidelines",
+                "label": "Scaling Guidelines",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "safety_guidelines",
+                "label": "Safety Guidelines",
+                "type": "textarea",
+                "required": false
+            }
+        ]
+    },
+    "periodization": {
+        "fields": [
+            {
+                "key": "macrocycle_length_weeks",
+                "label": "Macrocycle Length (weeks)",
+                "type": "number",
+                "required": true,
+                "validation": {
+                    "min": 1
+                }
+            },
+            {
+                "key": "mesocycles",
+                "label": "Mesocycles",
+                "type": "array",
+                "itemSchema": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "length_weeks": {
+                            "type": "number",
+                            "required": true
+                        },
+                        "focus": {
+                            "type": "string",
+                            "required": true
+                        }
+                    }
+                },
+                "required": true
+            },
+            {
+                "key": "peak_week",
+                "label": "Peak/Competition Week",
+                "type": "number",
+                "required": false
+            },
+            {
+                "key": "deload_plan",
+                "label": "Deload Plan",
+                "type": "textarea",
+                "required": false
+            }
+        ]
+    },
+    "warmup_cooldown": {
+        "fields": [
+            {
+                "key": "warmup_duration",
+                "label": "Warm-up Duration (min)",
+                "type": "number",
+                "required": true
+            },
+            {
+                "key": "warmup_drills",
+                "label": "Warm-up Drills",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": true
+            },
+            {
+                "key": "cooldown_duration",
+                "label": "Cooldown Duration (min)",
+                "type": "number",
+                "required": false
+            },
+            {
+                "key": "cooldown_drills",
+                "label": "Cooldown Drills",
+                "type": "array",
+                "itemSchema": {
+                    "type": "string"
+                },
+                "required": false
+            },
+            {
+                "key": "mobility_focus",
+                "label": "Mobility Focus (optional)",
+                "type": "string",
+                "required": false
+            }
+        ]
+    }
+}

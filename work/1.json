@@ -1,0 +1,405 @@
+{
+    "workout_templates": [
+        {
+            "type": "Strength",
+            "fields": [
+                {
+                    "label": "Training Max / 1RM",
+                    "name": "training_max",
+                    "type": "number",
+                    "unit": "kg/lb"
+                },
+                {
+                    "label": "Progression Scheme",
+                    "name": "progression_scheme",
+                    "type": "select",
+                    "options": [
+                        "Linear",
+                        "5x5",
+                        "3x5",
+                        "5/3/1"
+                    ]
+                },
+                {
+                    "label": "Intensity (% of 1RM)",
+                    "name": "intensity_percent",
+                    "type": "number",
+                    "min": 0,
+                    "max": 100
+                },
+                {
+                    "label": "Top Set Weight",
+                    "name": "top_set_weight",
+                    "type": "number",
+                    "unit": "kg/lb"
+                },
+                {
+                    "label": "Back-off Sets",
+                    "name": "backoff_sets",
+                    "type": "number"
+                }
+            ]
+        },
+        {
+            "type": "Hypertrophy",
+            "fields": [
+                {
+                    "label": "Split Type",
+                    "name": "split_type",
+                    "type": "select",
+                    "options": [
+                        "Full Body",
+                        "Upper/Lower",
+                        "Push-Pull-Legs",
+                        "Bodypart Split"
+                    ]
+                },
+                {
+                    "label": "Rep Range",
+                    "name": "rep_range",
+                    "type": "text",
+                    "placeholder": "e.g. 8–12"
+                },
+                {
+                    "label": "Proximity to Failure (RIR)",
+                    "name": "rir",
+                    "type": "number",
+                    "min": 0,
+                    "max": 5
+                }
+            ]
+        },
+        {
+            "type": "Power/Olympic",
+            "fields": [
+                {
+                    "label": "Lift Variation",
+                    "name": "lift_variation",
+                    "type": "select",
+                    "options": [
+                        "Clean & Jerk",
+                        "Snatch",
+                        "Power Clean",
+                        "Hang Snatch"
+                    ]
+                },
+                {
+                    "label": "Bar Speed Cue",
+                    "name": "bar_speed",
+                    "type": "textarea"
+                },
+                {
+                    "label": "Set Type",
+                    "name": "set_type",
+                    "type": "select",
+                    "options": [
+                        "Singles",
+                        "Clusters",
+                        "Doubles",
+                        "Triples"
+                    ]
+                },
+                {
+                    "label": "Technical Priority",
+                    "name": "technical_priority",
+                    "type": "checkbox"
+                }
+            ]
+        },
+        {
+            "type": "Cardio/Endurance",
+            "fields": [
+                {
+                    "label": "Modality",
+                    "name": "modality",
+                    "type": "select",
+                    "options": [
+                        "Run",
+                        "Row",
+                        "Bike",
+                        "Swim"
+                    ]
+                },
+                {
+                    "label": "Target Type",
+                    "name": "target_type",
+                    "type": "select",
+                    "options": [
+                        "Steady",
+                        "Tempo",
+                        "Intervals",
+                        "Long Slow Distance"
+                    ]
+                },
+                {
+                    "label": "Target Distance",
+                    "name": "distance",
+                    "type": "number",
+                    "unit": "km/miles"
+                },
+                {
+                    "label": "Target Duration",
+                    "name": "duration",
+                    "type": "time"
+                },
+                {
+                    "label": "HR Zone / Pace",
+                    "name": "hr_zone",
+                    "type": "number",
+                    "min": 1,
+                    "max": 5
+                }
+            ]
+        },
+        {
+            "type": "HIIT",
+            "fields": [
+                {
+                    "label": "Protocol",
+                    "name": "protocol",
+                    "type": "select",
+                    "options": [
+                        "Tabata",
+                        "EMOM",
+                        "AMRAP",
+                        "Custom"
+                    ]
+                },
+                {
+                    "label": "Work Duration",
+                    "name": "work_duration",
+                    "type": "time"
+                },
+                {
+                    "label": "Rest Duration",
+                    "name": "rest_duration",
+                    "type": "time"
+                },
+                {
+                    "label": "Rounds",
+                    "name": "rounds",
+                    "type": "number"
+                },
+                {
+                    "label": "Target HR / RPE",
+                    "name": "target_hr",
+                    "type": "number"
+                },
+                {
+                    "label": "Movement Pool",
+                    "name": "movement_pool",
+                    "type": "textarea"
+                }
+            ]
+        },
+        {
+            "type": "Functional",
+            "fields": [
+                {
+                    "label": "Movement Patterns",
+                    "name": "movement_patterns",
+                    "type": "checkbox_group",
+                    "options": [
+                        "Hinge",
+                        "Squat",
+                        "Push",
+                        "Pull",
+                        "Carry",
+                        "Rotate"
+                    ]
+                },
+                {
+                    "label": "Circuit Stations",
+                    "name": "stations",
+                    "type": "number"
+                },
+                {
+                    "label": "Time Cap",
+                    "name": "time_cap",
+                    "type": "time"
+                }
+            ]
+        },
+        {
+            "type": "Calisthenics",
+            "fields": [
+                {
+                    "label": "Skill Level",
+                    "name": "skill_level",
+                    "type": "select",
+                    "options": [
+                        "Beginner",
+                        "Intermediate",
+                        "Advanced"
+                    ]
+                },
+                {
+                    "label": "Progression Notes",
+                    "name": "progression_notes",
+                    "type": "textarea"
+                },
+                {
+                    "label": "Hold Time (sec)",
+                    "name": "hold_time",
+                    "type": "number"
+                },
+                {
+                    "label": "Assisted to Strict Progression",
+                    "name": "progression_flag",
+                    "type": "checkbox"
+                }
+            ]
+        },
+        {
+            "type": "Rehab/Mobility",
+            "fields": [
+                {
+                    "label": "Focus Region",
+                    "name": "focus_region",
+                    "type": "text"
+                },
+                {
+                    "label": "Pain Scale",
+                    "name": "pain_scale",
+                    "type": "number",
+                    "min": 0,
+                    "max": 10
+                },
+                {
+                    "label": "ROM Target",
+                    "name": "rom_target",
+                    "type": "text"
+                },
+                {
+                    "label": "Contra Moves Checklist",
+                    "name": "contra_moves",
+                    "type": "textarea"
+                },
+                {
+                    "label": "Therapist Notes",
+                    "name": "therapist_notes",
+                    "type": "textarea"
+                }
+            ]
+        },
+        {
+            "type": "Group Class",
+            "fields": [
+                {
+                    "label": "Class Cap",
+                    "name": "class_cap",
+                    "type": "number"
+                },
+                {
+                    "label": "Required Space",
+                    "name": "required_space",
+                    "type": "text"
+                },
+                {
+                    "label": "Music BPM",
+                    "name": "music_bpm",
+                    "type": "number"
+                },
+                {
+                    "label": "Coach Script",
+                    "name": "coach_script",
+                    "type": "textarea"
+                }
+            ]
+        },
+        {
+            "type": "Circuit/CrossFit",
+            "fields": [
+                {
+                    "label": "Station List",
+                    "name": "station_list",
+                    "type": "textarea"
+                },
+                {
+                    "label": "Reps / Time per Station",
+                    "name": "station_reps_time",
+                    "type": "text"
+                },
+                {
+                    "label": "Transition Time",
+                    "name": "transition_time",
+                    "type": "time"
+                },
+                {
+                    "label": "Time Cap",
+                    "name": "time_cap",
+                    "type": "time"
+                },
+                {
+                    "label": "Scoring Type",
+                    "name": "scoring_type",
+                    "type": "select",
+                    "options": [
+                        "Time",
+                        "Reps",
+                        "Rounds"
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Sport Specific",
+            "fields": [
+                {
+                    "label": "Sport",
+                    "name": "sport",
+                    "type": "text"
+                },
+                {
+                    "label": "Position",
+                    "name": "position",
+                    "type": "text"
+                },
+                {
+                    "label": "Drill Library",
+                    "name": "drill_library",
+                    "type": "textarea"
+                },
+                {
+                    "label": "Testing Metric",
+                    "name": "testing_metric",
+                    "type": "text"
+                }
+            ]
+        },
+        {
+            "type": "Powerlifting",
+            "fields": [
+                {
+                    "label": "Lift Day",
+                    "name": "lift_day",
+                    "type": "select",
+                    "options": [
+                        "Squat",
+                        "Bench",
+                        "Deadlift"
+                    ]
+                },
+                {
+                    "label": "Wave Percentage",
+                    "name": "wave_percent",
+                    "type": "text"
+                },
+                {
+                    "label": "Accessory Category",
+                    "name": "accessory_category",
+                    "type": "select",
+                    "options": [
+                        "Hypertrophy",
+                        "Weak-point Training"
+                    ]
+                },
+                {
+                    "label": "Deload Week",
+                    "name": "deload_week",
+                    "type": "checkbox"
+                }
+            ]
+        }
+    ]
+}
