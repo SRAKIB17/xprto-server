@@ -1,6 +1,8 @@
 import { TezX } from "tezx";
 import { loadEnv, serveStatic, wsHandlers } from "tezx/bun";
 import { cors, logger } from "tezx/middleware";
+import { corsPolicy } from "./middlewares/middlewares.js";
+import { v1 } from "./routes/v1/index.js";
 
 const app = new TezX({
   env: loadEnv(),
@@ -14,6 +16,8 @@ app.get("/", (ctx) => {
 });
 
 app.static(serveStatic('public'));
+app.use(corsPolicy)
+app.use(v1);
 
 export function swaggerUI(
   jsonPath: string = "docs.json",
