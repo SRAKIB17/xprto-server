@@ -252,56 +252,56 @@ const auth = new Router();
 auth.post('/login', async (ctx) => {
     const body = await ctx.req.json();
     let { email, password } = body;
-    let { result } = await db.findOne(table_schema.user_details, {
-        where: `email = ${sanitize(email)}`,
-    }).execute();
-    if (result.length > 0) {
+    // let { result } = await db.findOne(table_schema.user_details, {
+    //     where: `email = ${sanitize(email)}`,
+    // }).execute();
+    // if (result.length > 0) {
 
-        let { hashed, salt, login_type, user_id } = result[0];
-        if (login_type == 'google') {
-            return ctx.json({ success: false, message: "Email already in use. Please log in with Google." });
-        }
+    //     let { hashed, salt, login_type, user_id } = result[0];
+    //     if (login_type == 'google') {
+    //         return ctx.json({ success: false, message: "Email already in use. Please log in with Google." });
+    //     }
 
-        let { hash: hashedPassword } = await wrappedCryptoToken({
-            wrappedCryptoString: password,
-            salt: salt
-        });
-        if (hashed === hashedPassword) {
-            let tkn = await tokenEncodedCrypto({
-                account: email,
-                method: 'email',
-                hashed: hashed,
-                data: { user_id: user_id },
-                role: 'user',
-            });
-            setCookie(ctx, 's_id', tkn as string, {
-                httpOnly: true,
-                path: '/',
-                secure: true,
-                domain: cookieDOMAIN,
-                sameSite: 'Lax',
-                maxAge: 60 * 60 * 24 * 30, // 30 days
-            });
+    //     let { hash: hashedPassword } = await wrappedCryptoToken({
+    //         wrappedCryptoString: password,
+    //         salt: salt
+    //     });
+    //     if (hashed === hashedPassword) {
+    //         let tkn = await tokenEncodedCrypto({
+    //             account: email,
+    //             method: 'email',
+    //             hashed: hashed,
+    //             data: { user_id: user_id },
+    //             role: 'user',
+    //         });
+    //         setCookie(ctx, 's_id', tkn as string, {
+    //             httpOnly: true,
+    //             path: '/',
+    //             secure: true,
+    //             domain: cookieDOMAIN,
+    //             sameSite: 'Lax',
+    //             maxAge: 60 * 60 * 24 * 30, // 30 days
+    //         });
 
-            return ctx.json({
-                success: true,
-                message: 'User logged in successfully',
-                s_id: tkn,
-            })
-        }
-        else {
-            return ctx.json({
-                success: false,
-                message: 'Invalid password',
-            });
-        }
-    }
-    else {
-        return ctx.json({
-            success: false,
-            message: 'User not found',
-        });
-    }
+    //         return ctx.json({
+    //             success: true,
+    //             message: 'User logged in successfully',
+    //             s_id: tkn,
+    //         })
+    //     }
+    //     else {
+    //         return ctx.json({
+    //             success: false,
+    //             message: 'Invalid password',
+    //         });
+    //     }
+    // }
+    // else {
+    return ctx.json({
+        success: false,
+        message: 'User not found',
+    });
+    // }
 })
 
 // auth.post('/refresh', AuthorizationBasicAuthUser(), async (ctx) => {

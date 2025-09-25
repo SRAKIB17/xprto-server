@@ -14,7 +14,10 @@ app.get("/", (ctx) => {
   console.log(ctx.env)
   return ctx.text("Hello from TezX (bun)");
 });
-
+app.use((_, next) => {
+  console.log(34)
+  return next();
+})
 app.static(serveStatic('public'));
 app.use(corsPolicy)
 app.use(v1);

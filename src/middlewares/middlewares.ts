@@ -143,7 +143,9 @@ export const AllowSite = [
 export let corsPolicy = cors({
     methods: ['GET', "POST", "DELETE", "PUT"],
     credentials: true,
-    origin: ALlowCorsOrigin
+    origin: (origin) => {
+        return true;
+    }
 })
 
 // export let corsPolicy = cors({
