@@ -20,7 +20,7 @@ export async function AuthorizationControllerAdmin({ credentials = {}, ctx }: { 
             let role = data?.role;
             let { result, error } = await db.update(table_schema.admins, {
                 values: {
-                    last_login: mysql_datetime()
+                    last_visit: mysql_datetime()
                 },
                 where: db.condition({ admin_id: admin_id }),
             }).findOne(table_schema.admins, {

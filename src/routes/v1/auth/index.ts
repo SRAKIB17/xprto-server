@@ -11,9 +11,14 @@
 // import { AuthorizationBasicAuthUser } from "./basicAuth.js";
 // import { google } from "./google.js";
 
+import { find, insert, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { getConnInfo } from "tezx/bun";
-
+import { deleteCookie, setCookie } from "tezx/helper";
+import { cookieDOMAIN } from "../../../config";
+import { dbQuery, TABLES } from "../../../models";
+import tokenEncodedCrypto, { wrappedCryptoToken } from "../../../utils/crypto";
+import { AuthorizationBasicAuthUser } from "./basicAuth";
 const auth = new Router();
 
 // auth.post('/email-availability', async (ctx) => {
@@ -173,140 +178,198 @@ const auth = new Router();
 // }
 
 
-// auth.post('/register', async (ctx) => {
-//     const body = await ctx.req.json();
-//     let { email, account_type, login_type, profile_info: { avatar_url, college, email_verified, department, fullname, instagram, username, company, discord, github, job_role, linkedin, twitter }, password, is_verified } = body as EncryptAuthType;
+auth.post('/register', async (ctx) => {
+    try {
+        const body = await ctx.req.json();
+        const {
+            name,
+            email,
+            type,
+            fullname,
+            mobileNumber,
+            healthGoal,
+            emergencyContact,
+            password,
+            specialization,
+            experience,
+        } = body;
 
-//     if (is_verified || email_verified) {
-//         let { hash, salt } = await wrappedCryptoToken({
-//             wrappedCryptoString: password,
-//         })
+        // Generate hash and salt for password
+        let { hash, salt } = await wrappedCryptoToken({
+            wrappedCryptoString: password,
+        });
+        let account_type = type;
+        let insertData: Record<string, any> = {};
+        let table;
+        if (type === "client") {
+            insertData = {
+                fullname,
+                phone: mobileNumber,
+                email,
+                hashed: hash!,
+                salt,
+                health_goal: healthGoal || null,
+                emergency_contact: emergencyContact || null,
+                xprto: true as any,
+                status: 'active',
+            }
+            table = TABLES.CLIENTS.clients;
+        } else if (type === "trainer") {
+            insertData = {
+                fullname,
+                phone: mobileNumber,
+                email,
+                hashed: hash,
+                xprto: true as any,
+                salt,
+                specialization: specialization || null,
+                experience: experience || null,
+                status: 'active',
+            };
+            table = TABLES.TRAINERS.trainers;
+        } else {
+            return ctx.json({ success: false, message: 'Invalid account type' });
+        }
 
-//         let { success, result, error, errno } = await db.create(table_schema.user_details, {
-//             email: email,
-//             college: college,
-//             department: department,
-//             fullname: fullname,
-//             avatar_url: avatar_url,
-//             instagram: instagram,
-//             username: (typeof username === 'object' ? (username as any).value : username)?.toLowerCase(),
-//             company: company,
-//             login_type: login_type == 'google' ? 'google' : 'email',
-//             hashed: login_type == 'google' ? null : hash,
-//             salt: login_type == 'google' ? null : salt,
-//             account_type: account_type,
-//             email_verified: true,
-//             discord: discord,
-//             github: github,
-//             job_role: job_role,
-//             linkedin: linkedin,
-//             twitter: twitter,
-//         }).execute();
+        let sql = insert(table, insertData);
 
-//         if (success && result && result.affectedRows > 0) {
-//             let tkn = await tokenEncodedCrypto({
-//                 account: email,
-//                 data: { user_id: result?.insertId },
-//                 method: login_type == 'google' ? 'google' : 'email',
-//                 hashed: login_type == 'google' ? email : hash,
-//                 role: 'user',
-//             });
-//             setCookie(ctx, 's_id', tkn as string, {
-//                 httpOnly: true,
-//                 secure: true,
-//                 path: '/',
-//                 domain: cookieDOMAIN,
-//                 sameSite: 'Lax',
-//                 maxAge: 60 * 60 * 24 * 30, // 30 days     
-//             });
-//             return ctx.json({
-//                 success: true,
-//                 account_type,
-//                 message: 'User created successfully',
-//                 s_id: tkn,
-//             })
-//         }
-//         else {
-//             if (errno === 1062) {
-//                 return ctx.json({
-//                     success: false,
-//                     message: 'Email already exists',
-//                 });
-//             }
-//             if (errno === 1452) {
-//                 return ctx.json({
-//                     success: false,
-//                     message: 'Invalid data',
-//                 });
-//             }
-//             return ctx.json({
-//                 success: false, error: 'Please try again! Internal server error',
-//             });
-//         }
-//     }
-//     else {
-//         return ctx.json({ success: false, message: 'Email not verified' });
-//     }
-// })
+        let { success, result, error }: any = await dbQuery(sql!);
+        if (success && result?.affectedRows > 0) {
+            // Generate session token
+            let tkn = await tokenEncodedCrypto({
+                account: email,
+                data: {
+                    [type == 'trainer' ? "trainer_id" : "client_id"]: result.insertId,
+                    maxAge: 60 * 60 * 24 * 30, // 30 days
+                },
+                method: 'email',
+                hashed: hash,
+                role: type,
+
+            });
+            // Set cookie
+            setCookie(ctx, 's_id', tkn!, {
+                httpOnly: true,
+                secure: true,
+                path: '/',
+                domain: cookieDOMAIN,
+                sameSite: 'Lax',
+                maxAge: 60 * 60 * 24 * 30, // 30 days
+            });
+            return ctx.json({
+                user_info: insertData,
+                success: true,
+                account_type,
+                message: 'User created successfully',
+                s_id: tkn,
+            });
+        }
+        else {
+            if (error?.errno === 1062) {
+                return ctx.json({
+                    success: false,
+                    message: 'Email already exists',
+                });
+            }
+            if (error?.errno === 1452) {
+                return ctx.json({
+                    success: false,
+                    message: 'Invalid foreign key data',
+                });
+            }
+            return ctx.json({
+                success: false,
+                message: 'Failed to create account. Please try again!',
+            });
+        }
+    } catch (err: any) {
+        return ctx.json({
+            success: false,
+            message: 'Internal server error',
+            error: err.message,
+        });
+    }
+});
 
 auth.post('/login', async (ctx) => {
-    const body = await ctx.req.json();
-    let { email, password } = body;
-    // let { result } = await db.findOne(table_schema.user_details, {
-    //     where: `email = ${sanitize(email)}`,
-    // }).execute();
-    // if (result.length > 0) {
+    try {
+        const body = await ctx.req.json();
+        let { email, password, keep = false, role } = body;
 
-    //     let { hashed, salt, login_type, user_id } = result[0];
-    //     if (login_type == 'google') {
-    //         return ctx.json({ success: false, message: "Email already in use. Please log in with Google." });
-    //     }
+        // Fetch user from DB
+        const sql = find(role === 'trainer' ? TABLES.TRAINERS.trainers : TABLES.CLIENTS.clients, {
+            where: `email = ${sanitize(email)}`,
+            limitSkip: {
+                limit: 1
+            }
+        })
+        const { success, result } = await dbQuery(sql);
+        if (!result || result.length === 0) {
+            return ctx.json({ success: false, message: 'User not found' });
+        }
 
-    //     let { hash: hashedPassword } = await wrappedCryptoToken({
-    //         wrappedCryptoString: password,
-    //         salt: salt
-    //     });
-    //     if (hashed === hashedPassword) {
-    //         let tkn = await tokenEncodedCrypto({
-    //             account: email,
-    //             method: 'email',
-    //             hashed: hashed,
-    //             data: { user_id: user_id },
-    //             role: 'user',
-    //         });
-    //         setCookie(ctx, 's_id', tkn as string, {
-    //             httpOnly: true,
-    //             path: '/',
-    //             secure: true,
-    //             domain: cookieDOMAIN,
-    //             sameSite: 'Lax',
-    //             maxAge: 60 * 60 * 24 * 30, // 30 days
-    //         });
+        const user = result[0];
+        const { hashed, salt, login_type, client_id, trainer_id } = user;
 
-    //         return ctx.json({
-    //             success: true,
-    //             message: 'User logged in successfully',
-    //             s_id: tkn,
-    //         })
-    //     }
-    //     else {
-    //         return ctx.json({
-    //             success: false,
-    //             message: 'Invalid password',
-    //         });
-    //     }
-    // }
-    // else {
-    return ctx.json({
-        success: false,
-        message: 'User not found',
-    });
-    // }
+        if (login_type === 'google') {
+            return ctx.json({
+                success: false,
+                message: "Email already in use. Please log in with Google."
+            });
+        }
+
+        // Verify password
+        const { hash: hashedPassword } = await wrappedCryptoToken({
+            wrappedCryptoString: password,
+            salt,
+        });
+
+        if (hashed !== hashedPassword) {
+            return ctx.json({ success: false, message: 'Invalid password' });
+        }
+
+        // Generate session token
+        const tkn = await tokenEncodedCrypto({
+            account: email,
+            method: 'email',
+            hashed,
+            data: {
+                [client_id ? "client_id" : "trainer_id"]: client_id ?? trainer_id,
+                maxAge: keep ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days or 1 day
+            },
+            role: role || 'user',
+        });
+        // Set cookie
+        console.log(tkn)
+        setCookie(ctx, 's_id', tkn!, {
+            httpOnly: true,
+            secure: true,
+            path: '/',
+            domain: cookieDOMAIN,
+            sameSite: 'Lax',
+            maxAge: keep ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days or 1 day
+        });
+
+        return ctx.json({
+            success: true,
+            message: 'User logged in successfully',
+            s_id: tkn,
+            user_info: user,
+        });
+    } catch (err: any) {
+        console.error("Login Error:", err);
+        return ctx.json({
+            success: false,
+            message: 'Internal server error',
+            error: err.message,
+        });
+    }
+});
+
+
+auth.post('/refresh', AuthorizationBasicAuthUser(), async (ctx) => {
+    return ctx.json(ctx.auth || {})
 })
-
-// auth.post('/refresh', AuthorizationBasicAuthUser(), async (ctx) => {
-//     return ctx.json(ctx.auth || {})
-// })
 
 
 let documentPublicStorage = new Map();
@@ -350,7 +413,6 @@ auth.post('/password-reset', [getConnInfo(), async (ctx, next) => {
     })(ctx, next) as Response;
 
 }], async (ctx) => {
-
     let { email, fullname } = ctx.forget_password;
     // Add expiry time (now + 5 minutes)
     const payload = JSON.stringify({
@@ -485,7 +547,11 @@ auth.get('/logout', async (ctx) => {
         domain: cookieDOMAIN,
         sameSite: 'Lax',
     });
-    return ctx.redirect(next ? next : CLIENT_URL)
+    if (!next) {
+        return ctx.json({ success: true, })
+    }
+    if (next === 'app') return ctx.json({ success: true })
+    return ctx.redirect(next as string);
 })
 // auth.use(google)
 export default auth;

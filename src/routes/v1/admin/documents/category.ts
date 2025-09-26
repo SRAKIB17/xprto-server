@@ -1,6 +1,6 @@
 import { Router } from "tezx";
 import { db, table_schema } from "../../../../models/index.js";
-import { slug } from "../../../../utils/documents.js";
+import { slug } from "../../../../utils/slug.js";
 
 const category = new Router();
 // CREATE TABLE

@@ -7,7 +7,7 @@ import { useFormData } from 'tezx/helper';
 import { tempDir } from "../../../config.js";
 import { db, table_schema } from "../../../models/index.js";
 import { ChildProcess, docs2tempPdf, imageExtractionFromPDFthumbnail, pdfParse, popplerPdfToText, runCommand } from "../../../utils/child_process.js";
-import { slug } from "../../../utils/documents.js";
+import { slug } from "../../../utils/slug.js";
 import { fileExists, safeUnlink } from '../../../utils/fileExists.js';
 import openAiFileUPloadHandler from '../../../utils/ai/clients/openai/upload.js';
 import { MCP, ModelName } from '../../../utils/ai/mcp.js';

@@ -1,37 +1,6 @@
 -- টেবিল: clients
 -- উদ্দেশ্য: প্রতিটি জিম ক্লায়েন্টের ব্যক্তিগত তথ্য, স্বাস্থ্য লক্ষ্য, মেম্বারশিপ, এবং XPRTO ইন্টিগ্রেশন ডেটা সংরক্ষণ
 CREATE TABLE
-    clients (
-        client_id BIGINT AUTO_INCREMENT PRIMARY KEY, -- ইউনিক ক্লায়েন্ট আইডি
-        gym_owner_id BIGINT NOT NULL, -- কোন জিম মালিকের সাথে ক্লায়েন্ট যুক্ত (gym_owners টেবিল রেফারেন্স)
-        xprto_client BOOLEAN DEFAULT FALSE, -- TRUE = XPRTO অ্যাপ থেকে এসেছে, FALSE = জিম মালিক নিজে যোগ করেছে
-        fullname VARCHAR(100) NOT NULL, -- ক্লায়েন্টের পূর্ণ নাম
-        mobile_number VARCHAR(20) NOT NULL, -- মোবাইল নম্বর (যোগাযোগের জন্য)
-        email VARCHAR(100) NOT NULL, -- ইমেইল (লগইন বা নোটিফিকেশনের জন্য)
-        dob DATE DEFAULT NULL, -- জন্ম তারিখ
-        age INT GENERATED ALWAYS AS (
-            IF (
-                dob IS NOT NULL,
-                TIMESTAMPDIFF (YEAR, dob, CURDATE ()),
-                NULL
-            )
-        ) STORED, -- স্বয়ংক্রিয়ভাবে বয়স হিসাব করা
-        gender ENUM ('male', 'female', 'other') DEFAULT 'other', -- লিঙ্গ
-        membership_no VARCHAR(50) UNIQUE DEFAULT NULL, -- মেম্বারশিপ নাম্বার (ইউনিক)
-        health_goal TEXT DEFAULT NULL, -- ক্লায়েন্টের ফিটনেস বা স্বাস্থ্য লক্ষ্য
-        address TEXT DEFAULT NULL, -- ঠিকানা (ঐচ্ছিক)
-        emergency_contact VARCHAR(50) DEFAULT NULL, -- জরুরি যোগাযোগ নম্বর
-        medical_conditions TEXT DEFAULT NULL, -- মেডিকেল অবস্থা বা এলার্জি
-        registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- সিস্টেমে নিবন্ধনের সময়
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- সর্বশেষ আপডেট সময়
-        -- ডেটা ভ্যালিডেশন
-        CONSTRAINT chk_mobile_length CHECK (CHAR_LENGTH(mobile_number) BETWEEN 7 AND 20),
-        CONSTRAINT chk_email_format CHECK (email LIKE '%_@_%._%'),
-        -- ফরেন কি: ক্লায়েন্ট মুছে গেলে সম্পর্কিত ডেটা CASCADE করা যাবে
-        FOREIGN KEY (gym_owner_id) REFERENCES gym_owners (gym_owner_id) ON DELETE CASCADE
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-
-CREATE TABLE
     health_data (
         health_id BIGINT AUTO_INCREMENT PRIMARY KEY, -- ইউনিক হেলথ আইডি
         client_id BIGINT NOT NULL, -- কোন ক্লায়েন্টের ডেটা

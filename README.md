@@ -1,8 +1,7 @@
 
-Got it — based on the provided XPRTO developer guide, I can prepare a **full database schema list** covering all user types, dashboards, features, and modules mentioned.  
-
-Here’s the structured schema breakdown:
-
+client:
+<xc@gamil.com>
+1234
 ---
 
 ## **1. User Management**

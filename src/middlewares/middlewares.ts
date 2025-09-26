@@ -141,11 +141,9 @@ export const AllowSite = [
 
 
 export let corsPolicy = cors({
-    methods: ['GET', "POST", "DELETE", "PUT"],
     credentials: true,
-    origin: (origin) => {
-        return true;
-    }
+    allowedHeaders: ["Content-Type", "Authorization", "Install-Id", 's_id'],
+    origin: ALlowCorsOrigin
 })
 
 // export let corsPolicy = cors({

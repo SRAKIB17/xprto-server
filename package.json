@@ -24,7 +24,7 @@
   "dependencies": {
     "@tezx/sqlx": "^1.0.0",
     "mysql2": "^3.15.1",
-    "tezx": "^3.0.11-beta",
+    "tezx": "^3.0.14-beta",
     "typescript": "^5.8.2"
   },
   "devDependencies": {

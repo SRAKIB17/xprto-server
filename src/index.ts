@@ -1,6 +1,6 @@
 import { TezX } from "tezx";
 import { loadEnv, serveStatic, wsHandlers } from "tezx/bun";
-import { cors, logger } from "tezx/middleware";
+import { logger } from "tezx/middleware";
 import { corsPolicy } from "./middlewares/middlewares.js";
 import { v1 } from "./routes/v1/index.js";
 
@@ -8,16 +8,21 @@ const app = new TezX({
   env: loadEnv(),
   debugMode: true,
 });
-app.use(cors())
+
+
+app.use(async (_, next) => {
+  await next();
+  // console.log(_.headers)
+})
+app.use(corsPolicy)
+
 app.use([logger()]);
+
 app.get("/", (ctx) => {
   console.log(ctx.env)
   return ctx.text("Hello from TezX (bun)");
 });
-app.use((_, next) => {
-  console.log(34)
-  return next();
-})
+
 app.static(serveStatic('public'));
 app.use(corsPolicy)
 app.use(v1);

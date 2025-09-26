@@ -1,0 +1,33 @@
+CREATE TABLE
+    clients (
+        client_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        login_type ENUM ('email', 'google', 'facebook') DEFAULT 'email',
+        hashed VARCHAR(255) DEFAULT NULL,
+        salt VARCHAR(255) DEFAULT NULL,
+        gym_owner_id BIGINT DEFAULT NULL,
+        xprto BOOLEAN DEFAULT TRUE,
+        fullname VARCHAR(100) NOT NULL,
+        avatar VARCHAR(255) DEFAULT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        phone VARCHAR(20) UNIQUE NOT NULL,
+        dob DATE DEFAULT NULL,
+        age INT DEFAULT NULL,
+        bio TEXT DEFAULT NULL,
+        gender ENUM ('male', 'female', 'other') DEFAULT 'other',
+        membership_no VARCHAR(50) UNIQUE DEFAULT NULL,
+        health_goal TEXT DEFAULT NULL,
+        address TEXT DEFAULT NULL,
+        emergency_contact VARCHAR(50) DEFAULT NULL,
+        medical_conditions TEXT DEFAULT NULL,
+        registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status ENUM (
+            'active',
+            'inactive',
+            'temporary-block',
+            'suspended'
+        ) DEFAULT 'active',
+        last_visit TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT chk_mobile_length CHECK (CHAR_LENGTH(phone) BETWEEN 7 AND 20),
+        CONSTRAINT chk_email_format CHECK (email LIKE '%_@_%._%')
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

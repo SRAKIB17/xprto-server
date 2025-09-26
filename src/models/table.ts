@@ -1,7 +1,15 @@
 // src/db/tables.ts
-export const TABLES = {
-    CLIENT: {
+const database = 'xprto';
 
+const concat = (table: string, db: string = database) => {
+    return `${db}.${table}`
+}
+export const TABLES = {
+    CLIENTS: {
+        clients: concat("clients")
+    },
+    TRAINERS: {
+        trainers: concat("trainers")
     },
     USERS: "users",
     USER_DETAILS: "user_details",

@@ -1,11 +1,19 @@
-import { mysql_datetime } from "@dbnx/mysql";
-import { Context, NextCallback } from "tezx";
-import { basicAuth } from "tezx/middleware/basic-auth";
-import { db, table_schema } from "../../../models/index.js";
+// import { mysql_datetime } from "@dbnx/mysql";
+// import { Context, NextCallback } from "tezx";
+// import { deleteCookie, getCookie } from "tezx/helper";
+// import { basicAuth } from "tezx/middleware/basic-auth";
+// import { cookieDOMAIN } from "../../../config.js";
+// import { db, table_schema } from "../../../models/index.js";
+// import { wrappedCryptoToken } from "../../../utils/crypto.js";
+// import { decrypt } from "../../../utils/encrypted.js";
+
+import { Context, NextCallback, TezXError } from "tezx";
+import { getCookie } from "tezx/helper";
+import { basicAuth, bearerAuth } from "tezx/middleware";
+import { decrypt } from "../../../utils/encrypted";
+import { find, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
+import { dbQuery, TABLES } from "../../../models/index.js";
 import { wrappedCryptoToken } from "../../../utils/crypto.js";
-import { decrypt } from "../../../utils/encrypted.js";
-import { cookieDOMAIN } from "../../../config.js";
-import { deleteCookie, getCookie } from "tezx/helper";
 
 export async function AuthorizationControllerUser({ credentials = {}, ctx }: { ctx: Context, credentials?: any }) {
     let s_id = credentials?.token || getCookie(ctx, 's_id') || ctx.req.header("s_id");
@@ -16,67 +24,41 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
             let account = data?.account;
             let session = data?.session;
             let method = data?.method;
-            let user_id = data?.data?.user_id;
+            let user_id = data?.data?.client_id || data?.data?.trainer_id;
             let role = data?.role;
-            let { result, error } = await db.update(table_schema.user_details, {
+            let table = role === 'trainer' ? TABLES.TRAINERS.trainers : TABLES.CLIENTS.clients;
+
+            let updateSql = update(table, {
                 values: {
-                    last_login: mysql_datetime()
+                    last_visit: mysql_datetime()
                 },
-                where: db.condition({ user_id: user_id }),
-            }).findOne(table_schema.user_details, {
-                joins: [
-                    // {
-                    //     type: 'LEFT JOIN',
-                    //     table: table_schema.user_follows,
-                    //     on: 'user_details.user_id = user_follows.follower_id OR user_details.user_id = user_follows.following_id'
-                    // },
-                    {
-                        type: 'LEFT JOIN',
-                        table: table_schema.documents,
-                        on: 'user_details.user_id = documents.user_id'
-                    },
-                    {
-                        type: 'LEFT JOIN',
-                        table: table_schema.doc_uploaded_files,
-                        on: "doc_uploaded_files.doc_id = documents.doc_id"
-                    },
-                ],
-                columns: {
-                    user_details: ["*"],
-                    extra: [
-                        // 'COUNT(DISTINCT CASE WHEN user_follows.follower_id = user_details.user_id THEN user_follows.following_id END) AS total_following',
-                        // 'COUNT(DISTINCT CASE WHEN user_follows.following_id = user_details.user_id THEN user_follows.follower_id END) AS total_followers',
-                        // Subquery for total paper views for all the user's documents
-                        // `(SELECT SUM(view_count) FROM ${table_schema.documents} WHERE user_id = user_details.user_id) AS paper_views`,
-                        // Subquery for total reactions for all the user's documents
-                        // `(SELECT SUM(reaction_count) FROM ${table_schema.documents} WHERE user_id = user_details.user_id) AS reaction_count`,
-                        `COUNT(DISTINCT CASE WHEN doc_uploaded_files.visibility = 'PUBLIC' THEN documents.doc_id END) AS total_papers`, // Count total papers by user
-                        `CONCAT(DAY(registered_at), ', ', MONTHNAME(registered_at), ', ', YEAR(registered_at)) AS joined`, // Format the join date
-                        `
-CASE
-    WHEN user_details.delete_requested_at IS NOT NULL
-        THEN DATE_ADD(user_details.delete_requested_at, INTERVAL 14 DAY)
-    ELSE NULL
-END AS scheduled_deletion_date
-                        `
-                    ]
-                },
-                groupBy: ['user_details.user_id'], // Group by user_id to get user-level data
-                where: db.condition({
-                    email: account,
-                    login_type: method,
-                })
-            }).executeMultiple();
-            if (result?.[1]?.length === 0) {
+                where: `email = ${sanitize(account)}`,
+            });
+            const sql = find(table, {
+                where: `email = ${sanitize(account)}`,
+                limitSkip: {
+                    limit: 1
+                }
+            })
+            const { success, result, error, } = await dbQuery<any>(`${updateSql}${sql}`);
+            // 'COUNT(DISTINCT CASE WHEN user_follows.follower_id = user_details.user_id THEN user_follows.following_id END) AS total_following',
+            //                         `COUNT(DISTINCT CASE WHEN doc_uploaded_files.visibility = 'PUBLIC' THEN documents.doc_id END) AS total_papers`, // Count total papers by user
+            //                         `CONCAT(DAY(registered_at), ', ', MONTHNAME(registered_at), ', ', YEAR(registered_at)) AS joined`, // Format the join date
+            //                         `
+            // CASE
+            //     WHEN user_details.delete_requested_at IS NOT NULL
+            //         THEN DATE_ADD(user_details.delete_requested_at, INTERVAL 14 DAY)
+            //     ELSE NULL
+            // END AS scheduled_deletion_date
+            if (result?.[1]?.[0]?.length === 0) {
                 return false;
             }
 
-            let { hashed, salt, login_type, email } = result?.[1]?.[0];
+            let { hashed, salt, login_type, email } = result?.[1]?.[0]
             let [en_salt, en_hashed] = session.split('####');
             if (method == 'google') {
                 hashed = email
             }
-
             let s = await wrappedCryptoToken({
                 salt: en_salt,
                 wrappedCryptoString: hashed,
@@ -126,27 +108,14 @@ export function AuthorizationMiddlewareUser() {
         return next();
     }
 }
+
 export function AuthorizationBasicAuthUser(onUnauthorized?: ((ctx: Context, error?: Error) => Response)) {
-    return basicAuth({
-        supportedMethods: ['bearer-token'],
-        validateCredentials: async (method, credentials, ctx) => {
-            return AuthorizationControllerUser({ credentials, ctx })
+    return bearerAuth({
+        validate: (token, ctx) => {
+            return AuthorizationControllerUser({ credentials: { token: token }, ctx })
         },
         onUnauthorized(ctx, error) {
-            deleteCookie(ctx, 's_id', {
-                httpOnly: true,
-                path: '/',
-                secure: true,
-                domain: cookieDOMAIN,
-                sameSite: 'Lax',
-            });
-            if (onUnauthorized) {
-                return onUnauthorized(ctx, error);
-            }
-            return ctx.status(401).json({
-                success: false,
-                message: 'Unauthorized',
-            })
+            throw TezXError.unauthorized();
         },
     })
 }
