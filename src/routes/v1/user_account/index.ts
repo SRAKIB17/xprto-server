@@ -12,11 +12,11 @@
 // import { AuthorizationMiddlewareUser } from "../auth/basicAuth.js";
 // import user_account_bookmark from "./bookmark.js";
 
-import { Router } from "tezx";
-import { AuthorizationBasicAuthUser } from "../auth/basicAuth";
-import { wrappedCryptoToken } from "../../../utils/crypto";
-import { dbQuery } from "../../../models";
 import { sanitize, update } from "@tezx/sqlx/mysql";
+import { Router } from "tezx";
+import { dbQuery } from "../../../models";
+import { wrappedCryptoToken } from "../../../utils/crypto";
+import { AuthorizationBasicAuthUser } from "../auth/basicAuth";
 
 // import user_account_document_flag from "./flag-document.js";
 const user_account = new Router();
@@ -272,81 +272,27 @@ user_account.use(AuthorizationBasicAuthUser());
 //     }
 // });
 
-// user_account.put('/update/public-info/:column', async (ctx) => {
-//     const column = ctx.req.params?.column;
-//     const { user_id, username } = ctx.auth?.user_info || {};
-//     // Validate allowed fields
-//     const allowedColumns = [
-//         "phone",
-//         "username",
-//         "fullname",
-//         "bio",
-
-//         "college",
-//         "department",
-//         "company",
-//         "job_role",
-//         "is_access_public",
-
-//         "interest",
-//         "instagram",
-//         "twitter",
-//         "github",
-//         "linkedin",
-//         "discord",
-//         "medium",
-//     ];
-
-//     if (!allowedColumns.includes(column)) {
-//         return ctx.status(400).json({ error: "Invalid field update." });
-//     }
-
-//     const body = await ctx.req.json();
-//     const newValue = body?.[column];
-
-//     try {
-//         let update: any = {
-//             [column]: newValue
-//         }
-//         if (column == 'username') {
-//             update = {
-//                 username: newValue,
-//                 avatar_url: `/images/avatars/${newValue}`
-//             }
-//         }
-//         if (column === 'interest') {
-//             update = {
-//                 interest: JSON.stringify(newValue)
-//             }
-//         }
-//         const { success, result } = await db.update(table_schema.user_details, {
-//             values: {
-//                 ...update,
-//                 updated_at: mysql_datetime(),
-//             },
-//             where: db.condition({ user_id }),
-//         }).execute();
-
-//         if (success) {
-//             if (column == 'username') {
-//                 try {
-//                     const oldPath = path.resolve("uploads/avatars", `${username}.webp`);
-//                     const newPath = path.resolve("uploads/avatars", `${body?.username}.webp`);
-//                     if (username !== body?.username && existsSync(oldPath)) {
-//                         renameSync(oldPath, newPath);
-//                     }
-//                 } catch (error) {
-//                     console.error("Avatar rename failed:", error);
-//                 }
-//             }
-//             return ctx.json({ success: true, result });
-//         } else {
-//             return ctx.status(500).json({ error: "Failed to update." });
-//         }
-//     } catch (error) {
-//         return ctx.status(500).json({ error: "Server error." });
-//     }
-// });
+user_account.put('/update/my-info', async (ctx) => {
+    const body = await ctx.req.json();
+    try {
+        const { user_id, email } = ctx.auth?.user_info || {};
+        const table = ctx.auth.table;
+        const { success, result, error } = await dbQuery(update(table, {
+            values: body,
+            where: `email = ${sanitize(email)}`
+        }))
+        if (success) {
+            return ctx.json({ success: true, result });
+        } else if (error?.errno === 1054) {
+            return ctx.status(400).json({ message: "Invalid field(s) in update request." });
+        } else {
+            return ctx.status(500).json({ message: "Failed to update." });
+        }
+    }
+    catch (error) {
+        return ctx.status(500).json({ message: "Server error." });
+    }
+});
 
 // user_account.put("/delete-account", async (ctx) => {
 //     try {
