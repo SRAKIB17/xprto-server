@@ -4,7 +4,7 @@ CREATE TABLE
         login_type ENUM ('email', 'google', 'facebook') DEFAULT 'email',
         hashed VARCHAR(255) DEFAULT NULL,
         salt VARCHAR(255) DEFAULT NULL,
-        gym_owner_id BIGINT DEFAULT NULL,
+        gym_id BIGINT DEFAULT NULL,
         xprto BOOLEAN DEFAULT TRUE,
         fullname VARCHAR(100) NOT NULL,
         avatar VARCHAR(255) DEFAULT NULL,
@@ -30,5 +30,6 @@ CREATE TABLE
         last_visit TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         CONSTRAINT chk_mobile_length CHECK (CHAR_LENGTH(phone) BETWEEN 7 AND 20),
-        CONSTRAINT chk_email_format CHECK (email LIKE '%_@_%._%')
+        CONSTRAINT chk_email_format CHECK (email LIKE '%_@_%._%'),
+        FOREIGN KEY (gym_id) REFERENCES gyms (gym_id) ON DELETE SET NULL
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

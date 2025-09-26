@@ -118,7 +118,7 @@ export function AuthorizationMiddlewareUser() {
     }
 }
 
-export function AuthorizationBasicAuthUser(onUnauthorized?: ((ctx: Context, error?: Error) => Response)) {
+export function AuthorizationBasicAuthUser() {
     return bearerAuth({
         validate: (token, ctx) => {
             return AuthorizationControllerUser({ credentials: { token: token }, ctx })

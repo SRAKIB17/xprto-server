@@ -1,25 +1,20 @@
 -- টেবিল: gym_owners
 -- উদ্দেশ্য: জিম মালিকদের সম্পূর্ণ তথ্য, অ্যাকাউন্ট, সাবস্ক্রিপশন, পেমেন্ট, এবং অডিট ট্র্যাকিং
 CREATE TABLE
-    gym_owners (
-        gym_owner_id BIGINT AUTO_INCREMENT PRIMARY KEY, -- ইউনিক জিম মালিক আইডি
+    gyms (
+        gym_id BIGINT AUTO_INCREMENT PRIMARY KEY, -- ইউনিক জিম মালিক আইডি
         -- ব্যক্তিগত তথ্য
         fullname VARCHAR(100) NOT NULL, -- জিম মালিকের পূর্ণ নাম
         email VARCHAR(100) NOT NULL UNIQUE, -- ইমেইল (লগইন ও নোটিফিকেশনের জন্য)
         mobile_number VARCHAR(20) NOT NULL UNIQUE, -- মোবাইল নম্বর
         gender ENUM ('male', 'female', 'other') DEFAULT 'other', -- লিঙ্গ
         dob DATE DEFAULT NULL, -- জন্ম তারিখ
-        age INT GENERATED ALWAYS AS (
-            IF (
-                dob IS NOT NULL,
-                TIMESTAMPDIFF (YEAR, dob, CURDATE ()),
-                NULL
-            )
-        ) STORED, -- স্বয়ংক্রিয়ভাবে বয়স হিসাব
         -- জিম সম্পর্কিত তথ্য
         gym_name VARCHAR(150) NOT NULL, -- জিমের নাম
         address TEXT DEFAULT NULL, -- ঠিকানা
         city VARCHAR(50) DEFAULT NULL,
+        lat INT DEFAULT NULL,
+        lng INT DEFAULT NULL,
         state VARCHAR(50) DEFAULT NULL,
         country VARCHAR(50) DEFAULT 'Bangladesh',
         postal_code VARCHAR(20) DEFAULT NULL,
@@ -68,12 +63,11 @@ CREATE TABLE
         notes TEXT DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- তৈরি হওয়ার সময়
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- সর্বশেষ আপডেট
+        last_visit TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         -- ডেটা ভ্যালিডেশন
         CONSTRAINT chk_mobile_length CHECK (CHAR_LENGTH(mobile_number) BETWEEN 7 AND 20),
         CONSTRAINT chk_email_format CHECK (email LIKE '%_@_%._%'),
-        CONSTRAINT chk_subscription_dates CHECK (subscription_end >= subscription_start),
-        -- ইউনিক কনস্ট্রেইন্ট
-        UNIQUE KEY uk_email_mobile (email, mobile_number)
+        CONSTRAINT chk_subscription_dates CHECK (subscription_end >= subscription_start)
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- পারফরম্যান্স ইনডেক্স
