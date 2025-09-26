@@ -1,5 +1,5 @@
 // src/db/tables.ts
-const database = 'xprto';
+const database = 'u476740337_xprto';
 
 const concat = (table: string, db: string = database) => {
     return `${db}.${table}`

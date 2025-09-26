@@ -10,6 +10,7 @@ CREATE TABLE
         avatar VARCHAR(255) DEFAULT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
         phone VARCHAR(20) UNIQUE NOT NULL,
+        is_pro BOOLEAN DEFAULT FALSE,
         dob DATE DEFAULT NULL,
         age INT DEFAULT NULL,
         bio TEXT DEFAULT NULL,

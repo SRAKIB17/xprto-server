@@ -48,6 +48,39 @@ CREATE TABLE
             -- নোট: sender_id এর জন্য আলাদা রিলেশন টেবিল থাকতে পারে যেমন admins/trainers
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE
+    notifications (
+        notification_id BIGINT AUTO_INCREMENT PRIMARY KEY, -- ইউনিক নোটিফিকেশন আইডি
+        client_id BIGINT NOT NULL, -- যাকে পাঠানো হয়েছে (clients.client_id)
+        trainer_id BIGINT DEFAULT NULL, -- প্রেরকের ট্রেইনার আইডি, যদি থাকে
+        sender_type ENUM ('system', 'admin', 'gym_owner', 'trainer') NOT NULL DEFAULT 'system', -- প্রেরকের ধরন
+        sender_id BIGINT NULL, -- প্রেরকের আইডি, যদি human user হয়
+        title VARCHAR(255) NOT NULL, -- সংক্ষিপ্ত শিরোনাম
+        message TEXT NOT NULL, -- বিস্তারিত বার্তা
+        type ENUM (
+            'alert',
+            'offer',
+            'update',
+            'announcement',
+            'reminder',
+            'payment_due',
+            'class_schedule',
+            'feedback',
+            'achievement',
+            'system_event'
+        ) NOT NULL DEFAULT 'alert', -- নোটিফিকেশনের ধরন
+        metadata JSON NULL, -- future extra data
+        priority ENUM ('low', 'medium', 'high', 'urgent') DEFAULT 'medium', -- গুরুত্ব
+        status ENUM ('pending', 'sent', 'read', 'dismissed') DEFAULT 'pending', -- পাঠানো ও পড়ার অবস্থা
+        delivery_method
+        SET
+            ('app', 'email', 'sms', 'whatsapp') DEFAULT 'app', -- ডেলিভারি মাধ্যম
+            sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- পাঠানোর সময়
+            read_at TIMESTAMP NULL DEFAULT NULL, -- পড়ার সময়
+            expires_at TIMESTAMP NULL DEFAULT NULL, -- মেয়াদ শেষের সময়
+            FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE CASCADE
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
 -- ইনডেক্স তৈরী
 CREATE INDEX idx_notifications_client_id ON notifications (client_id);
 

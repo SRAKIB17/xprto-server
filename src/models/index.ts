@@ -6,11 +6,15 @@ import mysql, { Pool, RowDataPacket } from "mysql2/promise";
 // const password = process.env.DB_PASS as string;
 // const database = process.env.DB_NAME as string;
 
-const host = 'localhost';
-const port = parseInt(process.env.DB_PORT || "3306", 10);
-const user = 'root';
-const password = '11224455';
+// const host = 'localhost';
+// const port = parseInt(process.env.DB_PORT || "3306", 10);
+// const user = 'root';
+// const password = '11224455';
 
+const host = '193.203.184.63';
+const port = parseInt(process.env.DB_PORT || "3306", 10);
+const user = 'u476740337_xprto';
+const password = 'N]Ab/39b&'
 
 const pool: Pool = mysql.createPool({
     host,

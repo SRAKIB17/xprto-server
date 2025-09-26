@@ -3,6 +3,7 @@ import { loadEnv, serveStatic, wsHandlers } from "tezx/bun";
 import { logger } from "tezx/middleware";
 import { corsPolicy } from "./middlewares/middlewares.js";
 import { v1 } from "./routes/v1/index.js";
+import { websocket } from "./routes/websocket/index.js";
 
 const app = new TezX({
   env: loadEnv(),
@@ -16,7 +17,7 @@ app.use(async (_, next) => {
 })
 app.use(corsPolicy)
 
-app.use([logger()]);
+app.use([logger({ enabled: process.env.NODE_ENV === "development" })]);
 
 app.get("/", (ctx) => {
   console.log(ctx.env)
@@ -26,6 +27,7 @@ app.get("/", (ctx) => {
 app.static(serveStatic('public'));
 app.use(corsPolicy)
 app.use(v1);
+app.use(websocket)
 
 export function swaggerUI(
   jsonPath: string = "docs.json",

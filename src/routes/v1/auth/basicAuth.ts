@@ -64,7 +64,16 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
                 wrappedCryptoString: hashed,
             });
             if (s?.success && s?.hash === en_hashed) {
-                ctx.auth = { success: true, user_info: result?.[1]?.[0], isLoggedIn: true, role: role }
+                ctx.auth = {
+                    table: table,
+                    success: true,
+                    user_info: {
+                        ...result?.[1]?.[0],
+                        user_id: user_id,
+                    },
+                    isLoggedIn: true,
+                    role: role
+                }
                 return true;
             }
             else {
