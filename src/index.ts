@@ -1,3 +1,4 @@
+import DevTools from "@tezx/devtools";
 import { TezX } from "tezx";
 import { loadEnv, serveStatic, wsHandlers } from "tezx/bun";
 import { logger } from "tezx/middleware";
@@ -12,6 +13,7 @@ const app = new TezX({
 
 
 app.use(async (_, next) => {
+  // console.log(_.req.header())
   await next();
   // console.log(_.headers)
 })
@@ -28,6 +30,12 @@ app.static(serveStatic('public'));
 app.use(corsPolicy)
 app.use(v1);
 app.use(websocket)
+
+app.get("/devtools", DevTools(app, {
+  // Optional
+  // disableTabs: ['cookies', 'routes'],
+  // extraTabs: (ctx) => [ ... ]
+}));
 
 export function swaggerUI(
   jsonPath: string = "docs.json",

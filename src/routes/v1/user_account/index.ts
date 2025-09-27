@@ -18,12 +18,16 @@ import { dbQuery } from "../../../models/index.js";
 import { wrappedCryptoToken } from "../../../utils/crypto.js";
 import { AuthorizationBasicAuthUser } from "../auth/basicAuth.js";
 import notifications from "./notifications.js";
+import trainers from "./trainers/index.js";
+import my_documents from "./my-documents.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const user_account = new Router();
 
 user_account.use(AuthorizationBasicAuthUser());
 user_account.use(notifications);
+user_account.use(trainers);
+user_account.use(my_documents);
 // user_account.use(user_account_bookmark);
 
 // user_account.get('/follower-following',
