@@ -2,6 +2,7 @@ import { Router } from "tezx";
 import { dbQuery, TABLES } from "../../../models/index.js";
 import { destroy, find, insert } from "@tezx/sqlx/mysql";
 import { generateUUID } from "tezx/helper";
+import { safeUnlink } from "../../../utils/fileExists.js";
 
 const my_documents = new Router({
     basePath: '/my-documents'
@@ -32,36 +33,36 @@ my_documents.post("/", async (ctx) => {
         }
 
         const body = await ctx.req.json();
-        const {
-            document_type,
-            original_name,
-            stored_name,
-            storage_path,
-            mime_type,
-            size,
-            metadata,
-            checksum,
-        } = body;
+        // const {
+        //     document_type,
+        //     original_name,
+        //     stored_name,
+        //     storage_path,
+        //     mime_type,
+        //     size,
+        //     metadata,
+        //     checksum,
+        // } = body;
 
-        const { success, result, error } = await dbQuery(
-            insert(TABLES.USER_DOCUMENTS, {
-                uuid: crypto.randomUUID?.() || generateUUID(), // fallback
-                user_type: role,
-                user_id,
-                document_type,
-                original_name,
-                stored_name,
-                storage_path,
-                mime_type,
-                size,
-                metadata: metadata ? JSON.stringify(metadata) : null,
-                checksum,
-            })
-        );
+        // const { success, result, error } = await dbQuery(
+        //     insert(TABLES.USER_DOCUMENTS, {
+        //         uuid: crypto.randomUUID?.() || generateUUID(), // fallback
+        //         user_type: role,
+        //         user_id,
+        //         document_type,
+        //         original_name,
+        //         stored_name,
+        //         storage_path,
+        //         mime_type,
+        //         size,
+        //         metadata: metadata ? JSON.stringify(metadata) : null,
+        //         checksum,
+        //     })
+        // );
 
-        if (!success) {
-            return ctx.status(500).json({ success: false, message: "Insert failed", error });
-        }
+        // if (!success) {
+        return ctx.status(500).json({ success: false, message: "Insert failed", 'error': 34 });
+        // }
 
         return ctx.json({
             success: true,
@@ -73,12 +74,14 @@ my_documents.post("/", async (ctx) => {
 });
 
 // ✅ Delete document
-my_documents.delete("/:id", async (ctx) => {
+my_documents.put("/:id", async (ctx) => {
     try {
         const { user_id } = ctx.auth?.user_info || {};
         const { role } = ctx.auth ?? {};
         const { id } = ctx.req.params;
 
+        const body = await ctx.req.json();
+        await safeUnlink(body?.storage_path)
         if (!user_id || !role) {
             return ctx.status(401).json({ success: false, message: "Unauthorized" });
         }

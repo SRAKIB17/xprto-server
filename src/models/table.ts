@@ -24,6 +24,6 @@ export const TABLES = {
     }
 
 } as const;
-
+// ('client', 'gym', 'trainer', 'admin') 
 // 👉 type এর জন্য
 export type TableName = (typeof TABLES)[keyof typeof TABLES];

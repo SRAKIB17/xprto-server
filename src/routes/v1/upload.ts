@@ -10,6 +10,7 @@ const tempUpload = new Router({
 tempUpload.post("/", async (ctx) => {
     const formData = await useFormData(ctx, {
         maxSize: 100_000_000, // 100MB
+        sanitized: true,
     });
 
     const file = formData.file as File;
