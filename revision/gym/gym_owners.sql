@@ -2,37 +2,33 @@
 -- উদ্দেশ্য: জিম মালিকদের সম্পূর্ণ তথ্য, অ্যাকাউন্ট, সাবস্ক্রিপশন, পেমেন্ট, এবং অডিট ট্র্যাকিং
 CREATE TABLE
     gyms (
-        gym_id BIGINT AUTO_INCREMENT PRIMARY KEY, -- ইউনিক জিম মালিক আইডি
-        -- ব্যক্তিগত তথ্য
-        fullname VARCHAR(100) NOT NULL, -- জিম মালিকের পূর্ণ নাম
-        email VARCHAR(100) NOT NULL UNIQUE, -- ইমেইল (লগইন ও নোটিফিকেশনের জন্য)
-        mobile_number VARCHAR(20) NOT NULL UNIQUE, -- মোবাইল নম্বর
-        gender ENUM ('male', 'female', 'other') DEFAULT 'other', -- লিঙ্গ
-        dob DATE DEFAULT NULL, -- জন্ম তারিখ
-        -- জিম সম্পর্কিত তথ্য
-        gym_name VARCHAR(150) NOT NULL, -- জিমের নাম
-        address TEXT DEFAULT NULL, -- ঠিকানা
-        city VARCHAR(50) DEFAULT NULL,
+        gym_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        fullname VARCHAR(100) NOT NULL,
+        email VARCHAR(100) NOT NULL UNIQUE,
+        mobile_number VARCHAR(20) NOT NULL UNIQUE,
+        gender ENUM ('male', 'female', 'other') DEFAULT 'other',
+        dob DATE DEFAULT NULL,
+        gym_name VARCHAR(150) NOT NULL,
+        address TEXT DEFAULT NULL,
+        postal_code VARCHAR(20) DEFAULT NULL,
+        country VARCHAR(50) DEFAULT NULL,
+        district VARCHAR(50) DEFAULT NULL,
         lat INT DEFAULT NULL,
         lng INT DEFAULT NULL,
         state VARCHAR(50) DEFAULT NULL,
-        country VARCHAR(50) DEFAULT 'Bangladesh',
-        postal_code VARCHAR(20) DEFAULT NULL,
-        total_clients INT DEFAULT 0, -- মোট ক্লায়েন্ট সংখ্যা
-        plan_features JSON DEFAULT NULL, -- প্ল্যান ফিচার বা বেনিফিটের বিস্তারিত JSON (উদাহরণ: ক্লায়েন্ট লিমিট, স্টাফ সংখ্যা)
-        -- অ্যাকাউন্ট স্ট্যাটাস ও সাবস্ক্রিপশন
+        total_clients INT DEFAULT 0,
+        plan_features JSON DEFAULT NULL,
         status ENUM (
             'active',
             'inactive',
             'paused',
             'suspended',
             'banned'
-        ) DEFAULT 'active', -- অ্যাকাউন্ট স্ট্যাটাস
-        subscription_plan ENUM ('basic', 'premium', 'enterprise', 'custom') DEFAULT 'basic', -- জিম মালিকের প্ল্যান
+        ) DEFAULT 'active',
+        subscription_plan ENUM ('basic', 'premium', 'enterprise', 'custom') DEFAULT 'basic',
         subscription_start DATE DEFAULT NULL,
         subscription_end DATE DEFAULT NULL,
-        auto_renew BOOLEAN DEFAULT FALSE, -- অটো রিনিউয়াল সক্রিয় কিনা
-        -- পেমেন্ট সম্পর্কিত তথ্য
+        auto_renew BOOLEAN DEFAULT FALSE,
         payment_method ENUM (
             'cash',
             'card',
@@ -40,7 +36,7 @@ CREATE TABLE
             'upi',
             'wallet',
             'cheque'
-        ) DEFAULT NULL, -- পেমেন্ট মাধ্যম
+        ) DEFAULT NULL,
         last_payment_date DATE DEFAULT NULL,
         next_payment_due DATE DEFAULT NULL,
         payment_status ENUM (
@@ -50,25 +46,21 @@ CREATE TABLE
             'overdue',
             'refunded'
         ) DEFAULT 'unpaid',
-        -- নিরাপত্তা ও লগিং
-        password_hash VARCHAR(255) DEFAULT NULL, -- লগইন পাসওয়ার্ড হ্যাশ
-        two_factor_enabled BOOLEAN DEFAULT FALSE, -- 2FA সক্রিয় কিনা
-        last_login TIMESTAMP NULL DEFAULT NULL, -- শেষ লগইন সময়
-        failed_login_attempts INT DEFAULT 0, -- ব্যর্থ লগইন ট্র্যাক
-        -- মিডিয়া এবং ইনভয়েস
-        profile_photo VARCHAR(255) DEFAULT NULL, -- প্রোফাইল ছবি URL
-        logo_url VARCHAR(255) DEFAULT NULL, -- জিম লোগো URL
-        invoice_prefix VARCHAR(20) DEFAULT 'GYM', -- ইনভয়েসের জন্য প্রিফিক্স
-        -- নোট ও অতিরিক্ত তথ্য
+        password_hash VARCHAR(255) DEFAULT NULL,
+        two_factor_enabled BOOLEAN DEFAULT FALSE,
+        last_login TIMESTAMP NULL DEFAULT NULL,
+        failed_login_attempts INT DEFAULT 0,
+        profile_photo VARCHAR(255) DEFAULT NULL,
+        logo_url VARCHAR(255) DEFAULT NULL,
+        invoice_prefix VARCHAR(20) DEFAULT 'GYM',
         notes TEXT DEFAULT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- তৈরি হওয়ার সময়
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- সর্বশেষ আপডেট
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         last_visit TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        -- ডেটা ভ্যালিডেশন
-        CONSTRAINT chk_mobile_length CHECK (CHAR_LENGTH(mobile_number) BETWEEN 7 AND 20),
-        CONSTRAINT chk_email_format CHECK (email LIKE '%_@_%._%'),
-        CONSTRAINT chk_subscription_dates CHECK (subscription_end >= subscription_start)
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+        CONSTRAINT chk_mobile_length_gyms CHECK (CHAR_LENGTH(mobile_number) BETWEEN 7 AND 20),
+        CONSTRAINT chk_email_format_gyms CHECK (email LIKE '%_@_%._%'),
+        CONSTRAINT chk_subscription_dates_gyms CHECK (subscription_end >= subscription_start)
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- পারফরম্যান্স ইনডেক্স
 CREATE INDEX idx_gym_owners_status ON gym_owners (status);

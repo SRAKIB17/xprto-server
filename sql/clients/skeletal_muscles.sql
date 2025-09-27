@@ -37,7 +37,7 @@ CREATE TABLE
         ),
         -- ফরেন কী: clients টেবিলের client_id রেফারেন্স; ক্লায়েন্ট মুছে গেলে সংশ্লিষ্ট ডেটাও মুছে যাবে
         FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE CASCADE
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- পারফরম্যান্স উন্নয়নের জন্য ইনডেক্স (client_id তে)
 CREATE INDEX idx_skeletal_muscles_client_id ON skeletal_muscles (client_id);

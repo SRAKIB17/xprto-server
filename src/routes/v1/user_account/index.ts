@@ -14,15 +14,16 @@
 
 import { sanitize, update } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
-import { dbQuery } from "../../../models";
-import { wrappedCryptoToken } from "../../../utils/crypto";
-import { AuthorizationBasicAuthUser } from "../auth/basicAuth";
+import { dbQuery } from "../../../models/index.js";
+import { wrappedCryptoToken } from "../../../utils/crypto.js";
+import { AuthorizationBasicAuthUser } from "../auth/basicAuth.js";
+import notifications from "./notifications.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const user_account = new Router();
 
 user_account.use(AuthorizationBasicAuthUser());
-// user_account.use(user_account_document_flag);
+user_account.use(notifications);
 // user_account.use(user_account_bookmark);
 
 // user_account.get('/follower-following',
@@ -277,6 +278,9 @@ user_account.put('/update/my-info', async (ctx) => {
     try {
         const { user_id, email } = ctx.auth?.user_info || {};
         const table = ctx.auth.table;
+        if (Object.keys(body)?.includes('email')) {
+            return ctx.status(400).json({ message: "Email update is not allowed." });
+        }
         const { success, result, error } = await dbQuery(update(table, {
             values: body,
             where: `email = ${sanitize(email)}`

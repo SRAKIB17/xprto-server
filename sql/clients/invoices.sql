@@ -25,7 +25,7 @@ CREATE TABLE
         FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE CASCADE,
         FOREIGN KEY (billing_id) REFERENCES billing_info (billing_id) ON DELETE SET NULL,
         FOREIGN KEY (subscription_id) REFERENCES subscriptions (subscription_id) ON DELETE SET NULL
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- দ্রুত অনুসন্ধানের জন্য ইনডেক্স
 CREATE INDEX idx_invoices_client_id ON invoices (client_id);

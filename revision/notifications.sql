@@ -1,62 +1,15 @@
--- টেবিল: notifications
--- উদ্দেশ্য: জিম ক্লায়েন্টদের জন্য বিভিন্ন ধরনের নোটিফিকেশন পাঠানো, ট্র্যাক করা এবং পাঠানো ব্যক্তির তথ্য সংরক্ষণ।
 CREATE TABLE
     notifications (
-        notification_id BIGINT AUTO_INCREMENT PRIMARY KEY, -- প্রতিটি নোটিফিকেশনের ইউনিক আইডি
-        client_id BIGINT NOT NULL, -- কোন ক্লায়েন্টকে পাঠানো হয়েছে (clients টেবিলের client_id রেফারেন্স)
-        trainer_id BIGINT DEFAULT NULL,
-        -- Sender (notification কে পাঠিয়েছে)
+        notification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        -- Recipient
+        recipient_type ENUM ('client', 'trainer', 'gym', 'admin') NOT NULL,
+        recipient_id BIGINT UNSIGNED NOT NULL,
+        -- Sender
         sender_type ENUM ('system', 'admin', 'gym_owner', 'trainer') NOT NULL DEFAULT 'system',
-        sender_id BIGINT NULL, -- sender_type যদি human user হয় তবে এখানে তাদের আইডি থাকবে
-        title VARCHAR(255) NOT NULL, -- নোটিফিকেশনের সংক্ষিপ্ত শিরোনাম
-        message TEXT NOT NULL, -- নোটিফিকেশনের বিস্তারিত বার্তা
-        type ENUM (
-            'alert', -- জরুরি বার্তা
-            'offer', -- অফার/ডিসকাউন্ট
-            'update', -- সিস্টেম আপডেট
-            'announcement', -- ঘোষণা
-            'reminder', -- রিমাইন্ডার
-            'payment_due', -- পেমেন্ট ডিউ
-            'class_schedule', -- ক্লাস শিডিউল
-            'feedback', -- ফিডব্যাক/রিভিউ অনুরোধ
-            'achievement', -- অর্জন/অ্যাচিভমেন্ট
-            'system_event' -- সিস্টেম ইভেন্ট (যেমন নতুন ফিচার রিলিজ)
-        ) NOT NULL DEFAULT 'alert',
-        -- Future metadata (extra JSON data রাখার জন্য)
-        metadata JSON NULL,
-        type ENUM (
-            'alert', -- জরুরি বার্তা
-            'offer', -- অফার/ডিসকাউন্ট
-            'update', -- সিস্টেম আপডেট
-            'announcement', -- ঘোষণা
-            'reminder', -- রিমাইন্ডার (যেমন: মেম্বারশিপ রিনিউ)
-            'payment_due', -- পেমেন্ট ডিউ
-            'class_schedule' -- ক্লাস শিডিউল
-        ) NOT NULL DEFAULT 'alert',
-        priority ENUM ('low', 'medium', 'high', 'urgent') DEFAULT 'medium', -- গুরুত্বের মাত্রা
-        status ENUM ('pending', 'sent', 'read', 'dismissed') DEFAULT 'pending', -- পাঠানো ও পড়ার অবস্থা
-        delivery_method
-        SET
-            ('app', 'email', 'sms', 'whatsapp') DEFAULT 'app', -- কোন মাধ্যমে পাঠানো হয়েছে
-            -- কে পাঠিয়েছে তার তথ্য
-            sender_type ENUM ('system', 'admin', 'gym_owner', 'trainer') NOT NULL DEFAULT 'system',
-            sender_id BIGINT NULL, -- sender_type যদি admin/gym_owner/trainer হয়, তাহলে এখানে তাদের আইডি
-            sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- কখন পাঠানো হয়েছে
-            read_at TIMESTAMP NULL DEFAULT NULL, -- কখন পড়েছে
-            expires_at TIMESTAMP NULL DEFAULT NULL, -- কখন মেয়াদ শেষ হবে
-            FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE CASCADE
-            -- নোট: sender_id এর জন্য আলাদা রিলেশন টেবিল থাকতে পারে যেমন admins/trainers
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-
-CREATE TABLE
-    notifications (
-        notification_id BIGINT AUTO_INCREMENT PRIMARY KEY, -- ইউনিক নোটিফিকেশন আইডি
-        client_id BIGINT NOT NULL, -- যাকে পাঠানো হয়েছে (clients.client_id)
-        trainer_id BIGINT DEFAULT NULL, -- প্রেরকের ট্রেইনার আইডি, যদি থাকে
-        sender_type ENUM ('system', 'admin', 'gym_owner', 'trainer') NOT NULL DEFAULT 'system', -- প্রেরকের ধরন
-        sender_id BIGINT NULL, -- প্রেরকের আইডি, যদি human user হয়
-        title VARCHAR(255) NOT NULL, -- সংক্ষিপ্ত শিরোনাম
-        message TEXT NOT NULL, -- বিস্তারিত বার্তা
+        sender_id BIGINT UNSIGNED NULL,
+        -- Content
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
         type ENUM (
             'alert',
             'offer',
@@ -68,112 +21,102 @@ CREATE TABLE
             'feedback',
             'achievement',
             'system_event'
-        ) NOT NULL DEFAULT 'alert', -- নোটিফিকেশনের ধরন
-        metadata JSON NULL, -- future extra data
-        priority ENUM ('low', 'medium', 'high', 'urgent') DEFAULT 'medium', -- গুরুত্ব
-        status ENUM ('pending', 'sent', 'read', 'dismissed') DEFAULT 'pending', -- পাঠানো ও পড়ার অবস্থা
-        delivery_method
-        SET
-            ('app', 'email', 'sms', 'whatsapp') DEFAULT 'app', -- ডেলিভারি মাধ্যম
-            sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- পাঠানোর সময়
-            read_at TIMESTAMP NULL DEFAULT NULL, -- পড়ার সময়
-            expires_at TIMESTAMP NULL DEFAULT NULL, -- মেয়াদ শেষের সময়
-            FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE CASCADE
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+        ) NOT NULL DEFAULT 'alert',
+        metadata JSON NULL,
+        action_url VARCHAR(300) DEFAULT NULL,
+        priority ENUM ('low', 'medium', 'high', 'urgent') DEFAULT 'medium',
+        delivery_method ENUM ('app', 'email', 'sms', 'whatsapp') DEFAULT 'app',
+        -- Timestamps
+        sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        read_at TIMESTAMP NULL DEFAULT NULL,
+        expires_at TIMESTAMP NULL DEFAULT NULL,
+        INDEX idx_recipient_notifications (recipient_type, recipient_id)
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci
 
--- ইনডেক্স তৈরী
-CREATE INDEX idx_notifications_client_id ON notifications (client_id);
 
-CREATE INDEX idx_notifications_sender_type ON notifications (sender_type);
+    আপনি চাইছেন `notifications` টেবিলের জন্য **searchable index** তৈরি করতে এবং যদি দরকার হয় `ALTER` statement ব্যবহার করে update করতে। নিচে বিস্তারিত দিচ্ছি।
 
-CREATE INDEX idx_notifications_status ON notifications (status);
+---
 
-CREATE INDEX idx_notifications_type ON notifications (type);
+### 1️⃣ Fulltext Index (title + message)
 
--- উদাহরণ ডেটা ইনসার্ট
-INSERT INTO
-    notifications (
-        client_id,
-        title,
-        message,
-        type,
-        priority,
-        status,
-        delivery_method,
-        sender_type,
-        sender_id,
-        expires_at
-    )
-VALUES
-    (
-        101,
-        'মেম্বারশিপ রিনিউ',
-        'আপনার মেম্বারশিপ ৩ দিনের মধ্যে শেষ হবে। রিনিউ করতে আজই যোগাযোগ করুন।',
-        'reminder',
-        'high',
-        'pending',
-        'app,email,sms',
-        'system',
-        NULL,
-        DATE_ADD (NOW (), INTERVAL 3 DAY)
-    ),
-    (
-        102,
-        'নতুন যোগা ক্লাস',
-        'আপনার যোগা ক্লাস প্রতি বুধবার সন্ধ্যা ৬টায়।',
-        'class_schedule',
-        'medium',
-        'sent',
-        'app',
-        'trainer',
-        12,
-        NULL
-    ),
-    (
-        103,
-        'জিমের ছুটির নোটিশ',
-        'আগামী শুক্রবার জিম বন্ধ থাকবে।',
-        'announcement',
-        'medium',
-        'pending',
-        'app,email',
-        'gym_owner',
-        5,
-        DATE_ADD (NOW (), INTERVAL 2 DAY)
-    );
+যদি আপনি **title** ও **message** field এর উপর search functionality চান (keyword search), তাহলে **FULLTEXT index** বানানো যায়:
 
--- উদাহরণ কুয়েরি:
--- 1) নির্দিষ্ট ক্লায়েন্টের আনরিড নোটিফিকেশন বের করা
-SELECT
-    *
-FROM
-    notifications
-WHERE
-    client_id = 101
-    AND status = 'sent'
-    AND read_at IS NULL;
+```sql
+ALTER TABLE notifications
+ADD FULLTEXT idx_title_message_notification (title, message);
+```
 
--- 2) কোন ট্রেইনার কোন নোটিফিকেশন পাঠিয়েছে, তার লিস্ট
-SELECT
-    notification_id,
-    title,
-    message,
-    sent_at
-FROM
-    notifications
-WHERE
-    sender_type = 'trainer'
-    AND sender_id = 12;
+এভাবে আপনি MySQL/MariaDB তে keyword search করতে পারবেন:
 
--- 3) মেয়াদোত্তীর্ণ অফার ডিলিট করা
-DELETE FROM notifications
-WHERE
-    expires_at IS NOT NULL
-    AND expires_at < NOW ();
+```sql
+SELECT * 
+FROM notifications
+WHERE MATCH(title, message) AGAINST ('gym' IN NATURAL LANGUAGE MODE);
+```
 
--- নোট (বাংলায়):
--- 1) sender_type + sender_id রাখার ফলে বোঝা যাবে নোটিফিকেশন কে পাঠিয়েছে এবং প্রয়োজন হলে sender_id থেকে তার ডিটেইলস বের করা যাবে।
--- 2) যদি sender_type = 'system' হয়, তাহলে sender_id NULL রাখা যাবে।
--- 3) আলাদা admins, trainers, gym_owners টেবিল থেকে sender_id দিয়ে জয়েন করলে সম্পূর্ণ তথ্য পাওয়া যাবে (নাম, ইমেইল ইত্যাদি)।
--- 4) delivery_method SET টাইপে একাধিক মাধ্যম সেভ করা সম্ভব।
--- 5) priority এবং status দিয়ে ড্যাশবোর্ডে সাজানো সহজ হবে।
+/*
+-- Query: SELECT * FROM u476740337_xprto.notifications
+LIMIT 0, 1000
+
+-- Date: 2025-09-27 06:24
+*/
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (2,'trainer',1,'',7,'Feedback Given','Client 7 submitted feedback on your last class.','feedback',NULL,NULL,'medium','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (3,'trainer',1,'system',NULL,'System Update','App will be down for maintenance tonight.','system_event',NULL,NULL,'low','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (4,'trainer',1,'admin',2,'Payment Reminder','Please confirm your pending payment invoice.','payment_due',NULL,NULL,'urgent','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (5,'trainer',1,'',3,'Achievement Unlocked','Client 3 reached their goal weight!','achievement',NULL,NULL,'medium','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (6,'trainer',1,'',8,'Class Schedule Change','Client 8 asked to reschedule the session.','class_schedule',NULL,NULL,'high','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (7,'trainer',1,'gym_owner',1,'Offer Announcement','Special discount for premium trainers!','offer',NULL,NULL,'medium','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (8,'trainer',1,'system',NULL,'Security Notice','We detected a login from a new device.','alert',NULL,NULL,'urgent','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (9,'trainer',1,'',10,'Feedback Request','Please rate your last session with Client 10.','feedback',NULL,NULL,'low','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (10,'trainer',1,'admin',4,'New Policy Update','Admin added a new cancellation policy.','announcement',NULL,NULL,'medium','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (11,'trainer',1,'system',NULL,'Reminder','Don’t forget to update your profile information.','reminder',NULL,NULL,'low','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (12,'trainer',1,'',12,'Class Booking','Client 12 booked a new session for next week.','class_schedule',NULL,NULL,'high','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (13,'trainer',1,'',15,'Payment Completed','Client 15 completed payment for the last session.','update',NULL,NULL,'medium','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (14,'trainer',1,'gym_owner',2,'Achievement Badge','You received “Top Trainer” badge this month.','achievement',NULL,NULL,'high','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (15,'trainer',1,'system',NULL,'System Event','New video training feature is now live!','system_event',NULL,NULL,'medium','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (16,'trainer',1,'admin',6,'Alert','Please verify your KYC documents.','alert',NULL,NULL,'urgent','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (17,'trainer',1,'',18,'Offer','Client 18 shared a referral code with you.','offer',NULL,NULL,'low','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (18,'trainer',1,'gym_owner',3,'Announcement','New gym equipment added to your center.','announcement',NULL,NULL,'medium','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (19,'trainer',1,'system',NULL,'Reminder','Complete your weekly progress report.','reminder',NULL,NULL,'medium','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (20,'trainer',1,'',20,'Feedback Request','Client 20 asked you to review their workout plan.','feedback',NULL,NULL,'high','app','2025-09-26 21:35:36',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (21,'gym',1,'system',NULL,'System Maintenance','The platform will be unavailable for 2 hours tonight.','system_event',NULL,NULL,'medium','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (22,'gym',1,'admin',2,'Payment Due','Please clear pending subscription payment.','payment_due',NULL,NULL,'urgent','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (23,'gym',1,'trainer',5,'Trainer Request','Trainer 5 requested additional slots for clients.','update',NULL,NULL,'high','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (24,'gym',1,'',10,'Feedback Submitted','Client 10 left a review about your gym.','feedback',NULL,NULL,'medium','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (25,'gym',1,'gym_owner',1,'Offer Announcement','New promotional offer available for your gym members.','offer',NULL,NULL,'medium','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (26,'gym',1,'system',NULL,'Security Alert','Unusual login activity detected in gym account.','alert',NULL,NULL,'urgent','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (27,'gym',1,'admin',3,'New Policy','Updated terms & conditions for gyms have been published.','announcement',NULL,NULL,'medium','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (28,'gym',1,'trainer',7,'Class Schedule','Trainer 7 updated their weekly schedule.','class_schedule',NULL,NULL,'high','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (29,'gym',1,'',15,'Membership Renewal','Client 15 renewed membership successfully.','update',NULL,NULL,'medium','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (30,'gym',1,'system',NULL,'Reminder','Update your gym facilities information.','reminder',NULL,NULL,'low','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (31,'gym',1,'admin',4,'Inspection Notice','Admin scheduled a compliance inspection for next week.','alert',NULL,NULL,'high','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (32,'gym',1,'trainer',9,'Achievement','Trainer 9 achieved 100+ sessions this month.','achievement',NULL,NULL,'medium','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (33,'gym',1,'gym_owner',2,'Special Event','Join the annual fitness expo this weekend.','announcement',NULL,NULL,'medium','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (34,'gym',1,'system',NULL,'New Feature','Group booking feature now available for gyms.','system_event',NULL,NULL,'medium','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (35,'gym',1,'',18,'Complaint','Client 18 submitted a complaint about equipment.','alert',NULL,NULL,'high','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (36,'gym',1,'trainer',12,'Trainer Feedback','Trainer 12 requested more equipment.','feedback',NULL,NULL,'low','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (37,'gym',1,'admin',6,'Offer','Discount on annual subscription fees for gyms.','offer',NULL,NULL,'medium','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (38,'gym',1,'system',NULL,'Reminder','Don’t forget to upload gym license documents.','reminder',NULL,NULL,'high','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (39,'gym',1,'gym_owner',3,'Achievement','Your gym ranked in Top 10 gyms in the city.','achievement',NULL,NULL,'high','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (40,'gym',1,'',20,'Session Booking','Client 20 booked 5 group classes in your gym.','class_schedule',NULL,NULL,'high','app','2025-09-26 21:36:42',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (41,'client',1,'system',NULL,'Welcome to FitLife','Thank you for registering as a client in FitLife app.','announcement',NULL,NULL,'medium','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (42,'client',1,'admin',2,'Profile Approved','Your client profile has been verified successfully.','update',NULL,NULL,'high','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (43,'client',1,'trainer',5,'Session Reminder','Your personal training session is scheduled for tomorrow at 7 AM.','reminder',NULL,NULL,'high','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (44,'client',1,'gym_owner',1,'Membership Offer','Get 20% off on annual gym membership!','offer',NULL,NULL,'medium','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (45,'client',1,'system',NULL,'Password Change Alert','Your password was recently updated.','alert',NULL,NULL,'urgent','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (46,'client',1,'trainer',8,'Feedback Request','Please leave a review for your last session.','feedback',NULL,NULL,'low','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (47,'client',1,'admin',3,'Payment Confirmation','We have received your subscription payment successfully.','payment_due',NULL,NULL,'medium','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (48,'client',1,'gym_owner',2,'Class Update','Yoga class timing has been changed to 6 PM.','class_schedule',NULL,NULL,'high','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (49,'client',1,'system',NULL,'New Feature','Group booking is now available for clients.','system_event',NULL,NULL,'medium','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (50,'client',1,'trainer',6,'Achievement Unlocked','You completed 10 training sessions this month!','achievement',NULL,NULL,'high','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (51,'client',1,'admin',4,'Important Notice','System maintenance will occur tonight from 12AM - 2AM.','alert',NULL,NULL,'medium','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (52,'client',1,'gym_owner',3,'Special Event','Join our fitness bootcamp this weekend.','announcement',NULL,NULL,'medium','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (53,'client',1,'trainer',7,'Trainer Update','Trainer 7 has uploaded a new workout plan for you.','update',NULL,NULL,'medium','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (54,'client',1,'system',NULL,'Reminder','Update your health information for better recommendations.','reminder',NULL,NULL,'low','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (55,'client',1,'admin',5,'Survey','Please participate in our annual fitness survey.','feedback',NULL,NULL,'low','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (56,'client',1,'gym_owner',4,'Offer Extended','The summer discount offer has been extended by 1 week.','offer',NULL,NULL,'medium','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (57,'client',1,'trainer',9,'Session Cancelled','Your scheduled session tomorrow has been cancelled.','alert',NULL,NULL,'high','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (58,'client',1,'system',NULL,'New Badge','Congratulations! You earned a \"Consistency\" badge.','achievement',NULL,NULL,'high','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (59,'client',1,'admin',6,'Policy Update','Our privacy policy has been updated.','announcement',NULL,NULL,'medium','app','2025-09-26 21:37:01',NULL,NULL);
+INSERT INTO `notificatoins` (`notification_id`,`recipient_type`,`recipient_id`,`sender_type`,`sender_id`,`title`,`message`,`type`,`metadata`,`action_url`,`priority`,`delivery_method`,`sent_at`,`read_at`,`expires_at`) VALUES (60,'client',1,'gym_owner',5,'Reminder','Don’t forget to renew your membership before it expires.','reminder',NULL,NULL,'high','app','2025-09-26 21:37:01',NULL,NULL);

@@ -1,10 +1,17 @@
 CREATE TABLE
     clients (
-        client_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        client_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         login_type ENUM ('email', 'google', 'facebook') DEFAULT 'email',
         hashed VARCHAR(255) DEFAULT NULL,
         salt VARCHAR(255) DEFAULT NULL,
-        gym_id BIGINT DEFAULT NULL,
+        gym_id BIGINT UNSIGNED DEFAULT NULL,
+        postal_code VARCHAR(20) DEFAULT NULL,
+        country VARCHAR(50) DEFAULT NULL,
+        state VARCHAR(50) DEFAULT NULL,
+        district VARCHAR(50) DEFAULT NULL,
+        address TEXT DEFAULT NULL,
+        lat INT DEFAULT NULL,
+        lng INT DEFAULT NULL,
         xprto BOOLEAN DEFAULT TRUE,
         fullname VARCHAR(100) NOT NULL,
         avatar VARCHAR(255) DEFAULT NULL,
@@ -17,7 +24,6 @@ CREATE TABLE
         gender ENUM ('male', 'female', 'other') DEFAULT 'other',
         membership_no VARCHAR(50) UNIQUE DEFAULT NULL,
         health_goal TEXT DEFAULT NULL,
-        address TEXT DEFAULT NULL,
         emergency_contact VARCHAR(50) DEFAULT NULL,
         medical_conditions TEXT DEFAULT NULL,
         registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -32,4 +38,4 @@ CREATE TABLE
         CONSTRAINT chk_mobile_length CHECK (CHAR_LENGTH(phone) BETWEEN 7 AND 20),
         CONSTRAINT chk_email_format CHECK (email LIKE '%_@_%._%'),
         FOREIGN KEY (gym_id) REFERENCES gyms (gym_id) ON DELETE SET NULL
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;

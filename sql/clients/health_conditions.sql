@@ -21,7 +21,7 @@ CREATE TABLE
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- রেকর্ড তৈরির সময়
         -- ফরেন কী: ক্লায়েন্ট মুছে গেলে তার সব হেলথ কন্ডিশনও মুছে যাবে
         FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE CASCADE
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- পারফরম্যান্স উন্নয়নের জন্য ইনডেক্স
 CREATE INDEX idx_health_conditions_client_id ON health_conditions (client_id);

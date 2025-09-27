@@ -30,7 +30,7 @@ CREATE TABLE
         ),
         CONSTRAINT chk_date_valid CHECK (end_date >= start_date),
         FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE CASCADE -- ক্লায়েন্ট ডিলিট হলে সাবস্ক্রিপশনও ডিলিট হবে
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- পারফরম্যান্স বাড়াতে ইনডেক্স
 CREATE INDEX idx_subscriptions_client_id ON subscriptions (client_id);

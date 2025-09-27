@@ -1,12 +1,16 @@
 CREATE TABLE
     trainers (
-        trainer_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        trainer_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         login_type ENUM ('email', 'google', 'facebook') DEFAULT 'email',
         hashed VARCHAR(255) DEFAULT NULL,
         salt VARCHAR(255) DEFAULT NULL,
-        gym_id BIGINT DEFAULT NULL,
+        gym_id BIGINT UNSIGNED DEFAULT NULL,
         xprto BOOLEAN DEFAULT TRUE,
         postal_code VARCHAR(20) DEFAULT NULL,
+        country VARCHAR(50) DEFAULT NULL,
+        state VARCHAR(50) DEFAULT NULL,
+        district VARCHAR(50) DEFAULT NULL,
+        address TEXT DEFAULT NULL,
         lat INT DEFAULT NULL,
         lng INT DEFAULT NULL,
         fullname VARCHAR(100) NOT NULL,
@@ -34,7 +38,7 @@ CREATE TABLE
         CONSTRAINT chk_mobile_length CHECK (CHAR_LENGTH(phone) BETWEEN 7 AND 20),
         CONSTRAINT chk_email_format CHECK (email LIKE '%_@_%._%'),
         FOREIGN KEY (gym_id) REFERENCES gyms (gym_id) ON DELETE SET NULL
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE
     shifts (
@@ -46,7 +50,7 @@ CREATE TABLE
         recurrence ENUM ('none', 'daily', 'weekly') DEFAULT 'none',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_shift_trainer FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id)
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE
     trainer_ratings (
@@ -58,7 +62,7 @@ CREATE TABLE
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_rating_trainer FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id),
         CONSTRAINT fk_rating_client FOREIGN KEY (client_id) REFERENCES clients (client_id)
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE
     earnings (
@@ -71,7 +75,7 @@ CREATE TABLE
         status ENUM ('pending', 'paid') DEFAULT 'pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_earning_trainer FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id)
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE
     leaves (
@@ -85,7 +89,7 @@ CREATE TABLE
         admin_note TEXT DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_leave_trainer FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id)
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE
     trainer_documents (
@@ -97,4 +101,4 @@ CREATE TABLE
         status ENUM ('valid', 'expired', 'pending') DEFAULT 'pending',
         uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_doc_trainer FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id)
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;

@@ -26,7 +26,7 @@ CREATE TABLE
             calories_burned IS NULL
             OR calories_burned >= 0
         )
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- পারফরম্যান্স উন্নত করার জন্য ইনডেক্স
 CREATE INDEX idx_activities_client_date ON activities_log (client_id, activity_date);

@@ -17,7 +17,7 @@ CREATE TABLE
         FOREIGN KEY (admin_id) REFERENCES admin_details (admin_id) ON DELETE SET NULL,
         FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE SET NULL,
         FOREIGN KEY (gym_id) REFERENCES gyms (gym_id) ON DELETE SET NULL
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE
     support_messages (

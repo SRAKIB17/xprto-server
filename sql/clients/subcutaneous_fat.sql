@@ -36,7 +36,7 @@ CREATE TABLE
         ),
         -- ফরেন কি: clients টেবিলের client_id রেফারেন্স করে; ক্লায়েন্ট মুছে ফেলা হলে সংশ্লিষ্ট ফ্যাট রেকর্ডগুলো অটোম্যাটিক ডিলিট হবে
         FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE CASCADE
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- InnoDB ব্যবহার করা হয়েছে FK ও ট্রাঞ্জেকশন সহজ রাখার জন্য
 -- পারফরম্যান্স বাড়াতে: ক্লায়েন্ট আইডির উপর ইনডেক্স থাকা দরকার (অনুসন্ধান ও জয়েন দ্রুত করতে)

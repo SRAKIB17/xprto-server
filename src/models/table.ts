@@ -17,14 +17,8 @@ export const TABLES = {
     ADMIN: {
         admin: concat("admin_details"),
     },
-    USERS: "users",
-    USER_DETAILS: "user_details",
-    WORKOUTS: "workouts",
-    BOOKINGS: "bookings",
-    WALLET: "wallet",
-    ORDERS: "orders",
-    PRODUCTS: "products",
-    CATEGORIES: "categories",
+    NOTIFICATIONS: concat("notifications"),
+
 } as const;
 
 // 👉 type এর জন্য

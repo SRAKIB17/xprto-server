@@ -223,7 +223,7 @@ auth.post('/register', async (ctx) => {
                 xprto: true as any,
                 salt,
                 specialization: specialization || null,
-                experience: experience || null,
+                experience_years: experience || null,
                 status: 'active',
             };
             table = TABLES.TRAINERS.trainers;
