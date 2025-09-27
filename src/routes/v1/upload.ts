@@ -7,7 +7,6 @@ import { tempDir } from "../../config";
 const tempUpload = new Router({
     basePath: '/temp/upload'
 });
-
 tempUpload.post("/", async (ctx) => {
     const formData = await useFormData(ctx, {
         maxSize: 100_000_000, // 100MB

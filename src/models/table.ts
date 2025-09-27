@@ -18,6 +18,7 @@ export const TABLES = {
         admin: concat("admin_details"),
     },
     NOTIFICATIONS: concat("notifications"),
+    USER_DOCUMENTS: concat("user_documents"),
     FEEDBACK: {
         CLIENT_TRAINER: concat("client_trainer_feedback")
     }
