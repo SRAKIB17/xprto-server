@@ -1,8 +1,10 @@
-import { Router } from "tezx";
-import { dbQuery, TABLES } from "../../../models/index.js";
 import { destroy, find, insert } from "@tezx/sqlx/mysql";
+import { Router } from "tezx";
 import { generateUUID } from "tezx/helper";
-import { safeUnlink } from "../../../utils/fileExists.js";
+import { dbQuery, TABLES } from "../../../models/index.js";
+import { copyFile, safeUnlink } from "../../../utils/fileExists.js";
+import crypto from "node:crypto";
+import path from "node:path";
 
 const my_documents = new Router({
     basePath: '/my-documents'
@@ -24,54 +26,100 @@ my_documents.get("/", async (ctx) => {
 });
 
 // ✅ Create document
+
+
+type NewDoc = {
+    document_type: string;
+    original_name: string;
+    user_type: "client" | "gym" | "trainer" | "admin";
+    stored_name: string;
+    storage_path: string;
+    mime_type: string;
+    size: number;
+    checksum?: string | null;
+};
+
 my_documents.post("/", async (ctx) => {
     try {
         const { user_id } = ctx.auth?.user_info || {};
         const { role } = ctx.auth ?? {};
         if (!user_id || !role) {
-            return ctx.status(401).json({ success: false, message: "Unauthorized" });
+
+            return ctx.status(401).json({ success: false, message: "Unauthorized", documents: [], });
         }
 
         const body = await ctx.req.json();
-        // const {
-        //     document_type,
-        //     original_name,
-        //     stored_name,
-        //     storage_path,
-        //     mime_type,
-        //     size,
-        //     metadata,
-        //     checksum,
-        // } = body;
+        let incoming: NewDoc[] = Array.isArray(body) ? body : [body];
 
-        // const { success, result, error } = await dbQuery(
-        //     insert(TABLES.USER_DOCUMENTS, {
-        //         uuid: crypto.randomUUID?.() || generateUUID(), // fallback
-        //         user_type: role,
-        //         user_id,
-        //         document_type,
-        //         original_name,
-        //         stored_name,
-        //         storage_path,
-        //         mime_type,
-        //         size,
-        //         metadata: metadata ? JSON.stringify(metadata) : null,
-        //         checksum,
-        //     })
-        // );
+        // ✅ প্রতিটা incoming doc এর জন্য insert loop
+        const results: any[] = [];
 
-        // if (!success) {
-        return ctx.status(500).json({ success: false, message: "Insert failed", 'error': 34 });
-        // }
+        for (const doc of incoming) {
+            // file content hash করতে হলে ফাইলটা read করতে হবে
+            // এখানে আমি ধরছি storage_path already accessible (e.g. local disk or S3)
+            let checksum: string | null = null;
+
+            try {
+                const fileBuffer = await Bun.file(doc.storage_path).arrayBuffer();
+                checksum = crypto.createHash("sha256").update(Buffer.from(fileBuffer)).digest("hex"); // 64 chars
+            }
+            catch (e) {
+                checksum = null; // fallback
+            }
+            let storage_path = path.join(path.resolve(), `/uploads/documents/my-documents/${doc?.stored_name}`);
+            let copy = await copyFile(doc?.storage_path, storage_path, true);
+            if (!copy) {
+                return ctx.status(500).json({
+                    success: false,
+                    message: "File copy failed",
+                    documents: [],
+                });
+            }
+            let insertData = {
+                uuid: crypto.randomUUID?.() || generateUUID(),
+                user_type: role,
+                user_id,
+                document_type: doc.document_type,
+                original_name: doc.original_name,
+                stored_name: doc.stored_name,
+                storage_path: storage_path,
+                mime_type: doc.mime_type,
+                size: doc.size,
+                checksum: checksum as any,
+            }
+            const { success, result, error } = await dbQuery<any>(
+                insert(TABLES.USER_DOCUMENTS, insertData)
+            );
+            if (!success) {
+                return ctx.status(500).json({
+                    success: false,
+                    message: "Insert failed",
+                    error,
+                });
+            }
+            results.push({
+                success: true,
+                ...doc,
+                ...insertData,
+                id: result?.insertId,
+                checksum
+            });
+        }
 
         return ctx.json({
             success: true,
-            id: result?.insertId,
+            documents: results,
         });
-    } catch (err) {
-        return ctx.status(500).json({ success: false, message: "Server error", error: err?.message });
+    } catch (err: any) {
+        return ctx.status(500).json({
+            documents: [],
+            success: false,
+            message: "Server error",
+            error: err?.message,
+        });
     }
 });
+
 
 // ✅ Delete document
 my_documents.put("/:id", async (ctx) => {
@@ -110,7 +158,7 @@ my_documents.put("/:id", async (ctx) => {
             success: true,
             message: "Document deleted",
         });
-    } catch (err) {
+    } catch (err: any) {
         return ctx.status(500).json({ success: false, message: "Server error", error: err?.message });
     }
 });

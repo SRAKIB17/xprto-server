@@ -40,15 +40,23 @@ import { dirname } from "path";
  * @param src - Source file path
  * @param dest - Destination file path
  */
-export async function copyFile(src: string, dest: string): Promise<void> {
+export async function copyFile(src: string, dest: string, unlinkSrc?: boolean): Promise<boolean> {
     try {
         // Ensure parent directory exists
         await mkdir(dirname(dest), { recursive: true });
         // Copy the file
         await fs.copyFile(src, dest);
+        // Optionally delete the source file
+        try {
+            if (unlinkSrc) {
+                await fs.unlink(src);
+            }
+        }
+        catch { }
+        return true;
     }
     catch (err) {
-        throw err;
+        return false;
     }
 }
 
