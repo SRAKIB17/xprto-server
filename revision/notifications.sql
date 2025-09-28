@@ -5,7 +5,7 @@ CREATE TABLE
         recipient_type ENUM ('client', 'trainer', 'gym', 'admin') NOT NULL,
         recipient_id BIGINT UNSIGNED NOT NULL,
         -- Sender
-        sender_type ENUM ('system', 'admin', 'gym_owner', 'trainer') NOT NULL DEFAULT 'system',
+        sender_type ENUM ('system', 'admin', 'gym', 'trainer', 'client') NOT NULL DEFAULT 'system',
         sender_id BIGINT UNSIGNED NULL,
         -- Content
         title VARCHAR(255) NOT NULL,

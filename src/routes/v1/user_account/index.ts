@@ -17,210 +17,21 @@ import { Router } from "tezx";
 import { dbQuery } from "../../../models/index.js";
 import { wrappedCryptoToken } from "../../../utils/crypto.js";
 import { AuthorizationBasicAuthUser } from "../auth/basicAuth.js";
+import abuse_reports from "./abuse-reports.js";
+import my_documents from "./my-documents.js";
 import notifications from "./notifications.js";
 import trainers from "./trainers/index.js";
-import my_documents from "./my-documents.js";
+import my_wallet from "./wallet.js";
+import support_tickets from "./support-ticket.js";
 
-// import user_account_document_flag from "./flag-document.js";
 const user_account = new Router();
-
 user_account.use(AuthorizationBasicAuthUser());
 user_account.use(notifications);
 user_account.use(trainers);
 user_account.use(my_documents);
-// user_account.use(user_account_bookmark);
-
-// user_account.get('/follower-following',
-//     paginationHandler({
-//         countKey: 'count',
-//         defaultLimit: 9,
-//         queryKeyLimit: 'limit',
-//         maxLimit: 9,
-//         getDataSource: async (ctx, pagination) => {
-//             const user_id = ctx.auth?.user_info?.user_id || '';
-//             const { type } = ctx.req.query;
-
-//             const followings = await db.findAll(table_schema.user_follows, {
-//                 joins: [
-//                     {
-//                         table: table_schema.user_details,
-//                         on: type == 'follower' ? 'user_details.user_id = user_follows.follower_id' : 'user_details.user_id = user_follows.following_id'
-//                     }
-//                 ],
-//                 columns: {
-//                     extra: [
-//                         // `Case when user_follows.`,
-//                         `(SELECT COUNT(*) FROM ${table_schema.user_follows} WHERE following_id = user_details.user_id AND follower_id = ${sanitize(user_id)}) as is_following`,
-//                         `(SELECT COUNT(*) FROM ${table_schema.user_follows} uf WHERE uf.follower_id = user_details.user_id) AS total_following`,
-//                         `(SELECT COUNT(*) FROM ${table_schema.user_follows} uf WHERE uf.following_id = user_details.user_id) AS total_followers`
-//                     ],
-//                     user_details: ['username', 'updated_at', 'fullname', 'avatar_url', 'user_id']
-//                 },
-//                 where: db.condition({
-//                     [type == 'follower' ? 'user_follows.following_id' : 'user_follows.follower_id']: user_id
-//                 })
-//             }).findOne(table_schema.user_follows, {
-//                 aggregates: [
-//                     {
-//                         COUNT: "*",
-//                         alias: 'count'
-//                     }
-//                 ],
-//                 joins: [
-//                     {
-//                         table: table_schema.user_details,
-//                         on: type == 'follower' ? 'user_details.user_id = user_follows.follower_id' : 'user_details.user_id = user_follows.following_id'
-//                     }
-//                 ],
-//                 where: db.condition({
-//                     [type == 'follower' ? 'user_follows.following_id' : 'user_follows.follower_id']: user_id
-//                 })
-//             }).executeMultiple();
-//             return {
-//                 data: followings?.result?.[0],
-//                 count: followings?.result?.[1]?.[0]?.count
-//             }
-//         },
-//     }),
-//     async (ctx) => {
-//         return ctx.json(ctx.body);
-//     })
-
-// user_account.post('/report-someone/:profile_id', async (ctx) => {
-//     try {
-//         const user_id = ctx.auth?.user_info?.user_id;
-//         const profile_id = ctx.req.params?.profile_id;
-
-//         if (!user_id) {
-//             return ctx.status(401).json({ success: false, message: "Unauthorized" });
-//         }
-
-//         if (!profile_id) {
-//             return ctx.status(400).json({ success: false, message: "Profile ID is required" });
-//         }
-
-//         const { reason, additional_info } = await ctx.req.json();
-
-//         if (!reason) {
-//             return ctx.status(400).json({ success: false, message: "Reason is required" });
-//         }
-
-//         const { result, success } = await db.create(table_schema.profile_reports, {
-//             reason,
-//             additional_info: additional_info || null,
-//             reporter_user_id: user_id,
-//             reported_profile_id: profile_id,
-//         }).execute();
-
-//         if (!success) {
-//             return ctx.status(500).json({ success: false, message: "Failed to submit report" },);
-//         }
-//         return ctx.json({ success: true, message: "Report submitted successfully", result });
-//     }
-//     catch (error) {
-//         return ctx.status(500).json({ success: false, message: "Server error" });
-//     }
-// });
-
-// user_account.post('/following/:following_id', async (ctx) => {
-//     const following_id = ctx.req.params?.following_id;
-//     const follower_id = ctx.auth?.user_info?.user_id || '';
-
-//     if (!following_id || !follower_id || following_id === follower_id) {
-//         return ctx.status(400).json({
-//             success: false,
-//             message: "Invalid follow request.",
-//         });
-//     }
-//     const { success, result, error, errno } = await db.create(table_schema.user_follows, {
-//         follower_id,
-//         following_id
-//     }) // for following
-//         .update(table_schema.user_details, {
-//             setCalculations: {
-//                 total_following: `total_following + 1`
-//             },
-//             where: db.condition({ user_id: follower_id })
-//         })
-//         // for follower
-//         .update(table_schema.user_details, {
-//             setCalculations: {
-//                 total_followers: `total_followers + 1`
-//             },
-//             where: db.condition({ user_id: following_id })
-//         })
-//         .executeMultiple();
-
-//     if (result?.[0]?.affectedRows > 0) {
-//         return ctx.json({
-//             success: true,
-//             message: "Followed successfully.",
-//         });
-//     } else {
-//         if (errno == 1062) {
-//             return ctx.json({
-//                 success: false,
-//                 message: "You are already following this user.",
-//             });
-//         }
-//         return ctx.status(500).json({
-//             success: false,
-//             message: "Failed to follow user.",
-//             error: error || "Unknown error occurred",
-//         });
-//     }
-
-// })
-
-// user_account.post('/unfollow/:following_id', async (ctx) => {
-//     const following_id = ctx.req.params?.following_id;
-//     const follower_id = ctx.auth?.user_info?.user_id || '';
-
-//     if (!following_id || !follower_id || following_id === follower_id) {
-//         return ctx.status(400).json({
-//             success: false,
-//             message: "Invalid follow request.",
-//         });
-//     }
-
-//     const { success, result, error, errno } = await db.delete(table_schema.user_follows, {
-//         where:
-//             db.condition({
-//                 follower_id,
-//                 following_id
-//             })
-//     })
-//         // for following
-//         .update(table_schema.user_details, {
-//             setCalculations: {
-//                 total_following: `GREATEST(total_following - 1, 0)`,
-//             },
-//             where: db.condition({ user_id: follower_id })
-//         })
-//         // for follower
-//         .update(table_schema.user_details, {
-//             setCalculations: {
-//                 total_followers: `GREATEST(total_followers - 1, 0)`,
-//             },
-//             where: db.condition({ user_id: following_id })
-//         })
-//         .executeMultiple();
-
-//     if (result?.[0]?.affectedRows > 0) {
-//         return ctx.json({
-//             success: true,
-//             message: "Unfollow successfully.",
-//         });
-//     } else {
-//         return ctx.status(500).json({
-//             success: false,
-//             message: "Failed to unfollow user.",
-//             error: error || "Unknown error occurred",
-//         });
-//     }
-
-// })
-
+user_account.use(abuse_reports);
+user_account.use(my_wallet);
+user_account.use(support_tickets)
 
 // user_account.put('/avatar-upload', async (ctx) => {
 //     const formData = await useFormData(ctx);

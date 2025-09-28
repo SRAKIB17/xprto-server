@@ -25,9 +25,6 @@ my_documents.get("/", async (ctx) => {
     return ctx.json({ success, data: result });
 });
 
-// ✅ Create document
-
-
 type NewDoc = {
     document_type: string;
     original_name: string;
@@ -44,7 +41,6 @@ my_documents.post("/", async (ctx) => {
         const { user_id } = ctx.auth?.user_info || {};
         const { role } = ctx.auth ?? {};
         if (!user_id || !role) {
-
             return ctx.status(401).json({ success: false, message: "Unauthorized", documents: [], });
         }
 
@@ -122,7 +118,7 @@ my_documents.post("/", async (ctx) => {
 
 
 // ✅ Delete document
-my_documents.put("/:id", async (ctx) => {
+my_documents.put("/:ticket_id", async (ctx) => {
     try {
         const { user_id } = ctx.auth?.user_info || {};
         const { role } = ctx.auth ?? {};
@@ -162,5 +158,4 @@ my_documents.put("/:id", async (ctx) => {
         return ctx.status(500).json({ success: false, message: "Server error", error: err?.message });
     }
 });
-
 export default my_documents;

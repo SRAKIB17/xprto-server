@@ -23,7 +23,7 @@
   "homepage": "https://github.com/tezxjs/tezx-app-example",
   "dependencies": {
     "@tezx/devtools": "^1.0.13",
-    "@tezx/sqlx": "^1.0.0",
+    "@tezx/sqlx": "^1.0.1",
     "mysql2": "^3.15.1",
     "tezx": "^3.0.14-beta",
     "typescript": "^5.8.2"

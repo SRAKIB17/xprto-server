@@ -2,6 +2,7 @@ import { Router } from "tezx";
 import auth from "./auth/index.js";
 import user_account from "./user_account/index.js";
 import tempUpload from "./upload.js";
+import appsData from "./apps.js";
 
 const v1 = new Router({
     basePath: "/v1"
@@ -13,6 +14,7 @@ v1.addRouter('/auth', auth);
 // v1.addRouter('/users', users);
 v1.addRouter('/account', user_account);
 v1.use(tempUpload);
+v1.use(appsData)
 // v1.addRouter('/public/site', publicData)
 // v1.addRouter('/sitemap', sitemap)
 // v1.use(liveSupport);

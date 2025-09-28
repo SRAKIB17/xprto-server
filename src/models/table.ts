@@ -17,6 +17,16 @@ export const TABLES = {
     ADMIN: {
         admin: concat("admin_details"),
     },
+    ABUSE_REPORTS: {
+        HISTORY: concat("abuse_reports")
+    },
+    WALLETS: {
+        WALLETS: concat('wallets'),
+    },
+    SUPPORT_TICKETS: {
+        SUPPORT_TICKETS: concat('support_tickets'),
+        SUPPORT_MESSAGES: concat("support_messages")
+    },
     NOTIFICATIONS: concat("notifications"),
     USER_DOCUMENTS: concat("user_documents"),
     FEEDBACK: {

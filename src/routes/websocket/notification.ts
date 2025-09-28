@@ -1,12 +1,27 @@
-import { Callback, Router } from "tezx";
+import { Callback, Context, Router } from "tezx";
 import { upgradeWebSocket } from "tezx/bun";
 import { generateUUID } from "tezx/helper";
 
-const clients = new Map<string, WebSocket>(); // store user_id/request_id → ws
+export const clients = new Map<string, WebSocket>(); // store user_id/request_id → ws
 
 const notifications = new Router({
     basePath: "/notifications",
 });
+
+type ToastType = "info" | "success" | "error" | "warning" | "custom";
+export function AppNotificationToast(ctx: Context, message: {
+    type?: ToastType;
+    title?: string;
+    message?: string;
+    duration?: number; // ms, 0 = persistent
+}) {
+    let socket_id = ctx.req.header("socket-id");
+    if (!socket_id) return;
+    return clients.get(socket_id)?.send(JSON.stringify({
+        type: 'toast',
+        message: message,
+    }))
+}
 
 notifications.get(
     "/push",
@@ -14,14 +29,13 @@ notifications.get(
         // Extract identity (user or guest)
         let userId: string | null = ctx.req.query?.user_id as string;
         if (!userId) {
-            userId = `guest_${generateUUID()}`; // fallback guest
+            userId = `socket_${generateUUID()}`; // fallback guest
         }
 
         return {
             open(ws) {
                 clients.set(userId!, ws);
-                console.log(`Connected: ${userId}`);
-                ws.send(JSON.stringify({ 'title': "Connected", message: "Welcome" }))
+                ws.send(JSON.stringify({ 'type': "connect", "socket-id": userId }))
             },
             message(ws, data) {
                 try {
