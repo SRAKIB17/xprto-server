@@ -1,4 +1,4 @@
-import { find, mysql_datetime, update } from "@tezx/sqlx/mysql";
+import { destroy, find, mysql_datetime, update } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
 import { dbQuery } from "../../../../models/index.js";
@@ -77,28 +77,36 @@ clientFeedback.get('/dashboard', async (ctx) => {
     }
 });
 
+
 clientFeedback.get("/trainers",
     paginationHandler({
         getDataSource: async (ctx, { page, limit, offset }) => {
             const { role } = ctx.auth || {};
             const { rating, sort } = ctx?.req.query
             const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
-            let condition = `trainer_id = "${user_id}"`
+            let condition = `client_trainer_feedback.client_id = "${user_id}"`
             if (rating) {
-                condition += ` AND rating BETWEEN ${rating} AND 5`
+                condition += ` AND .client_trainer_feedback.rating BETWEEN ${rating} AND 5`
             }
             let sortObj: any = {
-                feedback_id: -1
+                "client_trainer_feedback.feedback_id": -1
             };
 
             if (sort === 'highest' || sort === 'lowest') {
                 sortObj = {
-                    rating: sort === 'highest' ? -1 : 1
+                    "client_trainer_feedback.rating": sort === 'highest' ? -1 : 1
                 }
             }
 
             let sql = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
                 sort: sortObj,
+                joins: [
+                    {
+                        on: 'client_trainer_feedback.trainer_id = trainers.trainer_id',
+                        table: TABLES.TRAINERS.trainers
+                    }
+                ],
+                columns: `client_trainer_feedback.*, trainers.fullname as trainer_fullname, trainers.avatar as trainer_avatar`,
                 limitSkip: {
                     limit: limit,
                     skip: offset
@@ -124,6 +132,45 @@ clientFeedback.get("/trainers",
         },
     })
 );
+
+clientFeedback.delete("/trainers/:feedback_id/delete", async (ctx) => {
+    const feedback_id = Number(ctx.req.params?.feedback_id);
+    const { user_info } = ctx.auth || {};
+    const user_id = user_info?.user_id;
+
+    if (!feedback_id) {
+        return ctx.json({ success: false, message: "Feedback ID is required" });
+    }
+
+    try {
+        // only allow deleting own feedback
+        const condition = `feedback_id = "${feedback_id}" AND client_id = "${user_id}"`;
+
+        const sql = destroy(TABLES.FEEDBACK.CLIENT_TRAINER, {
+            where: condition,
+        });
+        const { success, result, error } = await dbQuery(sql);
+        if (!success) {
+            return ctx.json({
+                success: false,
+                message: error || "Failed to delete feedback"
+            });
+        }
+        return ctx.json({
+            success: true,
+            message: "Feedback deleted successfully",
+            data: result
+        });
+    }
+    catch (err) {
+        return ctx.json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+});
+
+
 clientFeedback.put("/:id/reply", async (ctx) => {
     try {
         const id = Number(ctx.req.params.id);
