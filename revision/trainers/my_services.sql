@@ -1,0 +1,127 @@
+CREATE TABLE
+    trainer_services (
+        service_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        trainer_id BIGINT UNSIGNED NOT NULL,
+        -- Basic Info
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        details TEXT NULL, -- full service details
+        -- Pricing & Package
+        package_name VARCHAR(255) NULL, -- e.g., "Starter Plan", "Premium Plan"
+        package_features JSON NULL, -- list of features/benefits included
+        price DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+        discount DECIMAL(5, 2) DEFAULT 0.00, -- percentage discount
+        currency VARCHAR(3) NOT NULL DEFAULT 'INR',
+        duration_minutes INT UNSIGNED DEFAULT 60,
+        -- Service Delivery
+        delivery_mode ENUM ('online', 'doorstep', 'hybrid') NOT NULL DEFAULT 'online',
+        requirements TEXT NULL, -- prerequisites (equipment, internet, etc.)
+        -- Media & Content
+        video_url VARCHAR(512) NULL,
+        images JSON NULL, -- array of image URLs
+        faqs JSON NULL, -- frequently asked questions
+        -- Status
+        status ENUM ('active', 'draft', 'suspended', 'archived') NOT NULL DEFAULT 'draft',
+        verify_status ENUM ('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+        -- Metadata
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE CASCADE,
+        INDEX (trainer_id),
+        INDEX (delivery_mode),
+        INDEX (price),
+        INDEX (status),
+        INDEX (verify_status),
+        FULLTEXT INDEX (title, description, details) -- for search
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+```
+INSERT INTO trainer_services
+(trainer_id, title, description, details, package_name, package_features, price, discount, currency, duration_minutes, delivery_mode, requirements, video_url, images, faqs, status, verify_status, created_at, updated_at)
+VALUES
+(1, '8-Week Weightloss Program', 'Lose weight and build stamina with personalized workouts.', 'This 8-week program includes weekly workout plans, diet charts, and weekly video check-ins.', 'Starter Plan', '["Weekly workouts", "Diet plan", "Access to community"]', 4000.00, 10.00, 'INR', 60, 'online', 'Yoga mat, Dumbbells, Internet connection', 'https://www.w3schools.com/html/mov_bbb.mp4', '["https://i.pravatar.cc/150?img=47","https://i.pravatar.cc/150?img=48"]', '[{"question":"Start date?","answer":"18 Aug"},{"question":"Refund?","answer":"7-day full refund"}]', 'active', 'approved', NOW(), NOW()),
+(1, 'Personal Strength Training', 'Build muscle and improve strength with guided sessions.', 'Customized strength training program for all levels.', 'Premium Plan', '["Daily workouts","Nutrition guide","Video sessions"]', 6000.00, 5.00, 'INR', 90, 'doorstep', 'Access to gym equipment', NULL, '["https://i.pravatar.cc/150?img=49"]', '[{"question":"Duration?","answer":"12 weeks"}]', 'draft', 'pending', NOW(), NOW()),
+(1, 'Yoga & Flexibility', 'Improve flexibility and mental clarity through yoga.', NULL, 'Standard Plan', '["Yoga sessions","Meditation guide"]', 3500.00, 0.00, 'INR', 60, 'online', 'Yoga mat', 'https://www.w3schools.com/html/mov_bbb.mp4', '[]', NULL, 'active', 'rejected', NOW(), NOW()),
+(1, 'HIIT Bootcamp', 'High-intensity interval training to burn calories fast.', '30-min sessions, 3x per week, with diet recommendations.', 'Bootcamp Plan', '["3x weekly sessions","Diet chart","Progress tracking"]', 4500.00, 15.00, 'INR', 30, 'hybrid', 'Minimal equipment', NULL, '["https://i.pravatar.cc/150?img=47"]', '[{"question":"Level?","answer":"Beginner to advanced"}]', 'active', 'approved', NOW(), NOW()),
+(1, 'Core Strength Program', 'Strengthen your core and improve posture.', 'Focused 6-week program for core and back muscles.', NULL, NULL, 3000.00, 0.00, 'INR', 45, 'doorstep', 'Yoga mat', NULL, '[]', NULL, 'draft', 'pending', NOW(), NOW()),
+(1, 'Functional Training', 'Train for daily life movements and overall fitness.', 'Includes compound exercises and mobility routines.', 'Functional Plan', '["Full body workouts","Mobility drills"]', 5000.00, 10.00, 'INR', 60, 'online', 'Resistance bands', 'https://www.w3schools.com/html/mov_bbb.mp4', '["https://i.pravatar.cc/150?img=48"]', '[{"question":"Equipment needed?","answer":"Resistance bands"}]', 'active', 'approved', NOW(), NOW()),
+(1, 'Cardio Blast', 'Boost endurance and burn fat with cardio sessions.', NULL, 'Cardio Plan', '["High intensity cardio","Weekly progress check"]', 3800.00, 5.00, 'INR', 50, 'hybrid', 'Open space', NULL, '[]', NULL, 'active', 'rejected', NOW(), NOW()),
+(1, 'Strength & Conditioning', 'Build strength and improve athletic performance.', '6-week structured program for all fitness levels.', 'Athlete Plan', '["Strength workouts","Conditioning drills","Weekly video check-ins"]', 7000.00, 20.00, 'INR', 75, 'doorstep', 'Gym access', NULL, '["https://i.pravatar.cc/150?img=49"]', '[{"question":"Who is this for?","answer":"Intermediate to advanced"}]', 'draft', 'pending', NOW(), NOW()),
+(1, 'Mind & Body Wellness', 'Yoga and meditation for mental clarity and relaxation.', NULL, 'Wellness Plan', '["Yoga sessions","Meditation guide","Breathing exercises"]', 4200.00, 0.00, 'INR', 60, 'online', 'Quiet space', 'https://www.w3schools.com/html/mov_bbb.mp4', '[]', NULL, 'active', 'approved', NOW(), NOW()),
+(1, 'Personalized Nutrition Plan', 'Custom diet plans based on your goals and body type.', 'Includes meal plans, calorie tracking, and weekly consultations.', NULL, NULL, 2500.00, 0.00, 'INR', 30, 'online', 'Access to kitchen', NULL, '[]', NULL, 'draft', 'pending', NOW(), NOW());
+
+```
+-- gyms
+CREATE TABLE
+    gyms (
+        gym_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        gym_name VARCHAR(255) NOT NULL,
+        address TEXT NULL,
+        lat DECIMAL(10, 7) NULL,
+        lng DECIMAL(10, 7) NULL,
+        phone VARCHAR(50) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX (lat, lng)
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- trainer affiliation to gym (a trainer can be attached to multiple gyms)
+CREATE TABLE
+    trainer_gym_affiliations (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        trainer_id BIGINT UNSIGNED NOT NULL,
+        gym_id BIGINT UNSIGNED NOT NULL,
+        is_primary TINYINT (1) DEFAULT 0,
+        started_at DATE NULL,
+        ended_at DATE NULL,
+        FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE CASCADE,
+        FOREIGN KEY (gym_id) REFERENCES gyms (gym_id) ON DELETE CASCADE,
+        INDEX (gym_id)
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- trainer_services: services/offers a trainer provides
+CREATE TABLE
+    trainer_services (
+        service_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        trainer_id BIGINT UNSIGNED NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        price DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+        currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+        duration_minutes INT UNSIGNED DEFAULT 60,
+        delivery_mode ENUM ('online', 'doorstep') NOT NULL DEFAULT 'online',
+        video_url VARCHAR(512) NULL,
+        images JSON NULL, -- array of image URLs
+        status ENUM ('active', 'draft', 'suspended') NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE CASCADE,
+        INDEX (trainer_id),
+        INDEX (delivery_mode),
+        INDEX (price)
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- trainer availability (simple repeating weekly slots)
+CREATE TABLE
+    trainer_availability (
+        availability_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        trainer_id BIGINT UNSIGNED NOT NULL,
+        day_of_week TINYINT NOT NULL, -- 0=Sunday .. 6=Saturday
+        start_time TIME NOT NULL,
+        end_time TIME NOT NULL,
+        timezone VARCHAR(64) DEFAULT NULL,
+        FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE CASCADE,
+        INDEX (trainer_id),
+        INDEX (day_of_week)
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- trainer location + coverage (for doorstep)
+CREATE TABLE
+    trainer_locations (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        trainer_id BIGINT UNSIGNED NOT NULL,
+        lat DECIMAL(10, 7) NOT NULL,
+        lng DECIMAL(10, 7) NOT NULL,
+        coverage_km DECIMAL(5, 2) NOT NULL DEFAULT 5.00, -- radius coverage
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE CASCADE,
+        SPATIAL INDEX (lat, lng) -- optionally use POINT + spatial index if available
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

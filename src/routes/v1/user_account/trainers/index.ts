@@ -1,5 +1,6 @@
 import { Router, TezXError } from "tezx";
 import clientFeedback from "./feedback.js";
+import myServices from "./my_services.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const trainers = new Router({
@@ -11,7 +12,8 @@ trainers.use((ctx, next) => {
     }
     throw new TezXError("unauthorized");
 })
-trainers.use(clientFeedback)
+trainers.use(clientFeedback);
+trainers.use(myServices);
 
 
 

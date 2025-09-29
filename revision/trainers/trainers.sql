@@ -24,6 +24,7 @@ CREATE TABLE
         certification TEXT DEFAULT NULL, -- comma-separated or JSON list
         avatar VARCHAR(255) DEFAULT NULL,
         cover VARCHAR(255) DEFAULT NULL,
+        -- coverage_km DECIMAL(5,2) NOT NULL DEFAULT 5.00,
         experience_years INT DEFAULT 0,
         hire_date DATE DEFAULT NULL,
         status ENUM (

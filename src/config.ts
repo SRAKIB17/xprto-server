@@ -15,6 +15,9 @@ import os from 'node:os';
 
 export const tempDir = () => os.tmpdir(); // usually '/tmp'
 
+export const DirectoryServe = {
+
+}
 
 // let storage_path = path.join(path.resolve(), `/uploads/documents/my-documents/${doc?.stored_name}`);
 //  const storage_path = path.join( path.resolve(),    "uploads", "attachments",   "support-tickets",      fileName);

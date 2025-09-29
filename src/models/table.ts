@@ -9,6 +9,7 @@ export const TABLES = {
         clients: concat("clients")
     },
     TRAINERS: {
+        services: concat("trainer_services"),
         trainers: concat("trainers"),
     },
     GYMS: {
