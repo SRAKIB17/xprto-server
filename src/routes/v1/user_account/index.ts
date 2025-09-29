@@ -23,11 +23,13 @@ import notifications from "./notifications.js";
 import trainers from "./trainers/index.js";
 import my_wallet from "./wallet.js";
 import support_tickets from "./support-ticket.js";
+import clients from "./clients/index.js";
 
 const user_account = new Router();
 user_account.use(AuthorizationBasicAuthUser());
 user_account.use(notifications);
 user_account.use(trainers);
+user_account.use(clients);
 user_account.use(my_documents);
 user_account.use(abuse_reports);
 user_account.use(my_wallet);

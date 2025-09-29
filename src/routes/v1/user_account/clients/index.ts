@@ -2,17 +2,17 @@ import { Router, TezXError } from "tezx";
 import clientFeedback from "./feedback.js";
 
 // import user_account_document_flag from "./flag-document.js";
-const trainers = new Router({
-    basePath: "/trainers"
+const clients = new Router({
+    basePath: "/clients"
 });
-trainers.use((ctx, next) => {
-    if (ctx.auth?.role === 'trainer') {
+clients.use((ctx, next) => {
+    if (ctx.auth?.role === 'client') {
         return next();
     }
     throw new TezXError("unauthorized");
 })
-trainers.use(clientFeedback)
+clients.use(clientFeedback)
 
 
 
-export default trainers;
+export default clients;
