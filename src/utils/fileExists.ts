@@ -60,10 +60,25 @@ export async function copyFile(src: string, dest: string, unlinkSrc?: boolean): 
     }
 }
 
-
+// export async function deleteFile(filePath: string): Promise<boolean> {
+//     try {
+//         await fs.unlink(filePath);
+//         return true;
+//     }
+//     catch (err: any) {
+//         if (err.code === "ENOENT") {
+//             console.warn(`⚠️ File not found: ${filePath}`);
+//             return false;
+//         }
+//         throw err;
+//     }
+// }
 
 export async function safeUnlink(file: string) {
     try {
         await unlink(file);
-    } catch { }
+        return true
+    } catch {
+        return false
+    }
 }

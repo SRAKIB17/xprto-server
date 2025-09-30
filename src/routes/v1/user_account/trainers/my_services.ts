@@ -1,8 +1,10 @@
-import { destroy, find, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
+import { destroy, find, insert, mysql_date, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
+import { DirectoryServe, filename } from "../../../../config.js";
 import { dbQuery } from "../../../../models/index.js";
 import { TABLES } from "../../../../models/table.js";
+import { copyFile, safeUnlink } from "../../../../utils/fileExists.js";
 
 
 // import user_account_document_flag from "./flag-document.js";
@@ -60,26 +62,136 @@ myServices.put('/:id/delete', async (ctx) => {
     const { id } = ctx.req.params;
     const { role, user_info } = ctx.auth || {};
     const userId = user_info?.user_id;
-    const { images, video_url } = await ctx.req.json();
+    const { images, video } = await ctx.req.json();
 
-    // console.log(body)
-    // if (!id) {
-    //     return ctx.json({ success: false, message: "Service ID is required" });
-    // }
-    // try {
-    //     // 2️⃣ Delete the notification
-    //     const deleteSql = destroy(TABLES.TRAINERS.services, {
-    //         where: `service_id = ${sanitize(id)} AND trainer_id = ${userId}`
-    //     })
-    //     const { success: delSuccess } = await dbQuery(deleteSql);
-    //     if (delSuccess) {
-    //         return ctx.json({ success: true, message: "Service deleted successfully" });
-    //     } else {
-    //         return ctx.json({ success: false, message: "Failed to delete service" });
-    //     }
-    // } catch (err) {
-    return ctx.json({ success: false, message: "Internal server error" });
-    // }
+    if (!id) {
+        return ctx.json({ success: false, message: "Service ID is required" });
+    }
+    try {
+        // 2️⃣ Delete the notification
+        if (video) {
+            await safeUnlink(DirectoryServe.myServices.video(video));
+        }
+        let img = typeof images === 'string' ? JSON.parse(images ?? '[]') : images;
+        if (img?.length) {
+            for (const image of img) {
+                await safeUnlink(DirectoryServe.myServices.video(image));
+            }
+        }
+        const deleteSql = destroy(TABLES.TRAINERS.services, {
+            where: `service_id = ${sanitize(id)} AND trainer_id = ${userId}`
+        })
+        const { success } = await dbQuery(deleteSql);
+        if (success) {
+            return ctx.json({ success: true, message: "Service deleted successfully" });
+        } else {
+            return ctx.json({ success: false, message: "Failed to delete service" });
+        }
+    } catch (err) {
+        return ctx.json({ success: false, message: "Internal server error" });
+    }
+});
+
+myServices.put('/:id/publish', async (ctx) => {
+    const { id } = ctx.req.params;
+    const { role, user_info } = ctx.auth || {};
+    const userId = user_info?.user_id;
+    if (!id) {
+        return ctx.json({ success: false, message: "Service ID is required" });
+    }
+    try {
+        const sql = update(TABLES.TRAINERS.services, {
+            values: {
+                status: 'active',
+            },
+            where: `service_id = ${sanitize(id)} AND trainer_id = ${userId}`
+        })
+        const { success } = await dbQuery(sql);
+        if (success) {
+            return ctx.json({ success: true, message: "Service publish successfully. Wait for approval" });
+        } else {
+            return ctx.json({ success: false, message: "Failed to publish service" });
+        }
+    } catch (err) {
+        return ctx.json({ success: false, message: "Internal server error" });
+    }
+});
+
+myServices.put('/add-update', async (ctx) => {
+    const { role, user_info } = ctx.auth || {};
+    const userId = user_info?.user_id;
+    if (!userId) return ctx.json({ success: false, message: "Unauthorized" });
+
+    const body = await ctx.req.json();
+
+    const {
+        title, description, duration_minutes, package_name, package_features, price, discount,
+        delivery_mode, requirements, video, images, certificates, faqs, mode, status, service_id
+    } = body;
+
+    let finalVideo = undefined;
+    // Parse arrays and JSON fields
+    if (video) {
+        if (await copyFile(video, DirectoryServe.myServices.video(video), true)) {
+            finalVideo = filename(video);
+        }
+    }
+    let finalImages = [];
+    if (Array.isArray(images)) {
+        for (const img of images) {
+            if (await copyFile(img, DirectoryServe.myServices.images(img), true)) {
+                finalImages.push(filename(img));
+            }
+        }
+    }
+    let finalAttachments = [];
+    if (Array.isArray(certificates)) {
+        for (const cert of certificates) {
+            if (await copyFile(cert, DirectoryServe.myServices.images(cert), true)) {
+                finalAttachments.push(filename(cert));
+            }
+        }
+    }
+    const json = {
+        title,
+        trainer_id: userId,
+        description,
+        duration_minutes: duration_minutes || undefined,
+        package_name: package_name || undefined,
+        package_features: Array.isArray(package_features) ? JSON.stringify(package_features) : undefined,
+        price,
+        discount: discount || "0",
+        delivery_mode,
+        verify_status: 'pending',
+        requirements: requirements || undefined,
+        video: finalVideo || undefined,
+        images: finalImages.length ? JSON.stringify(finalImages) : undefined,
+        attachments: finalAttachments.length ? JSON.stringify(finalAttachments) : undefined,
+        faqs: Array.isArray(faqs) ? JSON.stringify(faqs.map(r => ({
+            question: r?.question,
+            answer: r?.answer
+        })).filter(Boolean)) : undefined,
+        updated_at: mysql_datetime(),
+        status: status === 'draft' ? 'draft' : 'active',
+    };
+
+    try {
+        if (mode === 'edit' && service_id) {
+            // Update existing service
+            const updateSql = update(TABLES.TRAINERS.services, {
+                values: json,
+                where: `service_id = ${sanitize(service_id)} AND trainer_id = ${sanitize(userId)}`
+            })
+            const { success } = await dbQuery(updateSql);
+            return ctx.json({ success, message: success ? "Service updated successfully" : "Failed to update service" });
+        } else {
+            const insertSql = insert(TABLES.TRAINERS.services, json)
+            const { success, result: { insertId } } = await dbQuery<any>(insertSql);
+            return ctx.json({ success, service_id: insertId, message: success ? "Service created successfully" : "Failed to create service" });
+        }
+    } catch (err) {
+        return ctx.json({ success: false, message: "Internal server error" });
+    }
 });
 
 export default myServices;

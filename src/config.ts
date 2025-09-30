@@ -12,12 +12,18 @@ export const API_BASE_URL_V1 = `${BASE_URL}/v1`;
 export const FORGET_PASSWORD_EXP = 20 * 60 * 1000;  // 5 minutes from now
 
 import os from 'node:os';
+import path from 'node:path';
 
 export const tempDir = () => os.tmpdir(); // usually '/tmp'
-
 export const DirectoryServe = {
-
+    myServices: {
+        images: (pathname: string) => path.join(path.resolve(), `/uploads/trainer-services/images/${filename(pathname)}`),
+        video: (pathname: string) => path.join(path.resolve(), `/uploads/trainer-services/video/${filename(pathname)}`),
+        attachments: (pathname: string) => path.join(path.resolve(), `/uploads/trainer-services/attachments/${filename(pathname)}`)
+    },
+    supportTicket: (filename: string) => path.join(path.resolve(), "uploads", "attachments", "support-tickets", filename),
 }
 
-// let storage_path = path.join(path.resolve(), `/uploads/documents/my-documents/${doc?.stored_name}`);
+export const filename = (full_path: string) => path.basename(full_path);
+// let storage_path = ;
 //  const storage_path = path.join( path.resolve(),    "uploads", "attachments",   "support-tickets",      fileName);

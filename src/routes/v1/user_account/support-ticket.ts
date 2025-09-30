@@ -19,6 +19,7 @@ import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../models/index.js";
 import { CtxAuth } from "../../../types.js";
 import { copyFile } from "../../../utils/fileExists.js";
+import { DirectoryServe, filename } from "../../../config.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const support_tickets = new Router({
@@ -155,15 +156,8 @@ support_tickets.post('/:ticket_id/reply', async (ctx) => {
         if (Array.isArray(attachments)) {
             for (const att of attachments) {
                 // ধরে নিচ্ছি att হচ্ছে client থেকে আসা temp path বা file name
-                const fileName = path.basename(att);
-                const storage_path = path.join(
-                    path.resolve(),
-                    "uploads",
-                    "attachments",
-                    "support-tickets",
-                    fileName
-                );
-                let check = await copyFile(att, storage_path);
+                const fileName = filename(att);
+                let check = await copyFile(att, DirectoryServe.supportTicket(fileName));
                 if (check) {
                     finalAttachments.push(`/${fileName}`);
                 }

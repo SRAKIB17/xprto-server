@@ -5,7 +5,6 @@ CREATE TABLE
         -- Basic Info
         title VARCHAR(255) NOT NULL,
         description TEXT,
-        details TEXT NULL, -- full service details
         -- Pricing & Package
         package_name VARCHAR(255) NULL, -- e.g., "Starter Plan", "Premium Plan"
         package_features JSON NULL, -- list of features/benefits included
@@ -17,11 +16,12 @@ CREATE TABLE
         delivery_mode ENUM ('online', 'doorstep', 'hybrid') NOT NULL DEFAULT 'online',
         requirements TEXT NULL, -- prerequisites (equipment, internet, etc.)
         -- Media & Content
-        video_url VARCHAR(512) NULL,
-        images JSON NULL, -- array of image URLs
+        video VARCHAR(512) NULL,
+        images JSON NULL, -- array of image URLs,
+        attachments JSON NULL,
         faqs JSON NULL, -- frequently asked questions
         -- Status
-        status ENUM ('active', 'draft', 'suspended', 'archived') NOT NULL DEFAULT 'draft',
+        status ENUM ('active', 'draft', 'suspended', 'archived') NOT NULL DEFAULT 'active',
         verify_status ENUM ('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
         -- Metadata
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -32,12 +32,12 @@ CREATE TABLE
         INDEX (price),
         INDEX (status),
         INDEX (verify_status),
-        FULLTEXT INDEX (title, description, details) -- for search
+        FULLTEXT INDEX (title, description) -- for search
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 ```
 INSERT INTO trainer_services
-(trainer_id, title, description, details, package_name, package_features, price, discount, currency, duration_minutes, delivery_mode, requirements, video_url, images, faqs, status, verify_status, created_at, updated_at)
+(trainer_id, title, description, details, package_name, package_features, price, discount, currency, duration_minutes, delivery_mode, requirements, video, images, faqs, status, verify_status, created_at, updated_at)
 VALUES
 (1, '8-Week Weightloss Program', 'Lose weight and build stamina with personalized workouts.', 'This 8-week program includes weekly workout plans, diet charts, and weekly video check-ins.', 'Starter Plan', '["Weekly workouts", "Diet plan", "Access to community"]', 4000.00, 10.00, 'INR', 60, 'online', 'Yoga mat, Dumbbells, Internet connection', 'https://www.w3schools.com/html/mov_bbb.mp4', '["https://i.pravatar.cc/150?img=47","https://i.pravatar.cc/150?img=48"]', '[{"question":"Start date?","answer":"18 Aug"},{"question":"Refund?","answer":"7-day full refund"}]', 'active', 'approved', NOW(), NOW()),
 (1, 'Personal Strength Training', 'Build muscle and improve strength with guided sessions.', 'Customized strength training program for all levels.', 'Premium Plan', '["Daily workouts","Nutrition guide","Video sessions"]', 6000.00, 5.00, 'INR', 90, 'doorstep', 'Access to gym equipment', NULL, '["https://i.pravatar.cc/150?img=49"]', '[{"question":"Duration?","answer":"12 weeks"}]', 'draft', 'pending', NOW(), NOW()),

@@ -20,6 +20,7 @@ CREATE TABLE
         gender ENUM ('male', 'female', 'other') DEFAULT 'other',
         dob DATE DEFAULT NULL,
         bio TEXT DEFAULT NULL,
+        verified ENUM ("kyc", "assured") DEFAULT NULL,
         specialization JSON DEFAULT NULL, -- e.g. "Strength, Yoga, Rehab"
         certification TEXT DEFAULT NULL, -- comma-separated or JSON list
         avatar VARCHAR(255) DEFAULT NULL,
