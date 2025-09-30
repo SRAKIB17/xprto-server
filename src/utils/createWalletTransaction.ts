@@ -37,6 +37,11 @@ export async function performWalletTransaction(ctx: Context, opts: WalletTransac
     try {
         const { role, user_info: { user_id } } = ctx.auth ?? {};
         await conn.beginTransaction();
+        // const [existing] = await conn.query(
+        //     `SELECT * FROM wallet_transactions WHERE idempotency_key = ? LIMIT 1`,
+        //     [input.idempotency_key]
+        // );
+
         // 1️⃣ Lock wallet row
         const [walletRows] = await conn.query(
             `SELECT available_balance, held_balance, currency, wallet_id FROM ${TABLES.WALLETS.WALLETS} WHERE user_id = ? AND user_role = ? AND currency = ?
