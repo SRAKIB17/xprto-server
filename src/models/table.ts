@@ -10,6 +10,7 @@ export const TABLES = {
     },
     TRAINERS: {
         services: concat("trainer_services"),
+        kyc_verification: concat("trainer_kyc_verification"),
         trainers: concat("trainers"),
     },
     GYMS: {
@@ -23,6 +24,7 @@ export const TABLES = {
     },
     WALLETS: {
         WALLETS: concat('wallets'),
+        transactions: concat("wallet_transactions")
     },
     SUPPORT_TICKETS: {
         SUPPORT_TICKETS: concat('support_tickets'),

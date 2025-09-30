@@ -21,7 +21,11 @@ export const DirectoryServe = {
         video: (pathname: string) => path.join(path.resolve(), `/uploads/trainer-services/video/${filename(pathname)}`),
         attachments: (pathname: string) => path.join(path.resolve(), `/uploads/trainer-services/attachments/${filename(pathname)}`)
     },
-    supportTicket: (filename: string) => path.join(path.resolve(), "uploads", "attachments", "support-tickets", filename),
+    supportTicket: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "support-tickets", filename(pathname)),
+    verifications: {
+        KYC: (pathname: string) => path.join(path.resolve(), "uploads", "verifications", "kyc", filename(pathname)),
+        SELFIE: (pathname: string) => path.join(path.resolve(), "uploads", "verifications", "selfie", filename(pathname)),
+    }
 }
 
 export const filename = (full_path: string) => path.basename(full_path);

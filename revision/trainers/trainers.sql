@@ -42,6 +42,39 @@ CREATE TABLE
         FOREIGN KEY (gym_id) REFERENCES gyms (gym_id) ON DELETE SET NULL
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
+CREATE TABLE trainer_kyc_verification (
+    kyc_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    trainer_id BIGINT UNSIGNED NOT NULL ,
+    
+    -- KYC Details
+    fullname VARCHAR(100) DEFAULT NULL,
+    dob DATE DEFAULT NULL,
+    document_type ENUM('nid', 'passport', 'aadhaar', 'pan') DEFAULT NULL,
+    document_number VARCHAR(100) DEFAULT NULL,
+    document_file JSON DEFAULT NULL, -- multiple files (front/back/address proof)
+    selfie VARCHAR(255) DEFAULT NULL,
+    -- Verification Status
+    status ENUM('not_submitted', 'in_review', 'verified', 'rejected', 'blocked') DEFAULT 'not_submitted',
+    rejection_reason VARCHAR(255) NULL,
+    
+
+    -- Attempts & Payment
+    attempts TINYINT UNSIGNED DEFAULT 0, -- কতবার চেষ্টা করেছে
+    txn_id VARCHAR(50) DEFAULT NULL,
+    paid_first_attempt BOOLEAN DEFAULT FALSE, -- প্রথমবার পেমেন্ট দিয়েছে কি না
+        verified_for ENUM ("kyc", "assured") DEFAULT "kyc",
+
+    -- Audit Fields
+    verified_at TIMESTAMP NULL,
+    UNIQUE(trainer_id, verified_for),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    -- Relations
+    FOREIGN KEY (trainer_id) REFERENCES trainers(trainer_id) ON DELETE CASCADE
+);
+
+
+```
 CREATE TABLE
     shifts (
         shift_id BIGINT AUTO_INCREMENT PRIMARY KEY,
