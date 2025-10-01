@@ -1,41 +1,17 @@
+import { find, insert, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
-import { dbQuery, TABLES } from "../../../../../models/index.js";
-import { find, insert, mysql_date, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
-import { AppNotificationToast } from "../../../../websocket/notification.js";
-import { generateTxnID } from "../../../../../utils/generateTxnID.js";
-import { copyFile } from "../../../../../utils/fileExists.js";
+import { generateUUID } from "tezx/helper";
 import { DirectoryServe, filename } from "../../../../../config.js";
+import { dbQuery, TABLES } from "../../../../../models/index.js";
 import { performWalletTransaction } from "../../../../../utils/createWalletTransaction.js";
+import { copyFile } from "../../../../../utils/fileExists.js";
+import { generateTxnID } from "../../../../../utils/generateTxnID.js";
+import { AppNotificationToast } from "../../../../websocket/notification.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const KYC = new Router({
     basePath: "/kyc"
 });
-
-// CREATE TABLE trainer_kyc_verification(
-//     kyc_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-//     trainer_id BIGINT UNSIGNED NOT NULL UNIQUE,
-
-//     --KYC Details
-//     document_type ENUM('nid', 'passport', 'aadhaar', 'pan') NOT NULL,
-//     document_number VARCHAR(100) NOT NULL,
-//     document_file JSON NOT NULL, --multiple files(front / back / address proof)
-
-//     --Verification Status
-//     status ENUM('not_submitted', 'in_review', 'verified', 'rejected', 'blocked') DEFAULT 'not_submitted',
-//     rejection_reason VARCHAR(255) NULL,
-
-//     --Attempts & Payment
-//     attempts TINYINT UNSIGNED DEFAULT 0, --কতবার চেষ্টা করেছে
-//     paid_first_attempt BOOLEAN DEFAULT FALSE, --প্রথমবার পেমেন্ট দিয়েছে কি না
-
-//     --Audit Fields
-//     verified_at TIMESTAMP NULL,
-//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-//     --Relations
-//     FOREIGN KEY(trainer_id) REFERENCES trainers(trainer_id) ON DELETE CASCADE
-// );
 KYC.get("/:verified_for", async (ctx) => {
     const { user_id, email } = ctx.auth?.user_info || {};
     const { role } = ctx.auth || {};
@@ -83,11 +59,10 @@ KYC.get("/:verified_for", async (ctx) => {
 KYC.post("/kyc", async (ctx) => {
     const { user_id, email } = ctx.auth?.user_info || {};
     const { role } = ctx.auth || {};
-    const { verified_for } = ctx.req.params;
     if (!user_id || !role) {
         return ctx.status(401).json({ message: "Unauthorized" });
     }
-    let txn_id = generateTxnID(verified_for?.toUpperCase());
+    let txn_id = generateTxnID("KYC");
     const {
         fullname,
         dob,
@@ -128,7 +103,7 @@ KYC.post("/kyc", async (ctx) => {
     // ---- Check if KYC exists ----
     const { result: existingKYC } = await dbQuery<any>(
         find(TABLES.TRAINERS.kyc_verification, {
-            where: `trainer_id = ${sanitize(user_id)} AND verified_for = ${sanitize(verified_for)}`,
+            where: `trainer_id = ${sanitize(user_id)} AND verified_for = 'kyc'`,
             limitSkip: { limit: 1 },
         })
     );
@@ -136,7 +111,9 @@ KYC.post("/kyc", async (ctx) => {
         await performWalletTransaction(ctx, {
             amount: pay_amount,
             type: 'payment',
+            payment_method: "wallet",
             external_txn_id: txn_id,
+            idempotency_key: generateUUID(),
             note: "Payment KYC verification",
             reference_type: "kyc_payment"
         })
@@ -154,7 +131,7 @@ KYC.post("/kyc", async (ctx) => {
                 status: "in_review",
                 txn_id: existingKYC[0].txn_id || txn_id,
                 paid_first_attempt: 1,
-                verified_for,
+                verified_for: 'kyc',
                 updated_at: mysql_datetime(),
             },
             setCalculations: { attempts: "attempts + 1" },
@@ -206,9 +183,66 @@ KYC.post("/kyc", async (ctx) => {
     // }
     return ctx.json({ kyc: kycRow });
 });
-// xprtoTrainersVerifications.use(clientFeedback);
-// xprtoTrainersVerifications.use(myServices);
 
+KYC.post("/assured", async (ctx) => {
+    const { user_id, email } = ctx.auth?.user_info || {};
+    const { role } = ctx.auth || {};
+    const verified_for = "assured";
+    if (!user_id || !role) {
+        return ctx.status(401).json({ message: "Unauthorized" });
+    }
+    const {
+        certificates,
+        pvc
+    } = await ctx.req.json()
 
+    let documents = [];
+    if (await copyFile(pvc, DirectoryServe.verifications.ASSURED(pvc), true)) {
+        documents.push(filename(pvc))
+    }
+    if (Array.isArray(certificates)) {
+        for (const file of certificates) {
+            if (await copyFile(file, DirectoryServe.verifications.ASSURED(file), true)) {
+                documents.push(filename(file))
+            }
+        }
+    }
+    if (Array.isArray(documents) && documents?.length < 2) {
+        return ctx.status(400).json({ message: "Please upload documents again!" });
+    }
+
+    const { result: existingKYC } = await dbQuery<any>(
+        find(TABLES.TRAINERS.kyc_verification, {
+            where: `trainer_id = ${sanitize(user_id)} AND verified_for = ${sanitize(verified_for)}`,
+            limitSkip: { limit: 1 },
+        })
+    );
+
+    // // ---- Update old KYC ----
+    const { success } = await dbQuery(
+        update(TABLES.TRAINERS.kyc_verification, {
+            values: {
+                document_file: JSON.stringify(documents),
+                status: "in_review",
+                verified_for,
+                updated_at: mysql_datetime(),
+            },
+            setCalculations: { attempts: "attempts + 1" },
+            where: `trainer_id = ${sanitize(user_id)} AND kyc_id = ${existingKYC[0].kyc_id}`,
+        })
+    );
+
+    if (!success) {
+        return ctx.status(500).json({ message: "Failed to update XPRTO assured" });
+    }
+
+    let kycRow = (await dbQuery<any>(
+        find(TABLES.TRAINERS.kyc_verification, {
+            where: `kyc_id = ${existingKYC[0].kyc_id}`,
+            limitSkip: { limit: 1 },
+        })
+    )).result?.[0];
+    return ctx.json({ success: true, kyc: kycRow });
+});
 
 export default KYC;

@@ -38,6 +38,7 @@ tempUpload.post("/", async (ctx) => {
             type: file.type,
         });
     } catch (error) {
+        console.log(error)
         return ctx.status(500).json({ message: "Failed to save temp file" });
     }
 });

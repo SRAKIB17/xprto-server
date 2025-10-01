@@ -1,5 +1,7 @@
 import { Context } from 'tezx';
+import { generateUUID } from 'tezx/helper';
 import { pool, TABLES } from '../models/index.js';
+import { generateTxnID } from './generateTxnID.js';
 
 export type WalletTxnType =
     | 'topup'
@@ -36,11 +38,43 @@ export async function performWalletTransaction(ctx: Context, opts: WalletTransac
     const conn = await pool.getConnection();
     try {
         const { role, user_info: { user_id } } = ctx.auth ?? {};
+
+        if (!user_id || !role) throw new Error('Unauthenticated: missing user context');
+
+        if (typeof opts.amount !== 'number' || Number.isNaN(opts.amount) || opts.amount <= 0) {
+            throw new Error('Invalid amount; must be a positive number');
+        }
+        if (opts.fee != null && (typeof opts.fee !== 'number' || opts.fee < 0)) {
+            throw new Error('Invalid fee; must be a non-negative number');
+        }
+
+
         await conn.beginTransaction();
-        // const [existing] = await conn.query(
-        //     `SELECT * FROM wallet_transactions WHERE idempotency_key = ? LIMIT 1`,
-        //     [input.idempotency_key]
-        // );
+        const idempotency_key = opts.idempotency_key ?? generateUUID();
+        // Check idempotency
+        if (idempotency_key) {
+            const [existingRows] = await conn.query(
+                `SELECT * FROM ${TABLES.WALLETS.transactions} WHERE idempotency_key = ? LIMIT 1`,
+                [idempotency_key]
+            );
+            const existing = (existingRows as any)[0];
+            if (existing) {
+                await conn.commit();
+                return {
+                    success: true,
+                    idempotent: true,
+                    txn_id: existing.id,
+                    external_txn_id: existing?.external_txn_id,
+                    amount: existing?.amount,
+                    reference_id: existing?.reference_id,
+                    status: existing?.status,
+                    hold_change: existing?.hold_change,
+                    balance_after: existing.balance_after
+                };
+            }
+        }
+        const external_txn_id = opts?.external_txn_id ?? generateTxnID("XPRTO");
+
 
         // 1️⃣ Lock wallet row
         const [walletRows] = await conn.query(
@@ -55,6 +89,7 @@ export async function performWalletTransaction(ctx: Context, opts: WalletTransac
         // 3️⃣ Compute new balances
         let available = Number(wallet.available_balance);
         let held = Number(wallet.held_balance);
+
         // Update balances based on transaction type
         switch (opts.type) {
             case 'topup':
@@ -95,6 +130,27 @@ export async function performWalletTransaction(ctx: Context, opts: WalletTransac
             [available, held, wallet?.wallet_id]
         );
 
+
+        let txnAmount = opts.amount;
+        switch (opts.type) {
+            case 'topup':
+            case 'refund':
+            case 'adjustment':
+            case 'transfer_in':
+            case 'release_hold':  // releasing adds back
+                txnAmount = Math.abs(opts.amount); // positive
+                break;
+            case 'hold':
+            case 'payment':
+            case 'payout':
+            case 'transfer_out':
+                txnAmount = -Math.abs(opts.amount); // negative
+                break;
+        }
+        let txnFee = 0;
+        if (opts.fee != null) {
+            txnFee = -Math.abs(opts.fee); // always negative to indicate deduction
+        }
         // 5️⃣ Insert transaction record
         const [txnResult] = await conn.query(
             `INSERT INTO ${TABLES.WALLETS.transactions} 
@@ -102,15 +158,15 @@ export async function performWalletTransaction(ctx: Context, opts: WalletTransac
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 wallet?.wallet_id,
-                opts.idempotency_key ?? null,
+                idempotency_key,
                 opts.type,
-                opts.amount,
-                opts.fee ?? 0,
+                txnAmount,
+                txnFee,
                 currency,
                 available,
                 opts.holdChange ?? 0,
                 opts.payment_method ?? null,
-                opts.external_txn_id ?? null,
+                external_txn_id ?? null,
                 opts.reference_type ?? null,
                 opts.reference_id ?? null,
                 JSON.stringify(opts.metadata ?? {}),
@@ -121,7 +177,8 @@ export async function performWalletTransaction(ctx: Context, opts: WalletTransac
         );
         await conn.commit();
         return { success: true, balance_after: available, txn_id: (txnResult as any).insertId };
-    } catch (err) {
+    }
+    catch (err) {
         await conn.rollback();
         return { success: false, error: (err as Error).message };
     } finally {

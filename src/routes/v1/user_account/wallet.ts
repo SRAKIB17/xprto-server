@@ -1,4 +1,4 @@
-import { find, insert } from "@tezx/sqlx/mysql";
+import { find, insert, mysql_date, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../models/index.js";
@@ -54,15 +54,42 @@ my_wallet.get("/", async (ctx) => {
     return ctx.json({ wallet: newWallet?.[0] });
 });
 
-
 my_wallet.get("/transition-history", paginationHandler({
     getDataSource: async (ctx, { page, limit, offset }) => {
+
         const { role } = ctx.auth || {};
         const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
-        let condition = `reporter_role = "${role}" AND reporter_user_id = ${user_id}`
-        let sql = find(TABLES.ABUSE_REPORTS.HISTORY, {
+        let condition = `user_id = ${user_id} AND user_role = '${role}'`;
+        const { start, search, end, type } = ctx.req.query;
+
+        if (start) {
+            condition += ` AND wallet_transactions.created_at BETWEEN ${sanitize(start)} AND ${sanitize(end ?? mysql_date())} `
+        }
+        if (search) {
+            condition += ` AND (wallet_transactions.idempotency_key = ${sanitize(search)} OR wallet_transactions.external_txn_id = ${sanitize(search)})`
+        }
+        if (type === 'in') {
+            condition += ` AND wallet_transactions.amount > 0`
+        }
+        if (type === 'out') {
+            condition += ` AND wallet_transactions.amount < 0`
+        }
+        // find(TABLES.WALLETS.WALLETS, {
+        //     where: `user_id = ${user_id} AND user_role = '${role}'`,
+        //     limitSkip: { limit: 1 },
+        // })
+
+        let sql = find(TABLES.WALLETS.transactions, {
+            joins: [
+                {
+                    type: "LEFT JOIN",
+                    table: TABLES.WALLETS.WALLETS,
+                    on: 'wallet_transactions.wallet_id = wallets.wallet_id',
+                }
+            ],
+            columns: "wallet_transactions.*",
             sort: {
-                id: -1
+                txn_id: -1
             },
             limitSkip: {
                 limit: limit,
@@ -70,11 +97,19 @@ my_wallet.get("/transition-history", paginationHandler({
             },
             where: condition,
         })
-        let count = find(TABLES.ABUSE_REPORTS.HISTORY, {
+        let count = find(TABLES.WALLETS.transactions, {
+            joins: [
+                {
+                    type: "LEFT JOIN",
+                    table: TABLES.WALLETS.WALLETS,
+                    on: 'wallet_transactions.wallet_id = wallets.wallet_id',
+                }
+            ],
             columns: 'count(*) as count',
             where: condition,
         })
-        const { success, result } = await dbQuery<any[]>(`${sql}${count}`);
+        const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
+        console.log(error)
         if (!success) {
             return {
                 data: [],

@@ -21,6 +21,7 @@ CREATE TABLE
         dob DATE DEFAULT NULL,
         bio TEXT DEFAULT NULL,
         verified ENUM ("kyc", "assured") DEFAULT NULL,
+        badge ENUM("L1","L2","L3","L4","L5") DEFAULT NULL,
         specialization JSON DEFAULT NULL, -- e.g. "Strength, Yoga, Rehab"
         certification TEXT DEFAULT NULL, -- comma-separated or JSON list
         avatar VARCHAR(255) DEFAULT NULL,
