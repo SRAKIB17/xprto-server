@@ -74,6 +74,21 @@ CREATE TABLE trainer_kyc_verification (
     FOREIGN KEY (trainer_id) REFERENCES trainers(trainer_id) ON DELETE CASCADE
 );
 
+CREATE TABLE trainer_badge_verification (
+    badge_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    trainer_id BIGINT UNSIGNED NOT NULL ,
+    document_file JSON DEFAULT NULL, -- multiple files (front/back/address proof)
+    status ENUM('not_submitted', 'in_review', 'verified', 'rejected') DEFAULT 'not_submitted',
+    rejection_reason VARCHAR(255) NULL,
+    apply_for ENUM("L1","L2","L3","L4","L5") DEFAULT "L1",
+    verified_at TIMESTAMP NULL,
+    UNIQUE(trainer_id, apply_for),
+    expired_at TIMESTAMP DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (trainer_id) REFERENCES trainers(trainer_id) ON DELETE CASCADE
+);
+
 
 ```
 CREATE TABLE

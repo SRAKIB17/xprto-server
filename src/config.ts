@@ -24,6 +24,7 @@ export const DirectoryServe = {
     supportTicket: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "support-tickets", filename(pathname)),
     verifications: {
         KYC: (pathname: string) => path.join(path.resolve(), "uploads", "verifications", "kyc", filename(pathname)),
+        BADGE: (pathname: string) => path.join(path.resolve(), "uploads", "verifications", "badge", filename(pathname)),
         ASSURED: (pathname: string) => path.join(path.resolve(), "uploads", "verifications", "assured", filename(pathname)),
         SELFIE: (pathname: string) => path.join(path.resolve(), "uploads", "verifications", "selfie", filename(pathname)),
     }

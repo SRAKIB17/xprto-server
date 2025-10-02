@@ -11,6 +11,7 @@ export const TABLES = {
     TRAINERS: {
         services: concat("trainer_services"),
         kyc_verification: concat("trainer_kyc_verification"),
+        badge_verification: concat("trainer_badge_verification"),
         trainers: concat("trainers"),
     },
     GYMS: {

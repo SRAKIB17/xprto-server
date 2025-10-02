@@ -1,5 +1,6 @@
 import { Router } from "tezx";
-import KYC from "./kyc_verification";
+import KYC from "./kyc_verification.js";
+import BADGE from "./badge_verification.js";
 
 
 // import user_account_document_flag from "./flag-document.js";
@@ -8,6 +9,7 @@ const xprtoTrainersVerifications = new Router({
 });
 
 xprtoTrainersVerifications.use(KYC);
+xprtoTrainersVerifications.use(BADGE);
 // xprtoTrainersVerifications.use(myServices);
 
 
