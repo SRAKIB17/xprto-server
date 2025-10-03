@@ -13,6 +13,7 @@ CREATE TABLE
         address TEXT DEFAULT NULL,
         lat INT DEFAULT NULL,
         lng INT DEFAULT NULL,
+        email_verified BOOLEAN DEFAULT FALSE,
         fullname VARCHAR(100) NOT NULL,
         age INT DEFAULT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,

@@ -13,6 +13,7 @@ CREATE TABLE
         lat INT DEFAULT NULL,
         lng INT DEFAULT NULL,
         xprto BOOLEAN DEFAULT TRUE,
+        email_verified BOOLEAN DEFAULT FALSE,
         fullname VARCHAR(100) NOT NULL,
         avatar VARCHAR(255) DEFAULT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,

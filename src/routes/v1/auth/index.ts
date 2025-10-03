@@ -15,10 +15,13 @@ import { find, insert, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { getConnInfo } from "tezx/bun";
 import { deleteCookie, setCookie } from "tezx/helper";
-import { cookieDOMAIN } from "../../../config";
-import { dbQuery, TABLES } from "../../../models";
-import tokenEncodedCrypto, { wrappedCryptoToken } from "../../../utils/crypto";
-import { AuthorizationBasicAuthUser } from "./basicAuth";
+import rateLimiter from "tezx/middleware/rate-limiter";
+import { CLIENT_REDIRECT_URL, cookieDOMAIN, FORGET_PASSWORD_EXP, SITE_TITLE, support_email } from "../../../config.js";
+import { sendEmailWithTemplate } from "../../../email/mailer.js";
+import { dbQuery, TABLES } from "../../../models/index.js";
+import tokenEncodedCrypto, { wrappedCryptoToken } from "../../../utils/crypto.js";
+import { encrypt } from "../../../utils/encrypted.js";
+import { AuthorizationBasicAuthUser } from "./basicAuth.js";
 const auth = new Router();
 
 // auth.post('/email-availability', async (ctx) => {
@@ -375,10 +378,13 @@ auth.post('/refresh', AuthorizationBasicAuthUser(), async (ctx) => {
 let documentPublicStorage = new Map();
 
 auth.post('/password-reset', [getConnInfo(), async (ctx, next) => {
-    let { email } = await ctx.req.json();
-    let { result: user } = await db.findOne(table_schema.user_details, {
-        where: db.condition({ email })
-    }).execute();
+    let { email, role } = await ctx.req.json();
+    const { success, result: user } = await dbQuery(find(role === 'trainer' ? TABLES.TRAINERS.trainers : TABLES.CLIENTS.clients, {
+        where: `email = ${sanitize(email)}`,
+        limitSkip: {
+            limit: 1
+        }
+    }))
 
     if (!user || user.length === 0) {
         return ctx.json({
@@ -390,7 +396,7 @@ auth.post('/password-reset', [getConnInfo(), async (ctx, next) => {
     if (login_type == 'google') {
         return ctx.json({ success: false, message: "Email already in use. Please log in with Google." });
     }
-    ctx.forget_password = { email, fullname: user?.[0]?.fullname }
+    ctx.forget_password = { email, fullname: user?.[0]?.fullname, role: role }
 
     return await rateLimiter({
         maxRequests: 1,
@@ -413,10 +419,12 @@ auth.post('/password-reset', [getConnInfo(), async (ctx, next) => {
     })(ctx, next) as Response;
 
 }], async (ctx) => {
-    let { email, fullname } = ctx.forget_password;
+    let { email, fullname, role } = ctx.forget_password;
+
     // Add expiry time (now + 5 minutes)
     const payload = JSON.stringify({
         email,
+        role: role,
         name: fullname,
         exp: Date.now() + FORGET_PASSWORD_EXP // 5 minutes from now
     });
@@ -428,18 +436,17 @@ auth.post('/password-reset', [getConnInfo(), async (ctx, next) => {
 
     let url = CLIENT_REDIRECT_URL.reset_password(encrypted as string);
 
-    let x = await sendEmail({
+    let check = await sendEmailWithTemplate({
         to: email,
         templateName: 'reset-password',
-        subject: "Reset Your Password - PaperNxt",
+        subject: `Reset Your Password - ${SITE_TITLE}`,
         templateData: {
             name: fullname,
             resetUrl: url,
         }
     });
 
-
-    if (x) {
+    if (check) {
         return ctx.json({
             success: true,
             message: `Thank you! An email was sent that will ask you to verify that you own this account. If you don’t get the email, please contact ${support_email}`

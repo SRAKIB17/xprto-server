@@ -11,6 +11,18 @@ export const API_BASE_URL_V1 = `${BASE_URL}/v1`;
 
 export const FORGET_PASSWORD_EXP = 20 * 60 * 1000;  // 5 minutes from now
 
+export const CLIENT_URL = 'http://localhost:3000';
+export const SITE_TITLE = "Xprto";
+
+export const CLIENT_REDIRECT_URL = {
+    account: `${CLIENT_URL}/account`,
+    auth: (tkn: string) => `${CLIENT_URL}/auth?tkn=${tkn}`,
+    error: (error: string) => `${CLIENT_URL}/error?error=${error}`,
+    reset_password: (tkn: string) => `${CLIENT_URL}/auth/reset-password?tkn=${tkn}`,
+    logout: (next?: string) => '/v1/auth/logout' + next ? `?next=${next}` : ""
+}
+
+
 import os from 'node:os';
 import path from 'node:path';
 

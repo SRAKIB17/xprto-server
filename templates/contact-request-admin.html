@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Contact Request - PaperNxt</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    </head>
+    <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9fafb;">
+        <table align="center" cellpadding="0" cellspacing="0" width="100%"
+            style="max-width: 600px; background-color: #ffffff; margin: auto; border-radius: 8px; overflow: hidden;">
+
+            <!-- Header -->
+            <tr style="background-color: #1e293b;">
+                <td align="center" style="padding: 20px;">
+                    <img src="https://papernxt.com/favicon.ico" alt="PaperNxt Logo" style="width: 40px; height: 40px;">
+                    <h2 style="color: #ffffff; margin: 10px 0 0;">PaperNxt Contact Request</h2>
+                </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+                <td style="padding: 30px;">
+                    <h3 style="color: #111827;">You received a new contact request</h3>
+
+                    <p><strong>Name:</strong> {{name}}</p>
+                    <p><strong>Email:</strong> {{email}}</p>
+                    {{#if phone}}
+                        <p><strong>Phone:</strong> {{phone}}</p>
+                    {{/if}}
+                    <p><strong>Subject:</strong> {{subject}}</p>
+
+                    <div
+                        style="margin-top: 20px; background-color: #f3f4f6; padding: 15px; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                        <strong>Message:</strong><br />
+                        <p style="margin: 10px 0; color: #374151;">{{message}}</p>
+                    </div>
+
+                    <p style="font-size: 13px; color: #6b7280; margin-top: 25px;">This request was submitted from <a
+                            href="https://papernxt.com" style="color: #3b82f6;">PaperNxt.com</a>.</p>
+                </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr style="background-color: #f1f5f9;">
+                <td align="center" style="padding: 20px; font-size: 13px; color: #6b7280;">
+                    &copy; {{year}} <a href="https://papernxt.com"
+                        style="color: #3b82f6; text-decoration: none;">PaperNxt</a>. All rights reserved.
+                </td>
+            </tr>
+
+        </table>
+    </body>
+</html>New Contact Request on PaperNxt
