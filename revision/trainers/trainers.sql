@@ -24,7 +24,7 @@ CREATE TABLE
         verified ENUM ("kyc", "assured") DEFAULT NULL,
         badge ENUM("L1","L2","L3","L4","L5") DEFAULT NULL,
         specialization JSON DEFAULT NULL, -- e.g. "Strength, Yoga, Rehab"
-        certification TEXT DEFAULT NULL, -- comma-separated or JSON list
+        certification JSON DEFAULT NULL, -- comma-separated or JSON list
         avatar VARCHAR(255) DEFAULT NULL,
         cover VARCHAR(255) DEFAULT NULL,
         -- coverage_km DECIMAL(5,2) NOT NULL DEFAULT 5.00,
@@ -90,6 +90,56 @@ CREATE TABLE trainer_badge_verification (
     FOREIGN KEY (trainer_id) REFERENCES trainers(trainer_id) ON DELETE CASCADE
 );
 
+
+---- dummy
+
+
+-- 4. Bookings table
+CREATE TABLE bookings (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    slot_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+    status ENUM('pending','confirmed','cancelled','completed') DEFAULT 'pending',
+    payment_amount DECIMAL(10,2) DEFAULT 0.00,
+    payment_currency VARCHAR(10) DEFAULT 'INR',
+    payment_method VARCHAR(50),
+    transaction_id VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (slot_id) REFERENCES slots(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 5. Optional: Slot Packages / Recurring Sessions (if you want to group slots into packages)
+CREATE TABLE slot_packages (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    trainer_id BIGINT UNSIGNED NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) DEFAULT 0.00,
+    duration VARCHAR(10) DEFAULT '60m',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (trainer_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 6. Optional: Linking slots to packages
+CREATE TABLE package_slots (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    package_id BIGINT UNSIGNED NOT NULL,
+    slot_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (package_id) REFERENCES slot_packages(id) ON DELETE CASCADE,
+    FOREIGN KEY (slot_id) REFERENCES slots(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_package_slot (package_id, slot_id)
+);
+
+-- ========================================
+-- INDEXES for performance
+-- ========================================
+CREATE INDEX idx_slots_trainer_date ON slots(trainer_id, date);
+CREATE INDEX idx_bookings_slot ON bookings(slot_id);
+CREATE INDEX idx_bookings_user ON bookings(user_id);
 
 ```
 CREATE TABLE

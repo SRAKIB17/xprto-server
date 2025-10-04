@@ -56,7 +56,7 @@ CREATE TABLE
         two_factor_enabled BOOLEAN DEFAULT FALSE,
         last_login TIMESTAMP NULL DEFAULT NULL,
         failed_login_attempts INT DEFAULT 0,
-        profile_photo VARCHAR(255) DEFAULT NULL,
+        avatar VARCHAR(255) DEFAULT NULL,
         logo_url VARCHAR(255) DEFAULT NULL,
         invoice_prefix VARCHAR(20) DEFAULT 'GYM',
         notes TEXT DEFAULT NULL,

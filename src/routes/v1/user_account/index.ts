@@ -24,6 +24,8 @@ import trainers from "./trainers/index.js";
 import my_wallet from "./wallet.js";
 import support_tickets from "./support-ticket.js";
 import clients from "./clients/index.js";
+import { DirectoryServe, filename } from "../../../config.js";
+import { copyFile } from "../../../utils/fileExists.js";
 
 const user_account = new Router();
 user_account.use(AuthorizationBasicAuthUser());
@@ -94,9 +96,16 @@ user_account.put('/update/my-info', async (ctx) => {
     const body = await ctx.req.json();
     try {
         const { user_id, email } = ctx.auth?.user_info || {};
+        const role = ctx?.auth?.role;
         const table = ctx.auth.table;
         if (Object.keys(body)?.includes('email')) {
             return ctx.status(400).json({ message: "Email update is not allowed." });
+        }
+        if (body?.['avatar']) {
+            let success = await copyFile(body?.avatar, DirectoryServe.avatar(role, body?.avatar), true);
+            if (success) {
+                body['avatar'] = `/${role}/${filename(body?.avatar)}`
+            }
         }
         const { success, result, error } = await dbQuery(update(table, {
             values: body,
