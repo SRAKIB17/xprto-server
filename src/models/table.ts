@@ -35,6 +35,11 @@ export const TABLES = {
     USER_DOCUMENTS: concat("user_documents"),
     FEEDBACK: {
         CLIENT_TRAINER: concat("client_trainer_feedback")
+    },
+    CHAT_ROOMS: {
+        chat_rooms: concat('chat_rooms'),
+        memberships: concat('chat_room_memberships'),
+        messages: concat('chat_messages')
     }
 
 } as const;

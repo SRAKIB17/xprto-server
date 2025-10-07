@@ -14,58 +14,63 @@ type EmailData = {
     templateName: string;
     templateData: Record<string, any>;
     filePath?: string[];
-} & ({
-    templateName: 'reset-password',
-    templateData: {
-        name: string,
-        resetUrl: string,
-    }
-} | {
-    templateName: "password-reset-success",
-    templateData: {
-        name: string,
-    }
-} |
-{
-    templateName: "register-otp",
-    templateData: {
-        otp: string,
-    }
-}
-    | {
-        templateName: "admin-2fa-otp",
-        templateData: {
-            otp: string,
+} & (
+        {
+            templateName: "verify-email",
+            templateData: { name: string, verificationUrl: string }
+        } |
+        {
+            templateName: 'reset-password',
+            templateData: {
+                name: string,
+                resetUrl: string,
+            }
+        } | {
+            templateName: "password-reset-success",
+            templateData: {
+                name: string,
+            }
+        } |
+        {
+            templateName: "register-otp",
+            templateData: {
+                otp: string,
+            }
         }
-    } | {
-        templateName: 'contact-confirm',
-        templateData: {
-            name: string,
-            subject: string,
-            message: string,
+        | {
+            templateName: "admin-2fa-otp",
+            templateData: {
+                otp: string,
+            }
+        } | {
+            templateName: 'contact-confirm',
+            templateData: {
+                name: string,
+                subject: string,
+                message: string,
+            }
+        } | {
+            templateName: "account-delete",
+            templateData: {
+                name: string,
+                date: string,
+            }
+        } | {
+            templateName: "account-delete-cancelled",
+            templateData: {
+                name: string,
+                support_email: string,
+            }
+        } | {
+            templateName: "flag-document-notify-user",
+            templateData: {
+                title: string,
+                name: string,
+                reason: string,
+                description: string,
+                url: string,
+            }
         }
-    } | {
-        templateName: "account-delete",
-        templateData: {
-            name: string,
-            date: string,
-        }
-    } | {
-        templateName: "account-delete-cancelled",
-        templateData: {
-            name: string,
-            support_email: string,
-        }
-    } | {
-        templateName: "flag-document-notify-user",
-        templateData: {
-            title: string,
-            name: string,
-            reason: string,
-            description: string,
-            url: string,
-        }
-    }
     );
 // smtp-relay.brevo.com
 // Port
@@ -100,8 +105,9 @@ export async function sendEmailWithTemplate(props: EmailData) {
 export async function sendEmail({ to, filePath, subject, templateName, templateData }: EmailData) {
     try {
         let data = { ...templateData as any, year: new Date().getFullYear() }
-
         const templatePath = path.join(process.cwd(), "templates", `${templateName}.html`);
+
+
         const rawHtml = fs.readFileSync(templatePath, "utf-8");
         const html = renderTemplate(rawHtml, data);
 

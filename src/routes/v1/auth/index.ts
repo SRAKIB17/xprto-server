@@ -343,7 +343,7 @@ auth.post('/login', async (ctx) => {
             role: role || 'user',
         });
         // Set cookie
-        console.log(tkn)
+
         setCookie(ctx, 's_id', tkn!, {
             httpOnly: true,
             secure: true,
@@ -375,7 +375,7 @@ auth.post('/refresh', AuthorizationBasicAuthUser(), async (ctx) => {
 })
 
 
-let documentPublicStorage = new Map();
+let passwordReset = new Map();
 
 auth.post('/password-reset', [getConnInfo(), async (ctx, next) => {
     let { email, role } = await ctx.req.json();
@@ -405,13 +405,13 @@ auth.post('/password-reset', [getConnInfo(), async (ctx, next) => {
             return ctx.json({ success: false, message: error?.message });
         },
         storage: {
-            get: (key) => documentPublicStorage.get(key),
-            set: (key, value) => documentPublicStorage.set(key, value),
+            get: (key) => passwordReset.get(key),
+            set: (key, value) => passwordReset.set(key, value),
             clearExpired: () => {
                 const now = Date.now();
-                for (const [key, entry] of documentPublicStorage.entries()) {
+                for (const [key, entry] of passwordReset.entries()) {
                     if (now >= entry.resetTime) {
-                        documentPublicStorage.delete(key);
+                        passwordReset.delete(key);
                     }
                 }
             }
@@ -493,6 +493,110 @@ auth.post('/password-reset-verify', async (ctx) => {
         });
     }
 });
+
+
+let emailVerifiedStorage = new Map();
+
+auth.post('/send-verification-email', [
+    getConnInfo(),
+    async (ctx, next) => {
+        // request থেকে email আর role বের করা
+        let { email, role } = await ctx.req.json();
+        const { success, result: user } = await dbQuery(
+            find(
+                role === 'trainer' ? TABLES.TRAINERS.trainers : TABLES.CLIENTS.clients,
+                {
+                    where: `email = ${sanitize(email)}`,
+                    limitSkip: { limit: 1 }
+                }
+            )
+        );
+
+        if (!user || user.length === 0) {
+            return ctx.json({
+                success: false,
+                message: "Email not registered. Please sign up first."
+            });
+        }
+
+        let { login_type, fullname, email_verified } = user?.[0];
+
+        if (login_type === 'google') {
+            return ctx.json({
+                success: false,
+                message: "Email already in use. Please log in with Google."
+            });
+        }
+
+        if (email_verified) {
+            return ctx.json({
+                success: false,
+                message: "Email is already verified."
+            });
+        }
+
+        // attach context
+        ctx.email_verification = { email, fullname, role };
+
+        // rate limiter
+        return await rateLimiter({
+            maxRequests: 1,
+            windowMs: 60_000, // 1 min
+            onError: (ctx, r, error) => {
+                return ctx.json({ success: false, message: error?.message });
+            },
+            storage: {
+                get: (key) => emailVerifiedStorage.get(key),
+                set: (key, value) => emailVerifiedStorage.set(key, value),
+                clearExpired: () => {
+                    const now = Date.now();
+                    for (const [key, entry] of emailVerifiedStorage.entries()) {
+                        if (now >= entry.resetTime) emailVerifiedStorage.delete(key);
+                    }
+                }
+            }
+        })(ctx, next) as Response;
+    }],
+    async (ctx) => {
+        const { email, fullname, role } = ctx.email_verification;
+
+        // email verification token (expiry 10 min)
+        const payload = JSON.stringify({
+            email,
+            role,
+            name: fullname,
+            exp: Date.now() + 10 * 60_000 // 10 min
+        });
+
+        const { success, encrypted } = encrypt(payload, process.env.OTP_ENCRYPTION_KEY!);
+
+        if (!success) {
+            return ctx.json({ success: false, message: "Something went wrong. Please try again!" });
+        }
+
+        const url = CLIENT_REDIRECT_URL.verify_email(encrypted as string);
+
+        const check = await sendEmailWithTemplate({
+            to: email,
+            templateName: 'verify-email',
+            subject: `Verify Your Email - ${SITE_TITLE}`,
+            templateData: { name: fullname, verificationUrl: url }
+        });
+
+        if (check) {
+            return ctx.json({
+                success: true,
+                message: `Thank you! A verification email has been sent. If you don’t get the email, please contact ${support_email}`
+            });
+        }
+
+        return ctx.json({
+            success: false,
+            message: "Something went wrong. Please try again!"
+        });
+    }
+);
+
 
 auth.put('/password-reset-update', async (ctx) => {
     const { tkn, email, confirmPassword, newPassword, name } = await ctx.req.json();

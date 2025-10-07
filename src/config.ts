@@ -19,6 +19,7 @@ export const CLIENT_REDIRECT_URL = {
     auth: (tkn: string) => `${CLIENT_URL}/auth?tkn=${tkn}`,
     error: (error: string) => `${CLIENT_URL}/error?error=${error}`,
     reset_password: (tkn: string) => `${CLIENT_URL}/auth/reset-password?tkn=${tkn}`,
+    verify_email: (tkn: string) => `${CLIENT_URL}/auth/reset-password?tkn=${tkn}`,
     logout: (next?: string) => '/v1/auth/logout' + next ? `?next=${next}` : ""
 }
 
@@ -33,6 +34,7 @@ export const DirectoryServe = {
         video: (pathname: string) => path.join(path.resolve(), `/uploads/trainer-services/video/${filename(pathname)}`),
         attachments: (pathname: string) => path.join(path.resolve(), `/uploads/trainer-services/attachments/${filename(pathname)}`)
     },
+    chat_messages: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "chats", filename(pathname)),
     supportTicket: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "support-tickets", filename(pathname)),
     avatar: (role: string, pathname: string) => path.join(path.resolve(), "uploads", "avatars", role, "kyc", filename(pathname)),
     verifications: {

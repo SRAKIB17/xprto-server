@@ -1,10 +1,12 @@
 import { Router } from "tezx";
+import { chat_rooms } from "./chat-rooms.js";
 import { notifications } from "./notification.js";
 
 const websocket = new Router({
     basePath: "/websocket"
 })
 websocket.use(notifications)
+websocket.use(chat_rooms);
 // v1.addRouter('/admin', admin);
 // v1.addRouter('/public', pricing);
 // v1.addRouter('/documents', documents)

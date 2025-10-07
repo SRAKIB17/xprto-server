@@ -1,529 +1,70 @@
--- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
---
--- Host: localhost    Database: chat_app
--- ------------------------------------------------------
--- Server version	8.0.36
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-
-/*!50503 SET NAMES utf8 */;
-
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-
-/*!40103 SET TIME_ZONE='+00:00' */;
-
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
---
--- Table structure for table `chat_room_memberships`
---
-DROP TABLE IF EXISTS `chat_room_memberships`;
-
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-
-/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE
+  `chat_rooms` (
+    `room_id` bigint NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `room_name` varchar(255) DEFAULT NULL,
+    `is_group` tinyint (1) DEFAULT '0',
+    `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    `thumbnail` varchar(500) DEFAULT NULL
+  ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE
   `chat_room_memberships` (
     `chat_id` bigint NOT NULL AUTO_INCREMENT,
     `user_id` bigint NOT NULL,
+    `user_role` ENUM ('system', 'admin', 'gym', 'trainer', 'client') NOT NULL DEFAULT 'system',
     `room_id` bigint NOT NULL,
+    join_date timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`chat_id`),
-    UNIQUE KEY `unique_user_room` (`user_id`, `room_id`),
-    KEY `room_id` (`room_id`),
-    CONSTRAINT `chat_room_memberships_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
-    CONSTRAINT `chat_room_memberships_ibfk_2` FOREIGN KEY (`room_id`) REFERENCES `chat_rooms` (`room_id`) ON DELETE CASCADE
-  ) ENGINE = InnoDB AUTO_INCREMENT = 73 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `chat_room_memberships`
---
-LOCK TABLES `chat_room_memberships` WRITE;
-
-/*!40000 ALTER TABLE `chat_room_memberships` DISABLE KEYS */;
-
-INSERT INTO
-  `chat_room_memberships`
-VALUES
-  (56, 1, 1731545186908),
-  (1, 3, 1731545186908),
-  (3, 3, 1731545222919),
-  (5, 3, 1731545435420),
-  (7, 3, 1731546935266),
-  (9, 3, 1731546955582),
-  (11, 3, 1731547345589),
-  (52, 3, 1731549496464),
-  (54, 3, 1731549497693),
-  (58, 3, 1731594958315),
-  (60, 3, 1731594959708),
-  (62, 3, 1731594998446),
-  (64, 3, 1731595018441),
-  (66, 3, 1731595064361),
-  (68, 3, 1731595139346),
-  (70, 3, 1731595307370),
-  (72, 3, 1731596556633),
-  (2, 5, 1731545186908),
-  (4, 5, 1731545222919),
-  (6, 5, 1731545435420),
-  (8, 5, 1731546935266),
-  (10, 5, 1731546955582),
-  (12, 5, 1731547345589),
-  (55, 261, 1731545186908),
-  (51, 261, 1731549496464),
-  (53, 261, 1731549497693),
-  (57, 261, 1731594958315),
-  (59, 261, 1731594959708),
-  (61, 261, 1731594998446),
-  (63, 261, 1731595018441),
-  (65, 261, 1731595064361),
-  (67, 261, 1731595139346),
-  (69, 261, 1731595307370),
-  (71, 261, 1731596556633);
-
-/*!40000 ALTER TABLE `chat_room_memberships` ENABLE KEYS */;
-
-UNLOCK TABLES;
-
---
--- Table structure for table `chat_rooms`
---
-DROP TABLE IF EXISTS `chat_rooms`;
-
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-
-/*!50503 SET character_set_client = utf8mb4 */;
-
-CREATE TABLE
-  `chat_rooms` (
-    `room_id` bigint NOT NULL AUTO_INCREMENT,
-    `room_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-    `is_group` tinyint (1) DEFAULT '0',
-    `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-    `thumbnail` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-    PRIMARY KEY (`room_id`)
-  ) ENGINE = InnoDB AUTO_INCREMENT = 1731596556634 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `chat_rooms`
---
-LOCK TABLES `chat_rooms` WRITE;
-
-/*!40000 ALTER TABLE `chat_rooms` DISABLE KEYS */;
-
-INSERT INTO
-  `chat_rooms`
-VALUES
-  (
-    1731542836296,
-    NULL,
-    0,
-    '2024-11-14 00:07:15',
-    NULL
-  ),
-  (
-    1731542861269,
-    NULL,
-    0,
-    '2024-11-14 00:07:40',
-    NULL
-  ),
-  (
-    1731542904227,
-    NULL,
-    0,
-    '2024-11-14 00:08:24',
-    NULL
-  ),
-  (
-    1731542920944,
-    NULL,
-    0,
-    '2024-11-14 00:08:40',
-    NULL
-  ),
-  (
-    1731543034779,
-    NULL,
-    0,
-    '2024-11-14 00:10:34',
-    NULL
-  ),
-  (
-    1731543187257,
-    'Room_1731543187257',
-    0,
-    '2024-11-14 00:13:07',
-    NULL
-  ),
-  (
-    1731543201708,
-    'Room_1731543201708',
-    0,
-    '2024-11-14 00:13:20',
-    NULL
-  ),
-  (
-    1731545186908,
-    'Room_1731545186908',
-    0,
-    '2024-11-14 00:46:26',
-    NULL
-  ),
-  (
-    1731545222919,
-    'Room_1731545222919',
-    0,
-    '2024-11-14 00:47:02',
-    NULL
-  ),
-  (
-    1731545435420,
-    'Room_1731545435420',
-    0,
-    '2024-11-14 00:50:34',
-    NULL
-  ),
-  (
-    1731546935266,
-    'Room_1731546935266',
-    0,
-    '2024-11-14 01:15:35',
-    NULL
-  ),
-  (
-    1731546955582,
-    'Room_1731546955582',
-    0,
-    '2024-11-14 01:15:54',
-    NULL
-  ),
-  (
-    1731547345589,
-    'Room_1731547345589',
-    0,
-    '2024-11-14 01:22:24',
-    NULL
-  ),
-  (
-    1731549368510,
-    'Room_1731549368510',
-    0,
-    '2024-11-14 01:56:07',
-    NULL
-  ),
-  (
-    1731549369964,
-    'Room_1731549369964',
-    0,
-    '2024-11-14 01:56:09',
-    NULL
-  ),
-  (
-    1731549370869,
-    'Room_1731549370869',
-    0,
-    '2024-11-14 01:56:10',
-    NULL
-  ),
-  (
-    1731549371194,
-    'Room_1731549371194',
-    0,
-    '2024-11-14 01:56:10',
-    NULL
-  ),
-  (
-    1731549385843,
-    'Room_1731549385843',
-    0,
-    '2024-11-14 01:56:25',
-    NULL
-  ),
-  (
-    1731549387223,
-    'Room_1731549387223',
-    0,
-    '2024-11-14 01:56:26',
-    NULL
-  ),
-  (
-    1731549392604,
-    'Room_1731549392604',
-    0,
-    '2024-11-14 01:56:32',
-    NULL
-  ),
-  (
-    1731549394360,
-    'Room_1731549394360',
-    0,
-    '2024-11-14 01:56:33',
-    NULL
-  ),
-  (
-    1731549394780,
-    'Room_1731549394780',
-    0,
-    '2024-11-14 01:56:34',
-    NULL
-  ),
-  (
-    1731549394786,
-    'Room_1731549394786',
-    0,
-    '2024-11-14 01:56:34',
-    NULL
-  ),
-  (
-    1731549395242,
-    'Room_1731549395242',
-    0,
-    '2024-11-14 01:56:34',
-    NULL
-  ),
-  (
-    1731549443718,
-    'Room_1731549443718',
-    0,
-    '2024-11-14 01:57:23',
-    NULL
-  ),
-  (
-    1731549444213,
-    'Room_1731549444213',
-    0,
-    '2024-11-14 01:57:23',
-    NULL
-  ),
-  (
-    1731549444977,
-    'Room_1731549444977',
-    0,
-    '2024-11-14 01:57:24',
-    NULL
-  ),
-  (
-    1731549445139,
-    'Room_1731549445139',
-    0,
-    '2024-11-14 01:57:24',
-    NULL
-  ),
-  (
-    1731549445457,
-    'Room_1731549445457',
-    0,
-    '2024-11-14 01:57:25',
-    NULL
-  ),
-  (
-    1731549446353,
-    'Room_1731549446353',
-    0,
-    '2024-11-14 01:57:25',
-    NULL
-  ),
-  (
-    1731549446713,
-    'Room_1731549446713',
-    0,
-    '2024-11-14 01:57:26',
-    NULL
-  ),
-  (
-    1731549447439,
-    'Room_1731549447439',
-    0,
-    '2024-11-14 01:57:26',
-    NULL
-  ),
-  (
-    1731549496464,
-    'Room_1731549496464',
-    0,
-    '2024-11-14 01:58:15',
-    NULL
-  ),
-  (
-    1731549497693,
-    'Room_1731549497693',
-    0,
-    '2024-11-14 01:58:16',
-    NULL
-  ),
-  (
-    1731594958315,
-    'Room_1731594958315',
-    0,
-    '2024-11-14 14:35:58',
-    NULL
-  ),
-  (
-    1731594959708,
-    'Room_1731594959708',
-    0,
-    '2024-11-14 14:35:58',
-    NULL
-  ),
-  (
-    1731594998446,
-    'Room_1731594998446',
-    0,
-    '2024-11-14 14:36:37',
-    NULL
-  ),
-  (
-    1731595018441,
-    'Room_1731595018441',
-    0,
-    '2024-11-14 14:36:57',
-    NULL
-  ),
-  (
-    1731595064361,
-    'Room_1731595064361',
-    0,
-    '2024-11-14 14:37:43',
-    NULL
-  ),
-  (
-    1731595139346,
-    'Room_1731595139346',
-    0,
-    '2024-11-14 14:38:59',
-    NULL
-  ),
-  (
-    1731595307370,
-    'Room_1731595307370',
-    0,
-    '2024-11-14 14:41:47',
-    NULL
-  ),
-  (
-    1731596556633,
-    'Room_1731596556633',
-    0,
-    '2024-11-14 15:02:36',
-    NULL
-  );
-
-/*!40000 ALTER TABLE `chat_rooms` ENABLE KEYS */;
-
-UNLOCK TABLES;
-
---
--- Table structure for table `message_attachments`
---
-DROP TABLE IF EXISTS `message_attachments`;
-
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-
-/*!50503 SET character_set_client = utf8mb4 */;
-
-CREATE TABLE
-  `message_attachments` (
-    `attachment_id` bigint NOT NULL AUTO_INCREMENT,
-    `message_id` bigint NOT NULL,
-    `file_url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `file_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-    `file_size` bigint DEFAULT NULL,
-    `file_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-    `timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`attachment_id`),
-    KEY `message_id` (`message_id`),
-    CONSTRAINT `message_attachments_ibfk_1` FOREIGN KEY (`message_id`) REFERENCES `messages` (`message_id`) ON DELETE CASCADE
+    UNIQUE (`user_id`, `room_id`, `user_role`),
+    FOREIGN KEY (`room_id`) REFERENCES `chat_rooms` (`room_id`) ON DELETE CASCADE
   ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `message_attachments`
---
-LOCK TABLES `message_attachments` WRITE;
-
-/*!40000 ALTER TABLE `message_attachments` DISABLE KEYS */;
-
-/*!40000 ALTER TABLE `message_attachments` ENABLE KEYS */;
-
-UNLOCK TABLES;
-
---
--- Table structure for table `message_reads`
---
-DROP TABLE IF EXISTS `message_reads`;
-
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-
-/*!50503 SET character_set_client = utf8mb4 */;
-
 CREATE TABLE
-  `message_reads` (
-    `read_id` bigint NOT NULL AUTO_INCREMENT,
-    `message_id` bigint NOT NULL,
+  `chat_messages` (
+    attachments JSON DEFAULT NULL, --array []
+    `message_id` bigint NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `user_id` bigint NOT NULL,
-    `is_read` tinyint (1) DEFAULT '0',
-    `read_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`read_id`),
-    KEY `message_id` (`message_id`),
-    KEY `user_id` (`user_id`),
-    CONSTRAINT `message_reads_ibfk_1` FOREIGN KEY (`message_id`) REFERENCES `messages` (`message_id`) ON DELETE CASCADE,
-    CONSTRAINT `message_reads_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-  ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    `sender_role` ENUM ('s', 'a', 'g', 't', 'c') DEFAULT "c",
+    `room_id` bigint NOT NULL,
+    `message_type` enum ('TEXT', 'FILE') DEFAULT 'TEXT',
+    `text` text,
+    -- `is_update` tinyint (1) DEFAULT '0',
+    -- `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    `timestamp` timestamp DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`room_id`) REFERENCES `chat_rooms` (`room_id`) ON DELETE CASCADE
+  ) ENGINE = InnoDB AUTO_INCREMENT = 220 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-/*!40101 SET character_set_client = @saved_cs_client */;
-
+-- CREATE TABLE
+--   `message_attachments` (
+--     `attachment_id` bigint NOT NULL AUTO_INCREMENT,
+--     `message_id` bigint NOT NULL,
+--     `file_url` varchar(255) NOT NULL,
+--     `file_name` varchar(100) DEFAULT NULL,
+--     `file_size` bigint DEFAULT NULL,
+--     `file_type` varchar(50) DEFAULT NULL,
+--     `timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+--     `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+--     PRIMARY KEY (`attachment_id`),
+--     KEY `message_id` (`message_id`),
+--     CONSTRAINT `message_attachments_ibfk_1` FOREIGN KEY (`message_id`) REFERENCES `messages` (`message_id`) ON DELETE CASCADE
+--   ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+-- CREATE TABLE
+--   `message_reads` (
+--     `read_id` bigint NOT NULL AUTO_INCREMENT,
+--     `message_id` bigint NOT NULL,
+--     `user_id` bigint NOT NULL,
+--     `is_read` tinyint (1) DEFAULT '0',
+--     `read_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+--     PRIMARY KEY (`read_id`),
+--     KEY `message_id` (`message_id`),
+--     KEY `user_id` (`user_id`),
+--     CONSTRAINT `message_reads_ibfk_1` FOREIGN KEY (`message_id`) REFERENCES `messages` (`message_id`) ON DELETE CASCADE,
+--     CONSTRAINT `message_reads_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
+--   ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 --
 -- Dumping data for table `message_reads`
 --
-LOCK TABLES `message_reads` WRITE;
-
-/*!40000 ALTER TABLE `message_reads` DISABLE KEYS */;
-
-/*!40000 ALTER TABLE `message_reads` ENABLE KEYS */;
-
-UNLOCK TABLES;
-
 --
--- Table structure for table `messages`
---
-DROP TABLE IF EXISTS `messages`;
-
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-
-/*!50503 SET character_set_client = utf8mb4 */;
-
-CREATE TABLE
-  `messages` (
-    `message_id` bigint NOT NULL AUTO_INCREMENT,
-    `user_id` bigint NOT NULL,
-    `room_id` bigint NOT NULL,
-    `message_type` enum ('TEXT', 'AUDIO', 'FILE') COLLATE utf8mb4_unicode_ci DEFAULT 'TEXT',
-    `text` text COLLATE utf8mb4_unicode_ci,
-    `is_update` tinyint (1) DEFAULT '0',
-    `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    `timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`message_id`),
-    KEY `user_id` (`user_id`),
-    KEY `room_id` (`room_id`),
-    CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
-    CONSTRAINT `messages_ibfk_2` FOREIGN KEY (`room_id`) REFERENCES `chat_rooms` (`room_id`) ON DELETE CASCADE
-  ) ENGINE = InnoDB AUTO_INCREMENT = 220 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2743,7 +2284,7 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE
   `users` (
     `user_id` bigint NOT NULL AUTO_INCREMENT,
-    `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `username` varchar(50) NOT NULL,
     `email` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `password` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
