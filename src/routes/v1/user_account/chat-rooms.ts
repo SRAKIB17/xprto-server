@@ -29,7 +29,7 @@ chat_rooms.get("/", paginationHandler({
             ],
             columns: `
              chat_rooms.*,
-              MAX(chat_messages.updated_at) AS last_message_updated_at,
+              MAX(chat_messages.timestamp) AS last_message_updated_at,
               chat_messages.text AS message
             `,
             sort: {
@@ -54,7 +54,7 @@ chat_rooms.get("/", paginationHandler({
         });
 
         const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
-
+        console.log(error)
         if (!success) {
             return {
                 data: [],
@@ -261,7 +261,7 @@ chat_rooms.get("/:room_id/chats", paginationHandler({
         const find_message = find(TABLES.CHAT_ROOMS.messages, {
             where: `room_id = ${check_room?.room_id}`,
             sort: {
-                timestamp: 1
+                message_id: -1
             },
             limitSkip: {
                 limit: limit,

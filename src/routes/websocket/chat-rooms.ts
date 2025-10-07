@@ -1,4 +1,4 @@
-import { insert } from "@tezx/sqlx/mysql";
+import { insert, sanitize, update } from "@tezx/sqlx/mysql";
 import { Callback, Router } from "tezx";
 import { upgradeWebSocket } from "tezx/bun";
 import { DirectoryServe, filename } from "../../config.js";
@@ -59,7 +59,6 @@ chat_rooms.get("/:room_id", upgradeWebSocket((ctx) => {
                 }
                 const parsed = JSON.parse(data.toString());
                 const { type, ...props } = parsed;
-
                 if (type === 'connecting') {
                     const { user_role, user_id, avatar } = parsed?.payload;
                     let id = JSON.stringify({ user_role, user_id, avatar });
@@ -97,6 +96,33 @@ chat_rooms.get("/:room_id", upgradeWebSocket((ctx) => {
                     })
                     return
                 }
+                if (type === 'read') {
+                    const { room_id, last_message_id, user_id, role } = parsed;
+
+                    // DB update: এই room এর সব message যেগুলো recipient দেখেছে
+                    const query = update(TABLES.CHAT_ROOMS.messages, {
+                        values: {
+                            is_read: 1,
+                        },
+                        where: `room_id = ${sanitize(room_id)} AND message_id <= ${sanitize(last_message_id)} AND NOT (user_id = ${sanitize(ctx.auth.user_info.user_id ?? user_id)} AND sender_role = '${(ctx.auth.role ?? role)?.[0]}')`
+                    })
+
+                    await dbQuery(query);
+                    // Broadcast update to other clients in room
+                    const clients = chat_room_clients.get(room_id);
+                    clients?.forEach((clientWs) => {
+                        if (clientWs.readyState === WebSocket.OPEN) {
+                            clientWs.send(JSON.stringify({
+                                type: 'read_receipt',
+                                last_message_id,
+                                user_id: ctx.auth.user_info.user_id
+                            }));
+                        }
+                    });
+
+                    return;
+                }
+
                 if (type === 'message') {
                     const { attachments, message_type, text, message_id } = props;
                     let finalAttachments = [];
