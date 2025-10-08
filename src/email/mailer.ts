@@ -16,6 +16,10 @@ type EmailData = {
     filePath?: string[];
 } & (
         {
+            templateName: "join-as-gym",
+            templateData: { name: string, email: string, password: string, verificationUrl: string, year: number }
+        } |
+        {
             templateName: "verify-email",
             templateData: { name: string, verificationUrl: string }
         } |

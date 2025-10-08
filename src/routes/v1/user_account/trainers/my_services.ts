@@ -6,7 +6,6 @@ import { dbQuery } from "../../../../models/index.js";
 import { TABLES } from "../../../../models/table.js";
 import { copyFile, safeUnlink } from "../../../../utils/fileExists.js";
 
-
 // import user_account_document_flag from "./flag-document.js";
 const myServices = new Router({
     basePath: '/my-services'
@@ -126,7 +125,8 @@ myServices.put('/add-update', async (ctx) => {
 
     const {
         title, description, duration_minutes, package_name, package_features, price, discount,
-        delivery_mode, requirements, video, images, certificates, faqs, mode, status, service_id
+        delivery_mode, requirements, video, images, certificates, faqs, mode, status, service_id,
+        per_unit, recurrence_days, recurrence_type, time_from
     } = body;
 
     let finalVideo = undefined;
@@ -154,8 +154,12 @@ myServices.put('/add-update', async (ctx) => {
     }
     const json = {
         title,
+        time_from,
         trainer_id: userId,
         description,
+        per_unit,
+        recurrence_days: Array.isArray(recurrence_days) && recurrence_days?.length ? JSON.stringify(recurrence_days) : undefined,
+        recurrence_type,
         duration_minutes: duration_minutes || undefined,
         package_name: package_name || undefined,
         package_features: Array.isArray(package_features) ? JSON.stringify(package_features) : undefined,

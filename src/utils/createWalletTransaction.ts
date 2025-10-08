@@ -25,6 +25,7 @@ interface WalletTransactionOptions {
     reference_type?: string;
     reference_id?: string;
     metadata?: any;
+    payment_id?: string,
     initiated_by?: number;
     initiated_role?: 'system' | 'admin' | 'gym' | 'trainer' | 'client';
     note?: string;
@@ -154,8 +155,8 @@ export async function performWalletTransaction(ctx: Context, opts: WalletTransac
         // 5️⃣ Insert transaction record
         const [txnResult] = await conn.query(
             `INSERT INTO ${TABLES.WALLETS.transactions} 
-            (wallet_id, idempotency_key, type, amount, fee, currency, balance_after, hold_change, payment_method, external_txn_id, reference_type, reference_id, metadata, initiated_by, initiated_role, note)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (wallet_id, idempotency_key, type, amount, fee, currency, balance_after, hold_change, payment_method, external_txn_id, reference_type, reference_id, metadata, initiated_by, initiated_role, note, payment_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 wallet?.wallet_id,
                 idempotency_key,
@@ -173,12 +174,15 @@ export async function performWalletTransaction(ctx: Context, opts: WalletTransac
                 opts.initiated_by ?? null,
                 opts.initiated_role ?? 'system',
                 opts.note ?? null,
+                opts?.payment_id ?? null
+
             ]
         );
         await conn.commit();
         return { success: true, balance_after: available, txn_id: (txnResult as any).insertId };
     }
     catch (err) {
+        console.log(err)
         await conn.rollback();
         return { success: false, error: (err as Error).message };
     } finally {

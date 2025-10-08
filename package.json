@@ -24,16 +24,18 @@
   "dependencies": {
     "@tezx/devtools": "^1.0.13",
     "@tezx/sqlx": "^1.0.1",
+    "crypto-js": "^4.2.0",
     "i": "^0.3.7",
     "mysql2": "^3.15.1",
     "nodemailer": "^7.0.6",
     "npm": "^11.6.1",
     "razorpay": "^2.9.6",
-    "tezx": "^3.0.14-beta",
+    "tezx": "^3.0.14-beta.1",
     "typescript": "^5.8.2"
   },
   "devDependencies": {
     "@types/bun": "^1.2.22",
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^22.13.14",
     "@types/nodemailer": "^7.0.2"
   }

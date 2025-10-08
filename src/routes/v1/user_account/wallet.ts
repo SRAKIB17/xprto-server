@@ -16,7 +16,7 @@ my_wallet.get("/", async (ctx) => {
         return ctx.status(401).json({ message: "Unauthorized" });
     }
 
-    // try to find existing wallet
+    // Try to find existing wallet
     const { result: wallet } = await dbQuery(
         find(TABLES.WALLETS.WALLETS, {
             where: `user_id = ${user_id} AND user_role = '${role}'`,
@@ -24,34 +24,48 @@ my_wallet.get("/", async (ctx) => {
         })
     );
 
-    if (wallet?.length) {
-        return ctx.json({ wallet: wallet[0] });
+    let walletData: any = wallet?.[0];
+
+    // Create new wallet if not exists
+    if (!walletData) {
+        const { result, success, error } = await dbQuery<any>(
+            insert(TABLES.WALLETS.WALLETS, {
+                user_role: role,
+                user_id,
+            })
+        );
+
+        if (!success) {
+            AppNotificationToast(ctx, {
+                message: "Failed to create wallet",
+                title: "Create Wallet",
+                type: "error",
+            });
+            return ctx.status(500).json({ message: "Failed to create wallet" });
+        }
+
+        const { result: newWallet } = await dbQuery(
+            find(TABLES.WALLETS.WALLETS, {
+                where: `wallet_id = ${result.insertId}`,
+                limitSkip: { limit: 1 },
+            })
+        );
+        walletData = newWallet?.[0];
     }
 
-    // create new wallet
-    const { result, success, error } = await dbQuery<any>(
-        insert(TABLES.WALLETS.WALLETS, {
-            user_role: role,
-            user_id,
+    // Fetch recent transactions (limit to last 5)
+    const { result: recentTransactions } = await dbQuery(
+        find(TABLES.WALLETS.transactions, {
+            where: `wallet_id = ${walletData.wallet_id}`,
+            sort: "created_at DESC",
+            limitSkip: { limit: 8 },
         })
     );
 
-    if (!success) {
-        AppNotificationToast(ctx, {
-            message: "Failed to create wallet",
-            title: "Create wallet",
-            type: "error"
-        })
-        return ctx.status(500).json({ message: "Failed to create wallet" });
-    }
-
-    const { result: newWallet } = await dbQuery(
-        find(TABLES.WALLETS.WALLETS, {
-            where: `wallet_id = ${result.insertId}`,
-            limitSkip: { limit: 1 },
-        })
-    );
-    return ctx.json({ wallet: newWallet?.[0] });
+    return ctx.json({
+        wallet: walletData,
+        transactions: recentTransactions || [],
+    });
 });
 
 my_wallet.get("/transition-history", paginationHandler({

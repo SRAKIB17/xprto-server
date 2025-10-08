@@ -42,6 +42,7 @@ CREATE TABLE
         -- Business references
         reference_type VARCHAR(50) DEFAULT NULL, -- e.g. 'booking','invoice' , "subscription"
         reference_id VARCHAR(191) DEFAULT NULL, -- internal/external id
+        payment_id VARCHAR(200) DEFAULT NULL,
         -- Metadata
         metadata JSON DEFAULT NULL,
         -- Lifecycle

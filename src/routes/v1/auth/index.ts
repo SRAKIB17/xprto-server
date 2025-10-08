@@ -16,13 +16,119 @@ import { Router } from "tezx";
 import { getConnInfo } from "tezx/bun";
 import { deleteCookie, setCookie } from "tezx/helper";
 import rateLimiter from "tezx/middleware/rate-limiter";
-import { CLIENT_REDIRECT_URL, cookieDOMAIN, FORGET_PASSWORD_EXP, SITE_TITLE, support_email } from "../../../config.js";
+import { CLIENT_REDIRECT_URL, cookieDOMAIN, DirectoryServe, filename, FORGET_PASSWORD_EXP, SITE_TITLE, support_email } from "../../../config.js";
 import { sendEmailWithTemplate } from "../../../email/mailer.js";
 import { dbQuery, TABLES } from "../../../models/index.js";
 import tokenEncodedCrypto, { wrappedCryptoToken } from "../../../utils/crypto.js";
 import { encrypt } from "../../../utils/encrypted.js";
+import { copyFile } from "../../../utils/fileExists.js";
 import { AuthorizationBasicAuthUser } from "./basicAuth.js";
 const auth = new Router();
+
+auth.post('/join-gym', async (ctx) => {
+    try {
+        const body = await ctx.req.json();
+        const {
+            fullName, email, mobile, gymName, district, state,
+            address, postalCode, clients, gymType, ownerPhoto, gymLogo
+        } = body;
+
+        // === Handle Owner Photo ===
+        let avatar;
+        if (ownerPhoto) {
+            const success = await copyFile(ownerPhoto, DirectoryServe.avatar('gym', ownerPhoto), true);
+            if (success) avatar = `/gym/${filename(ownerPhoto)}`;
+        }
+
+        // === Handle Gym Logo ===
+        let logo_url;
+        if (gymLogo) {
+            const success = await copyFile(gymLogo, DirectoryServe.avatar('gym/logo', gymLogo), true);
+            if (success) logo_url = `/gym/logo/${filename(gymLogo)}`;
+        }
+
+        // === Generate Random Password ===
+        const randomPassword = Math.random().toString(36).slice(-8); // 8-char random password
+        const { hash: hashed, salt } = await wrappedCryptoToken({
+            wrappedCryptoString: randomPassword,
+        });
+
+        // === Prepare Gym Data ===
+        const gymData = {
+            fullname: fullName,
+            email,
+            phone: mobile,
+            salt,
+            hashed: hashed,
+            gym_name: gymName,
+            address,
+            district,
+            state,
+            postal_code: postalCode,
+            total_clients: clients,
+            gym_type: gymType,
+            avatar,
+            logo_url,
+        };
+
+        // === Save to DB ===
+        const { success: dbSuccess, result, error } = await dbQuery<any>(insert(TABLES.GYMS.gyms, gymData as any));
+        if (!dbSuccess) {
+            if (error?.errno === 1062) {
+                return ctx.json({ success: false, message: 'Email already exists' });
+            }
+            if (error?.errno === 1452) {
+                return ctx.json({ success: false, message: 'Invalid foreign key data' });
+            }
+            return ctx.json({ success: false, message: 'Failed to create account. Please try again!' });
+        }
+
+        // === Generate Email Verification Token ===
+        const payload = JSON.stringify({
+            email,
+            role: 'gym',
+            name: fullName,
+            exp: Date.now() + 60 * 60_000 // 60 min expiry
+        });
+
+        const { success: encSuccess, encrypted } = encrypt(payload, process.env.OTP_ENCRYPTION_KEY!);
+
+        if (!encSuccess) {
+            console.error("Encryption failed for gym email verification:", payload);
+            return ctx.json({
+                success: false,
+                message: "Something went wrong. Credentials could not be sent to your email. Please reset your password"
+            });
+        }
+
+        const url = CLIENT_REDIRECT_URL.verify_email(encrypted as string);
+
+        // === Send Email ===
+        await sendEmailWithTemplate({
+            to: email,
+            templateName: 'join-as-gym',
+            subject: `Your Gym Owner Account - ${SITE_TITLE}`,
+            templateData: {
+                name: fullName,
+                email,
+                password: randomPassword,
+                verificationUrl: url,
+                year: new Date().getFullYear(),
+            },
+        });
+        // === Return Success Response ===
+        return await ctx.json({
+            success: true,
+            message: "Gym registered successfully! Please check your email for login details.",
+            tempPassword: randomPassword, // optional: return for dev/testing
+            gymId: result.insertId,
+        });
+
+    } catch (err) {
+        console.error("Join Gym Error:", err);
+        return ctx.json({ success: false, message: "Failed to register gym" });
+    }
+});
 
 // auth.post('/email-availability', async (ctx) => {
 //     const body = await ctx.req.json();

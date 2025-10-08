@@ -11,6 +11,10 @@ CREATE TABLE
         price DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
         discount DECIMAL(5, 2) DEFAULT 0.00, -- percentage discount
         currency VARCHAR(3) NOT NULL DEFAULT 'INR',
+        per_unit ENUM ('session', 'day', 'week', 'month', 'yearly') NOT NULL DEFAULT 'session',
+        recurrence_type ENUM ('None', 'Daily', 'Custom') DEFAULT 'None',
+        recurrence_days JSON DEFAULT NULL,
+        time_from TIME NOT NULL, -- FIXED: was DATE
         duration_minutes INT UNSIGNED DEFAULT 60,
         -- Service Delivery
         delivery_mode ENUM ('online', 'doorstep', 'hybrid') NOT NULL DEFAULT 'online',

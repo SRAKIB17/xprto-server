@@ -12,14 +12,29 @@ type ToastType = "info" | "success" | "error" | "warning" | "custom";
 export function AppNotificationToast(ctx: Context, message: {
     type?: ToastType;
     title?: string;
+    socket_id?: string,
     message?: string;
     duration?: number; // ms, 0 = persistent
 }) {
-    let socket_id = ctx.req.header("socket-id");
+    let socket_id = ctx.req.header("socket-id") ?? message?.socket_id;
     if (!socket_id) return;
     return clients.get(socket_id)?.send(JSON.stringify({
         type: 'toast',
         message: message,
+    }))
+}
+
+export function AppNotificationRefetch(ctx: Context, loading: {
+    socket_id?: string,
+    loading: {
+        wallet: boolean,
+    }
+}) {
+    let socket_id = ctx.req.header("socket-id") ?? loading?.socket_id;
+    if (!socket_id) return;
+    return clients.get(socket_id)?.send(JSON.stringify({
+        type: 'loading',
+        loading: loading?.loading,
     }))
 }
 

@@ -1,6 +1,6 @@
 
 export const BASE_URL = 'http://localhost:8080';
-export const AI_URL = "http://localhost:8081";
+
 export const CDN_URL = "http://localhost:8082";
 export const cookieDOMAIN = "localhost";
 
