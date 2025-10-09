@@ -24,6 +24,7 @@ export const TABLES = {
         HISTORY: concat("abuse_reports")
     },
     WALLETS: {
+        WALLET_PAYOUTS: concat("wallet_payouts"),
         WALLETS: concat('wallets'),
         transactions: concat("wallet_transactions")
     },

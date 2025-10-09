@@ -1,7 +1,10 @@
 import { find, insert, mysql_date, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
+import { generateUUID } from "tezx/helper";
 import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../models/index.js";
+import { performWalletTransaction } from "../../../utils/createWalletTransaction.js";
+import { generateTxnID } from "../../../utils/generateTxnID.js";
 import { AppNotificationToast } from "../../websocket/notification.js";
 
 const my_wallet = new Router({
@@ -138,145 +141,178 @@ my_wallet.get("/transition-history", paginationHandler({
 })
 );
 
-// notifications.delete('/delete/:id', async (ctx) => {
-//     const { id } = ctx.req.params;
-//     const { role, user_info } = ctx.auth || {};
-//     const userId = user_info?.user_id;
+my_wallet.post('/withdraw', async (ctx) => {
+    try {
+        const body = await ctx.req.json();
+        let {
+            withdraw: {
+                fee = 0,
+                upi,
+                amount,
+                wallet_id,
+                payout_type = 'upi',
+                provider = 'razorpay',
+                payout_method = 'razorpayx',
+                account_holder_name
+            },
+            prefill
+        } = body;
 
-//     if (!id) {
-//         return ctx.json({ success: false, message: "Notification ID is required" });
-//     }
-//     try {
-//         // 2️⃣ Delete the notification
-//         const deleteSql = destroy(TABLES.NOTIFICATIONS, {
-//             where: `notification_id = ${sanitize(id)} AND recipient_type = "${role}" AND recipient_id = ${userId}`
-//         })
-//         const { success: delSuccess } = await dbQuery(deleteSql);
-//         if (delSuccess) {
-//             return ctx.json({ success: true, message: "Notification deleted successfully" });
-//         } else {
-//             return ctx.json({ success: false, message: "Failed to delete notification" });
-//         }
-//     } catch (err) {
-//         return ctx.json({ success: false, message: "Internal server error" });
-//     }
-// });
 
-// // user_account_document_flag.delete('/documents/flag/:doc_id', async (ctx) => {
-// //     const doc_id = ctx.req.params?.doc_id;
-// //     const user_id = ctx.auth?.user_info?.user_id || '';
+        const role = ctx?.auth?.role;
+        const user_id = ctx?.auth?.user_info?.user_id;
 
-// //     if (!doc_id || !user_id) {
-// //         return ctx.json({
-// //             success: false,
-// //             message: "Missing user ID or document ID.",
-// //         }, 400);
-// //     }
+        if (!user_id || !role) {
+            return ctx.status(401).json({ success: false, message: "Unauthorized" });
+        }
 
-// //     try {
-// //         const { success, result } = await db
-// //             .delete(table_schema.document_reactions, {
-// //                 where: db.condition({
-// //                     user_id,
-// //                     doc_id,
-// //                 }),
-// //             })
-// //             .execute();
+        // ✅ Validate amount and UPI
+        if (!amount || amount <= 0) {
+            return ctx.json({ success: false, message: "Invalid withdrawal amount" });
+        }
+        if (payout_type === "upi" && (!upi || !/^[\w.\-_]{2,}@[a-zA-Z]{2,}$/.test(upi))) {
+            return ctx.json({ success: false, message: "Invalid UPI ID format" });
+        }
 
-// //         if (success) {
-// //             return ctx.json({
-// //                 success: true,
-// //                 message: "Your reaction has been removed successfully.",
-// //                 data: result,
-// //             });
-// //         } else {
-// //             return ctx.json({
-// //                 success: false,
-// //                 message: "Reaction not found or could not be deleted.",
-// //             }, 404);
-// //         }
+        // ✅ Generate IDs
+        let idempotency_key = generateUUID();
+        let txn_id = generateTxnID("WTDRW");
 
-// //     } catch (error) {
-// //         return ctx.json({
-// //             success: false,
-// //             message: "Internal server error while removing the reaction.",
-// //         }, 500);
-// //     }
-// // });
-// abuse_reports.post('/documents/flag/:doc_id', async (ctx) => {
-//     const doc_id = ctx.req.params?.doc_id;
-//     const { user_id, fullname, email } = ctx.auth?.user_info || {};
-//     const { description, reason, url, title } = await ctx.req.json();
+        // ✅ Insert payout request
+        const { success: insertSuccess, result, error } = await dbQuery<any>(insert(TABLES.WALLETS.WALLET_PAYOUTS, {
+            wallet_id,
+            payout_type,
+            provider,
+            payout_method,
+            upi_id: upi,
+            account_holder_name,
+            idempotency_key,
+            external_txn_id: txn_id,
+            amount,
+            fee,
+            status: 'requested'
+        }));
 
-//     if (!user_id) {
-//         return ctx.status(400).json({
-//             success: false,
-//             message: "Please login to flag a document.",
-//         });
-//     }
-//     if (!user_id || !doc_id || !reason) {
-//         return ctx.status(400).json({
-//             success: false,
-//             message: "Missing required data (user, document, or reason).",
-//         });
-//     }
+        console.log(insertSuccess, error)
+        if (!insertSuccess) {
+            AppNotificationToast(ctx, {
+                title: "Withdraw Failed",
+                message: "Unable to request withdrawal. Please try again later.",
+                type: "error"
+            });
+            return ctx.json({ success: false, message: "Failed to create payout request" });
+        }
 
-//     // 🔔 Notify via email
-//     await sendEmail({
-//         to: email || 'rakibulssc5@gmail.com',
-//         subject: "[PaperNxt] Document Flag Received – Thank You for Reporting",
-//         templateData: {
-//             description,
-//             name: fullname || "User",
-//             reason,
-//             title,
-//             url: `${CLIENT_URL}${url}`,
-//         },
-//         templateName: 'flag-document-notify-user',
-//     });
+        // ✅ Hold wallet balance for withdrawal
+        await performWalletTransaction(
+            { role, user_id },
+            {
+                amount: amount,
+                type: 'hold',
+                payment_method: payout_method,
+                external_txn_id: txn_id,
+                idempotency_key: idempotency_key,
+                note: "Withdrawal request initiated",
+                fee,
+                reference_type: "withdraw",
+                reference_id: result.insertId
+            }
+        );
+        // ✅ Send success toast
+        AppNotificationToast(ctx, {
+            title: "Withdrawal Requested",
+            message: `₹${amount} withdrawal request received successfully.`,
+            type: "success"
+        });
 
-//     try {
-//         const { success, result, error, errno } = await db.create(
-//             table_schema.document_flags,
-//             {
-//                 user_id,
-//                 doc_id,
-//                 reason,
-//                 description,
-//             },
-//             {
-//                 onDuplicateUpdateFields: ['reason', 'description', 'resolved_at', 'is_resolved']
-//             }
-//         ).execute();
+        return ctx.json({
+            success: true,
+            message: "Withdrawal request submitted successfully",
+            txn_id,
+            payout_id: result.insertId,
+        });
 
-//         if (success) {
-//             return ctx.json({
-//                 success: true,
-//                 message: "Document has been flagged successfully.",
-//                 data: result,
-//             });
-//         } else {
-//             if (errno === 1062) {
-//                 return ctx.status(409).json({
-//                     success: false,
-//                     message: "You’ve already flagged this document.",
-//                 });
-//             }
+    } catch (error) {
+        AppNotificationToast(ctx, {
+            title: "Error",
+            message: "Something went wrong while processing withdrawal",
+            type: "error"
+        });
+        return ctx.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+});
 
-//             return ctx.status(500).json({
-//                 success: false,
-//                 message: error || "Failed to flag the document.",
-//             });
-//         }
-//         // ctx.req.remoteAddress.address + ctx.req.remoteAddress.port
+my_wallet.get("/payout-history", paginationHandler({
+    getDataSource: async (ctx, { page, limit, offset }) => {
 
-//     } catch (error) {
-//         return ctx.status(500).json({
-//             success: false,
-//             message: "Internal server error while flagging the document.",
-//         });
-//     }
-// });
+        const { role } = ctx.auth || {};
+        const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
+        let condition = `wallets.user_id = ${user_id} AND wallets.user_role = '${role}'`;
+        const { start, search, end, type } = ctx.req.query;
 
+        if (start) {
+            condition += ` AND wallet_payouts.created_at BETWEEN ${sanitize(start)} AND ${sanitize(end ?? mysql_date())} `
+        }
+        // if (search) {
+        //     condition += ` AND (wallet_transactions.idempotency_key = ${sanitize(search)} OR wallet_transactions.external_txn_id = ${sanitize(search)})`
+        // }
+        // if (type === 'in') {
+        //     condition += ` AND wallet_transactions.amount > 0`
+        // }
+        // if (type === 'out') {
+        //     condition += ` AND wallet_transactions.amount < 0`
+        // }
+        // find(TABLES.WALLETS.WALLETS, {
+        //     where: `user_id = ${user_id} AND user_role = '${role}'`,
+        //     limitSkip: { limit: 1 },
+        // })
+
+        let sql = find(TABLES.WALLETS.WALLET_PAYOUTS, {
+            joins: [
+                {
+                    type: "LEFT JOIN",
+                    table: TABLES.WALLETS.WALLETS,
+                    on: 'wallet_payouts.wallet_id = wallets.wallet_id',
+                }
+            ],
+            columns: "wallet_payouts.*",
+            sort: {
+                created_at: -1
+            },
+            limitSkip: {
+                limit: limit,
+                skip: offset
+            },
+            where: condition,
+        })
+        let count = find(TABLES.WALLETS.WALLET_PAYOUTS, {
+            joins: [
+                {
+                    type: "LEFT JOIN",
+                    table: TABLES.WALLETS.WALLETS,
+                    on: 'wallet_payouts.wallet_id = wallets.wallet_id',
+                }
+            ],
+            columns: 'count(*) as count',
+            where: condition,
+        })
+        const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
+        console.log(result)
+        if (!success) {
+            return {
+                data: [],
+                total: 0
+            }
+        }
+        return {
+            data: result?.[0],
+            total: result?.[1]?.[0]?.count
+        }
+    },
+})
+);
 
 export default my_wallet;

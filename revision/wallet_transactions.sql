@@ -60,46 +60,60 @@ CREATE TABLE
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE
-    wallet_topups (
-        topup_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        wallet_id BIGINT NOT NULL,
-        payment_provider VARCHAR(50) NOT NULL, -- stripe/bkash/sslcommerz/etc
-        provider_payment_id VARCHAR(191) DEFAULT NULL,
+    wallet_payouts (
+        payout_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        wallet_id BIGINT UNSIGNED NOT NULL, -- recipient wallet
         amount DECIMAL(14, 2) NOT NULL,
-        fee DECIMAL(14, 2) DEFAULT 0.00,
-        net_amount DECIMAL(14, 2) GENERATED ALWAYS AS (amount - fee) STORED,
-        currency VARCHAR(3) NOT NULL DEFAULT 'BDT',
-        status ENUM ('initiated', 'processing', 'completed', 'failed') NOT NULL DEFAULT 'initiated',
-        idempotency_key VARCHAR(191) DEFAULT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (wallet_id) REFERENCES wallets (wallet_id)
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-
-CREATE TABLE
-    payouts (
-        payout_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        wallet_id BIGINT NOT NULL, -- recipient wallet
-        amount DECIMAL(14, 2) NOT NULL,
-        currency VARCHAR(3) DEFAULT 'BDT',
+        currency VARCHAR(3) DEFAULT 'INR',
         provider VARCHAR(50) DEFAULT NULL, -- bank/pg
         provider_payout_id VARCHAR(191) DEFAULT NULL,
         fee DECIMAL(14, 2) DEFAULT 0.00,
         status ENUM ('requested', 'processing', 'completed', 'failed') DEFAULT 'requested',
-        requested_by BIGINT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (wallet_id) REFERENCES wallets (wallet_id)
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
--- Optional: ledger table for audit of debits/credits (double-entry)
 CREATE TABLE
-    wallet_ledger (
-        ledger_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        txn_id BIGINT NOT NULL, -- link to wallet_transactions
-        account_type ENUM ('user_wallet', 'platform_revenue', 'escrow') NOT NULL,
-        debit DECIMAL(14, 2) DEFAULT 0.00,
-        credit DECIMAL(14, 2) DEFAULT 0.00,
+    wallet_payouts (
+        payout_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        wallet_id BIGINT UNSIGNED NOT NULL, -- Recipient wallet
+        -- Payment Info
+        payout_type ENUM ('upi', 'bank', 'wallet', 'manual') DEFAULT 'upi', -- Type of payout
+        payout_method VARCHAR(100) DEFAULT NULL, -- e.g., 'razorpay', 'cashfree', 'manual'
+        provider VARCHAR(100) DEFAULT NULL, -- e.g., 'RazorpayX', 'Paytm', 'Bank of India'
+        -- Account Info
+        upi_id VARCHAR(191) DEFAULT NULL, -- UPI address like name@bank
+        account_number VARCHAR(50) DEFAULT NULL,
+        ifsc_code VARCHAR(20) DEFAULT NULL,
+        account_holder_name VARCHAR(191) DEFAULT NULL,
+        -- Transaction Info
+        provider_payout_id VARCHAR(191) DEFAULT NULL, -- Razorpay/Cashfree payout ID
+        reference_id VARCHAR(191) DEFAULT NULL, -- Internal or external reference
+        idempotency_key VARCHAR(191) DEFAULT NULL, -- ensure idempotent ops,
+        external_txn_id VARCHAR(191) DEFAULT NULL, -- gateway txn id, bank ref no.
+        txn_note VARCHAR(255) DEFAULT NULL, -- Description or note for payout
+        -- Financial Info
+        amount DECIMAL(14, 2) NOT NULL,
+        fee DECIMAL(14, 2) DEFAULT 0.00,
+        tax DECIMAL(14, 2) DEFAULT 0.00,
+        total_amount DECIMAL(14, 2) GENERATED ALWAYS AS (amount - fee - tax) STORED,
+        currency VARCHAR(3) DEFAULT 'INR',
+        -- Status Info
+        status ENUM (
+            'requested',
+            'processing',
+            'completed',
+            'failed',
+            'reversed'
+        ) DEFAULT 'requested',
+        failure_reason TEXT DEFAULT NULL,
+        -- Meta
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (txn_id) REFERENCES wallet_transactions (txn_id)
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (wallet_id) REFERENCES wallets (wallet_id),
+        INDEX (idempotency_key),
+        INDEX (wallet_id),
+        INDEX (reference_id),
+        INDEX (status)
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;

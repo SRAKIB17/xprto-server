@@ -108,7 +108,10 @@ KYC.post("/kyc", async (ctx) => {
         })
     );
     if (!existingKYC[0]?.paid_first_attempt) {
-        await performWalletTransaction(ctx, {
+        await performWalletTransaction({
+            role: role,
+            user_id: user_id,
+        }, {
             amount: pay_amount,
             type: 'payment',
             payment_method: "wallet",

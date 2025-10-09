@@ -35,10 +35,10 @@ interface WalletTransactionOptions {
 /**
  * Safely perform a wallet transaction
  */
-export async function performWalletTransaction(ctx: Context, opts: WalletTransactionOptions) {
+export async function performWalletTransaction(user: { role: string, user_id: number }, opts: WalletTransactionOptions) {
     const conn = await pool.getConnection();
     try {
-        const { role, user_info: { user_id } } = ctx.auth ?? {};
+        const { role, user_id } = user;
 
         if (!user_id || !role) throw new Error('Unauthenticated: missing user context');
 

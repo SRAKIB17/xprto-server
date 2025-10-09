@@ -5,6 +5,16 @@ const appsData = new Router({
     basePath: '/apps-data'
 });
 let apps = {
+    withdraw: {
+        trainer: {
+            fee_percentage: 5,
+            currency: "INR",
+        },
+        client: {
+            fee_percentage: 5,
+            currency: "INR",
+        }
+    },
     kyc_amount: {
         amount: 200,
         currency: "INR"

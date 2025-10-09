@@ -75,14 +75,6 @@ razorpay.post('/checkout', async (ctx) => {
   const { create, prefill, order, response } = await ctx.req.json();
   try {
 
-    // Set auth context (optional, depends on your middleware)
-    ctx.auth = {
-      role: prefill?.role,
-      user_info: {
-        user_id: prefill?.user_id
-      }
-    };
-
     const { reference_type, type, reference_id, currency } = order;
     const key_id = process.env.RAZORPAY_KEY_ID;
     const secret: any = process.env.RAZORPAY_KEY_SECRET;
@@ -110,7 +102,10 @@ razorpay.post('/checkout', async (ctx) => {
     };
 
     // Perform wallet transaction
-    await performWalletTransaction(ctx, {
+    await performWalletTransaction({
+      user_id: prefill?.user_id,
+      role: prefill?.role,
+    }, {
       amount: order?.amount,
       type: type,
       payment_id: razorpay_payment_id,
@@ -222,7 +217,6 @@ razorpay.get("/checkout/ui", async (ctx) => {
   const payment_info = JSON.parse(decrypted ?? "{}");
   const { create, prefill, ...rest } = payment_info;
   const key = process.env.RAZORPAY_KEY_ID!;
-
   if (Date.now() > rest?.exp) {
     return ctx.html(`
 <!DOCTYPE html>
