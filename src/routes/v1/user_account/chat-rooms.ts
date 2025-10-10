@@ -154,7 +154,7 @@ chat_rooms.get("/:room_id", async (ctx) => {
             success: true,
             type: "group",
             data: {
-                room: check_room,
+                ...check_room,
                 members: memberships,
             },
         });
