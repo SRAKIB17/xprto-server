@@ -12,41 +12,50 @@ chat_rooms.get("/", paginationHandler({
     getDataSource: async (ctx, { page, limit, offset }) => {
         const { role } = ctx.auth || {};
         const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
-        let condition = `chat_room_memberships.user_id = "${user_id}" AND chat_room_memberships.user_role = '${role}'`;
+        let condition = `crm.user_id = "${user_id}" AND crm.user_role = '${role}'`;
 
-        let sql = find(TABLES.CHAT_ROOMS.chat_rooms, {
+        let sql = find(`${TABLES.CHAT_ROOMS.chat_rooms} AS cr`, {
             joins: [
                 {
                     type: "LEFT JOIN",
-                    on: `chat_rooms.room_id = chat_room_memberships.room_id`,
-                    table: TABLES.CHAT_ROOMS.memberships,
+                    table: `${TABLES.CHAT_ROOMS.memberships} AS crm`,
+                    on: `cr.room_id = crm.room_id`,
                 },
                 {
+                    // Subquery join for latest message
                     type: "LEFT JOIN",
-                    on: `chat_rooms.room_id = chat_messages.room_id`,
-                    table: TABLES.CHAT_ROOMS.messages,
+                    table: `( 
+                SELECT m1.room_id, m1.text, m1.timestamp 
+                FROM ${TABLES.CHAT_ROOMS.messages} AS m1
+                INNER JOIN (
+                    SELECT room_id, MAX(timestamp) AS max_time
+                    FROM ${TABLES.CHAT_ROOMS.messages}
+                    GROUP BY room_id
+                ) AS m2 ON m1.room_id = m2.room_id AND m1.timestamp = m2.max_time
+            ) AS cm`,
+                    on: `cr.room_id = cm.room_id`,
                 },
             ],
             columns: `
-             chat_rooms.*,
-              MAX(chat_messages.timestamp) AS last_message_updated_at,
-              chat_messages.text AS message
-            `,
+        cr.*,
+        cm.text AS message,
+        cm.timestamp AS last_message_updated_at
+    `,
+            where: condition,
             sort: {
-                "last_message_updated_at": -1
+                "cm.timestamp": -1
             },
             limitSkip: {
-                limit: limit,
+                limit,
                 skip: offset
-            },
-            where: condition,
+            }
         });
 
-        let count = find(TABLES.CHAT_ROOMS.chat_rooms, {
+        let count = find(`${TABLES.CHAT_ROOMS.chat_rooms} as cr`, {
             joins: [
                 {
-                    on: `chat_rooms.room_id = chat_room_memberships.room_id`,
-                    table: TABLES.CHAT_ROOMS.memberships,
+                    on: `cr.room_id = crm.room_id`,
+                    table: `${TABLES.CHAT_ROOMS.memberships} as crm`,
                 },
             ],
             columns: 'count(*) as count',
@@ -54,7 +63,7 @@ chat_rooms.get("/", paginationHandler({
         });
 
         const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
-        console.log(error)
+        console.log(result)
         if (!success) {
             return {
                 data: [],

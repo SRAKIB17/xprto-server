@@ -15,7 +15,6 @@ const chat_rooms = new Router({
 
 chat_rooms.get("/:room_id", upgradeWebSocket((ctx) => {
     // Extract identity (user or guest)
-
     return {
         open: async (ws) => {
             let check = await AuthorizationControllerUser({ credentials: { token: ctx.req.query?.s_id }, ctx });
@@ -124,7 +123,7 @@ chat_rooms.get("/:room_id", upgradeWebSocket((ctx) => {
                 }
 
                 if (type === 'message') {
-                    const { attachments, message_type, text, message_id } = props;
+                    const { attachments, message_type, text, message_id, room_id } = props;
                     let finalAttachments = [];
                     if (Array.isArray(attachments)) {
                         for (const att of attachments) {
@@ -142,7 +141,7 @@ chat_rooms.get("/:room_id", upgradeWebSocket((ctx) => {
                         attachments: finalAttachments?.length ? JSON.stringify(finalAttachments) : undefined,
                         user_id: ctx.auth.user_info?.user_id,
                         sender_role: ctx?.auth?.role?.[0],
-                        room_id: ctx?.req?.params?.room_id,
+                        room_id: room_id ?? ctx?.req?.params?.room_id,
                         message_type: message_type,
                         text: text,
                     }
@@ -152,7 +151,7 @@ chat_rooms.get("/:room_id", upgradeWebSocket((ctx) => {
                         message: { ...props, ...data }
                     }));
 
-                    let { result, success } = await dbQuery(insert(TABLES.CHAT_ROOMS.messages, data))
+                    let { result, success, error } = await dbQuery(insert(TABLES.CHAT_ROOMS.messages, data))
                     if (success) {
                         Broadcast({
                             type: 'inbox',

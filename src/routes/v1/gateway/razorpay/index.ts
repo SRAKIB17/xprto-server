@@ -97,7 +97,6 @@ razorpay.post('/checkout', async (ctx) => {
         type: "error"
       });
 
-
       return ctx.json({ success: false, message: "Payment verification failed" });
     };
 
