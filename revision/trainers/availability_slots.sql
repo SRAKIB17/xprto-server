@@ -1,3 +1,56 @@
+CREATE TABLE
+    trainer_weekly_slots (
+        slot_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        trainer_id BIGINT UNSIGNED NOT NULL, -- Trainer
+        gym_id BIGINT UNSIGNED NOT NULL, -- Gym where the trainer works
+        -- Day-of-week slot
+        week_day ENUM ('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun') DEFAULT NULL, --- if daily then it is null
+        start_time TIME NOT NULL,
+        duration_minutes INT UNSIGNED NOT NULL,
+        -- Slot details
+        service_name VARCHAR(191) NOT NULL,
+        recurrence ENUM ('Daily', 'Custom') DEFAULT 'Daily',
+        valid_from DATE DEFAULT NULL, -- slot active starting this date (optional)
+        valid_to DATE DEFAULT NULL, -- slot active until this date (optional)
+        -- Status / meta
+        is_active BOOLEAN DEFAULT TRUE, -- if trainer temporarily disables a slot
+        created_by BIGINT UNSIGNED NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        -- Foreign keys
+        FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id),
+        FOREIGN KEY (gym_id) REFERENCES gyms (gym_id),
+        UNIQUE (
+            gym_id,
+            trainer_id,
+            week_day,
+            start_time,
+            duration_minutes
+        ),
+        INDEX (trainer_id),
+        INDEX (gym_id),
+        INDEX (week_day)
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+-- Exceptions for specific dates (modify/remove/add overrides)
+CREATE TABLE
+    slot_exceptions (
+        exception_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        slot_id BIGINT UNSIGNED NULL, -- null for added ad-hoc slot (not from template)
+        exception_date DATE NOT NULL, -- the date this exception applies to
+        action ENUM ('remove', 'modify', 'add') NOT NULL DEFAULT 'remove',
+        -- when action='modify' or 'add', optional override fields:
+        start_time TIME NOT NULL,
+        duration_minutes INT UNSIGNED NOT NULL,
+        service_name VARCHAR(191) DEFAULT NULL,
+        reason TEXT DEFAULT NULL, -- optional reason for exception
+        created_by BIGINT UNSIGNED NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (slot_id) REFERENCES trainer_weekly_slots (slot_id) ON DELETE SET NULL,
+        INDEX (exception_date)
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+-------------------------------------------------------------------------------------------------------------------------------
 -- 3. Availability Slots table
 CREATE TABLE
     availability_slots (

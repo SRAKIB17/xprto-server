@@ -62,21 +62,6 @@ CREATE TABLE
 CREATE TABLE
     wallet_payouts (
         payout_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        wallet_id BIGINT UNSIGNED NOT NULL, -- recipient wallet
-        amount DECIMAL(14, 2) NOT NULL,
-        currency VARCHAR(3) DEFAULT 'INR',
-        provider VARCHAR(50) DEFAULT NULL, -- bank/pg
-        provider_payout_id VARCHAR(191) DEFAULT NULL,
-        fee DECIMAL(14, 2) DEFAULT 0.00,
-        status ENUM ('requested', 'processing', 'completed', 'failed') DEFAULT 'requested',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (wallet_id) REFERENCES wallets (wallet_id)
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
-CREATE TABLE
-    wallet_payouts (
-        payout_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         wallet_id BIGINT UNSIGNED NOT NULL, -- Recipient wallet
         -- Payment Info
         payout_type ENUM ('upi', 'bank', 'wallet', 'manual') DEFAULT 'upi', -- Type of payout

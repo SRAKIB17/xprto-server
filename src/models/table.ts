@@ -9,6 +9,10 @@ export const TABLES = {
         clients: concat("clients")
     },
     TRAINERS: {
+        WEEKLY_SLOTS: {
+            WEEKLY_SLOTS: concat("trainer_weekly_slots"),
+            SLOT_EXCEPTIONS: concat("slot_exceptions")
+        },
         services: concat("trainer_services"),
         kyc_verification: concat("trainer_kyc_verification"),
         badge_verification: concat("trainer_badge_verification"),
