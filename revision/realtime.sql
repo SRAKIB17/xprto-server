@@ -1,6 +1,6 @@
 CREATE TABLE
   `chat_rooms` (
-    `room_id` bigint NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `room_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `room_name` varchar(255) DEFAULT NULL,
     `is_group` tinyint (1) DEFAULT '0',
     `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -9,10 +9,10 @@ CREATE TABLE
 
 CREATE TABLE
   `chat_room_memberships` (
-    `chat_id` bigint NOT NULL AUTO_INCREMENT,
-    `user_id` bigint NOT NULL,
+    `chat_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` bigint UNSIGNED NOT NULL,
     `user_role` ENUM ('system', 'admin', 'gym', 'trainer', 'client') NOT NULL DEFAULT 'system',
-    `room_id` bigint NOT NULL,
+    `room_id` bigint UNSIGNED NOT NULL,
     join_date timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`chat_id`),
     UNIQUE (`user_id`, `room_id`, `user_role`),
@@ -21,11 +21,11 @@ CREATE TABLE
 
 CREATE TABLE
   `chat_messages` (
-    attachments JSON DEFAULT NULL, --array []
-    `message_id` bigint NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `user_id` bigint NOT NULL,
+    attachments JSON DEFAULT NULL,
+    `message_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `user_id` bigint UNSIGNED NOT NULL,
     `sender_role` ENUM ('s', 'a', 'g', 't', 'c') DEFAULT "c",
-    `room_id` bigint NOT NULL,
+    `room_id` bigint UNSIGNED NOT NULL,
     `message_type` enum ('TEXT', 'FILE') DEFAULT 'TEXT',
     `text` text DEFAULT NULL,
     `is_read` BOOLEAN DEFAULT FALSE,

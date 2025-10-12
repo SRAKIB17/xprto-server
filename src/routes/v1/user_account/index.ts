@@ -28,6 +28,7 @@ import { DirectoryServe, filename } from "../../../config.js";
 import { copyFile } from "../../../utils/fileExists.js";
 import chat_rooms from "./chat-rooms.js";
 import earningDashboardGymTrainer from "./earning-dashboard.js";
+import client_skeletal_muscles from "./client-skeletal-muscles.js";
 
 const user_account = new Router();
 user_account.use(AuthorizationBasicAuthUser());
@@ -40,6 +41,7 @@ user_account.use(my_wallet);
 user_account.use(support_tickets);
 user_account.use(chat_rooms);
 user_account.use(earningDashboardGymTrainer);
+user_account.use(client_skeletal_muscles)
 // user_account.put('/avatar-upload', async (ctx) => {
 //     const formData = await useFormData(ctx);
 //     const avatar = formData.avatar;
