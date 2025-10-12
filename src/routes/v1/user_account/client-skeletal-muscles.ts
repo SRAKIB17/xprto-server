@@ -55,7 +55,6 @@ client_skeletal_muscles.get('/stats/:client_id', async (ctx) => {
             data: result?.[0],
         });
     } catch (error) {
-        console.error("Skeletal stats error:", error);
         return ctx.json({
             success: false,
             message: "Internal server error",
