@@ -27,8 +27,17 @@ client_skeletal_muscles.get('/stats/:client_id', async (ctx) => {
         const { role } = ctx.auth || {};
 
         const query = find(`${TABLES.CLIENTS.skeletal_muscles} as cm`, {
+            joins: [
+                {
+                    table: `${TABLES.CLIENTS.clients} as cl`,
+                    on: `cl.client_id = cm.client_id`,
+                    type: "LEFT JOIN",
+                }
+            ],
             columns: `
               cm.client_id,
+              cl.fullname,
+              cl.avatar,
               ROUND(AVG(cm.whole_body_percent), 2) AS avg_whole_body,
               ROUND(AVG(cm.trunk_percent), 2) AS avg_trunk,
               ROUND(AVG(cm.arms_percent), 2) AS avg_arms,
@@ -37,11 +46,11 @@ client_skeletal_muscles.get('/stats/:client_id', async (ctx) => {
               ROUND(MIN(cm.whole_body_percent), 2) AS min_whole_body,
               COUNT(cm.skeletal_id) AS total_records
             `,
-            where: `client_id = ${role === 'trainer' ? ctx.req.params?.client_id : user_id}`,
-            groupBy: `cm.client_id`,
+            where: `cm.client_id = ${role === 'trainer' ? ctx.req.params?.client_id : user_id}`,
+            groupBy: `cm.client_id, cl.fullname, cl.avatar`,
             sort: `avg_whole_body DESC`
         })
-        const { success, result } = await dbQuery(query);
+        const { success, result, error } = await dbQuery(query);
         if (!success) {
             return ctx.json({
                 success: false,
@@ -63,7 +72,6 @@ client_skeletal_muscles.get('/stats/:client_id', async (ctx) => {
 });
 
 client_skeletal_muscles.get("/", paginationHandler({
-    maxLimit: 3,
     getDataSource: async (ctx, { page, limit, offset }) => {
         const { role } = ctx.auth || {};
         const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
