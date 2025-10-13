@@ -28,7 +28,7 @@ import { DirectoryServe, filename } from "../../../config.js";
 import { copyFile } from "../../../utils/fileExists.js";
 import chat_rooms from "./chat-rooms.js";
 import earningDashboardGymTrainer from "./earning-dashboard.js";
-import client_skeletal_muscles from "./client-skeletal-muscles.js";
+import client_skeletal_muscles from "./client-muscles_record.js";
 
 const user_account = new Router();
 user_account.use(AuthorizationBasicAuthUser());

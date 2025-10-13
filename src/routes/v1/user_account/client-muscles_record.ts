@@ -18,15 +18,15 @@ import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../models/index.js";
 
 const client_skeletal_muscles = new Router({
-    basePath: '/clients/skeletal-muscles'
+    basePath: '/clients/muscles-record'
 });
 
-client_skeletal_muscles.get('/stats/:client_id', async (ctx) => {
+client_skeletal_muscles.get('/stats/:type/:client_id', async (ctx) => {
     try {
         const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
         const { role } = ctx.auth || {};
 
-        const query = find(`${TABLES.CLIENTS.skeletal_muscles} as cm`, {
+        const query = find(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
             joins: [
                 {
                     table: `${TABLES.CLIENTS.clients} as cl`,
@@ -44,7 +44,7 @@ client_skeletal_muscles.get('/stats/:client_id', async (ctx) => {
               ROUND(AVG(cm.legs_percent), 2) AS avg_legs,
               ROUND(MAX(cm.whole_body_percent), 2) AS max_whole_body,
               ROUND(MIN(cm.whole_body_percent), 2) AS min_whole_body,
-              COUNT(cm.skeletal_id) AS total_records
+              COUNT(cm.id) AS total_records
             `,
             where: `cm.client_id = ${role === 'trainer' ? ctx.req.params?.client_id : user_id}`,
             groupBy: `cm.client_id, cl.fullname, cl.avatar`,
@@ -84,25 +84,25 @@ client_skeletal_muscles.get("/", paginationHandler({
             condition += `AND added_by = ${user_id}`
         }
 
-        let sql = find(TABLES.CLIENTS.skeletal_muscles, {
+        let sql = find(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
             sort: {
                 created_at: -1
             },
             joins: [
                 {
                     type: "LEFT JOIN",
-                    on: `client_skeletal_muscles.added_by = trainers.trainer_id`,
+                    on: `cm.added_by = trainers.trainer_id`,
                     table: TABLES.TRAINERS.trainers
                 }
             ],
-            columns: `client_skeletal_muscles.*, trainers.fullname, trainers.avatar`,
+            columns: `cm.*, trainers.fullname, trainers.avatar`,
             limitSkip: {
                 limit: limit,
                 skip: offset
             },
             where: condition,
         })
-        let count = find(TABLES.CLIENTS.skeletal_muscles, {
+        let count = find(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
             columns: 'count(*) as count',
             where: condition,
         })
@@ -131,8 +131,8 @@ client_skeletal_muscles.delete('/delete/:id', async (ctx) => {
     }
     try {
         // 2️⃣ Delete the notification
-        const deleteSql = destroy(TABLES.CLIENTS.skeletal_muscles, {
-            where: `skeletal_id = ${sanitize(id)}`
+        const deleteSql = destroy(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
+            where: `id = ${sanitize(id)}`
         })
         const { success: delSuccess } = await dbQuery(deleteSql);
         if (delSuccess) {
@@ -151,7 +151,7 @@ client_skeletal_muscles.post('/add-edit', async (ctx) => {
 
     try {
         const {
-            skeletal_id,
+            id,
             client_id,
             whole_body_percent,
             trunk_percent,
@@ -164,8 +164,8 @@ client_skeletal_muscles.post('/add-edit', async (ctx) => {
         let action = '';
 
         // ✅ Update existing record
-        if (skeletal_id) {
-            query = update(TABLES.CLIENTS.skeletal_muscles, {
+        if (id) {
+            query = update(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
                 values: {
                     whole_body_percent,
                     trunk_percent,
@@ -173,7 +173,7 @@ client_skeletal_muscles.post('/add-edit', async (ctx) => {
                     legs_percent,
                     updated_at: mysql_datetime(),
                 },
-                where: `skeletal_id = ${skeletal_id}`,
+                where: `id = ${id}`,
             });
             message = 'Skeletal record updated successfully';
             action = 'update';
@@ -181,7 +181,7 @@ client_skeletal_muscles.post('/add-edit', async (ctx) => {
 
         // ✅ Insert new record
         else {
-            query = insert(TABLES.CLIENTS.skeletal_muscles, {
+            query = insert(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
                 client_id: role === 'trainer' ? client_id : userId,
                 added_by: role === 'trainer' ? userId : undefined,
                 whole_body_percent,
@@ -211,7 +211,7 @@ client_skeletal_muscles.post('/add-edit', async (ctx) => {
             message,
             action,
             data: {
-                skeletal_id: skeletal_id || result.insertId,
+                id: id || result.insertId,
                 client_id: role === 'trainer' ? client_id : userId,
                 whole_body_percent,
                 trunk_percent,
@@ -227,8 +227,6 @@ client_skeletal_muscles.post('/add-edit', async (ctx) => {
         });
     }
 });
-
-
 
 
 export default client_skeletal_muscles;

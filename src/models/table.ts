@@ -6,7 +6,7 @@ const concat = (table: string, db: string = database) => {
 }
 export const TABLES = {
     CLIENTS: {
-        skeletal_muscles: concat("client_skeletal_muscles"),
+        MUSCLES_RECORD: concat("client_muscles_record"),
         clients: concat("clients")
     },
     TRAINERS: {
