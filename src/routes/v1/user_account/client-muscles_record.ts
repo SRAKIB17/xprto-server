@@ -46,7 +46,7 @@ client_skeletal_muscles.get('/stats/:type/:client_id', async (ctx) => {
               ROUND(MIN(cm.whole_body_percent), 2) AS min_whole_body,
               COUNT(cm.id) AS total_records
             `,
-            where: `cm.client_id = ${role === 'trainer' ? ctx.req.params?.client_id : user_id}`,
+            where: `cm.client_id = ${role === 'trainer' ? ctx.req.params?.client_id : user_id} AND type=${sanitize(ctx.req.params.type)}`,
             groupBy: `cm.client_id, cl.fullname, cl.avatar`,
             sort: `avg_whole_body DESC`
         })
@@ -71,7 +71,7 @@ client_skeletal_muscles.get('/stats/:type/:client_id', async (ctx) => {
     }
 });
 
-client_skeletal_muscles.get("/", paginationHandler({
+client_skeletal_muscles.get("/:type", paginationHandler({
     getDataSource: async (ctx, { page, limit, offset }) => {
         const { role } = ctx.auth || {};
         const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
@@ -79,7 +79,7 @@ client_skeletal_muscles.get("/", paginationHandler({
         if (role === 'trainer') {
             client_id = ctx?.req?.query?.client_id
         }
-        let condition = `client_id = ${client_id}`;
+        let condition = `client_id = ${client_id} AND cm.type=${sanitize(ctx.req.params?.type)}`;
         if (role === 'trainer') {
             condition += `AND added_by = ${user_id}`
         }
@@ -121,8 +121,8 @@ client_skeletal_muscles.get("/", paginationHandler({
 })
 );
 
-client_skeletal_muscles.delete('/delete/:id', async (ctx) => {
-    const { id } = ctx.req.params;
+client_skeletal_muscles.delete('/:type/delete/:id', async (ctx) => {
+    const { id, type } = ctx.req.params;
     const { role, user_info } = ctx.auth || {};
     const userId = user_info?.user_id;
 
@@ -131,10 +131,10 @@ client_skeletal_muscles.delete('/delete/:id', async (ctx) => {
     }
     try {
         // 2️⃣ Delete the notification
-        const deleteSql = destroy(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
-            where: `id = ${sanitize(id)}`
+        const deleteSql = destroy(`${TABLES.CLIENTS.MUSCLES_RECORD}`, {
+            where: `id = ${sanitize(id)} AND type = ${sanitize(type)}`
         })
-        const { success: delSuccess } = await dbQuery(deleteSql);
+        const { success: delSuccess, error } = await dbQuery(deleteSql);
         if (delSuccess) {
             return ctx.json({ success: true, message: "Skeletal record deleted successfully" });
         } else {
@@ -145,7 +145,8 @@ client_skeletal_muscles.delete('/delete/:id', async (ctx) => {
     }
 });
 
-client_skeletal_muscles.post('/add-edit', async (ctx) => {
+client_skeletal_muscles.post('/:type/add-edit', async (ctx) => {
+    const { type } = ctx.req.params;
     const { role, user_info } = ctx.auth || {};
     const userId = user_info?.user_id;
 
@@ -165,7 +166,7 @@ client_skeletal_muscles.post('/add-edit', async (ctx) => {
 
         // ✅ Update existing record
         if (id) {
-            query = update(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
+            query = update(TABLES.CLIENTS.MUSCLES_RECORD, {
                 values: {
                     whole_body_percent,
                     trunk_percent,
@@ -181,11 +182,12 @@ client_skeletal_muscles.post('/add-edit', async (ctx) => {
 
         // ✅ Insert new record
         else {
-            query = insert(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
+            query = insert(TABLES.CLIENTS.MUSCLES_RECORD, {
                 client_id: role === 'trainer' ? client_id : userId,
                 added_by: role === 'trainer' ? userId : undefined,
                 whole_body_percent,
                 trunk_percent,
+                type,
                 arms_percent,
                 legs_percent,
                 updated_at: mysql_datetime(),

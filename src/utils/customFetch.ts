@@ -3,7 +3,6 @@ import { Context } from "tezx";
 import { BASE_URL } from "../config";
 import { getCookie } from "tezx/helper";
 // import { cookies } from "next/headers";
-
 // Define a generic interface for the response that we expect from the API
 interface FetchOptions extends RequestInit {
     body?: any; // the body can be any format
