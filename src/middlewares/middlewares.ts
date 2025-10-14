@@ -145,7 +145,46 @@ export let corsPolicy = cors({
     allowedHeaders: ["Content-Type", "Authorization", "Install-Id", 's_id', 'x-auth', "socket-id"],
     origin: ALlowCorsOrigin
 })
-
+export function swaggerUI(
+    jsonPath: string = "docs.json",
+    swaggerVersion: string = "5.11.0",
+    meta?: {
+        title?: string;
+        metaDescription?: string;
+    }
+) {
+    return (ctx: any) => {
+        return ctx.html(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${meta?.title || "SwaggerUI"}</title>
+  <meta name="description" content="${meta?.metaDescription || "SwaggerUI Documentation"}" />
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@${swaggerVersion}/swagger-ui.css" />
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@${swaggerVersion}/swagger-ui-bundle.js" crossorigin></script>
+  <script src="https://unpkg.com/swagger-ui-dist@${swaggerVersion}/swagger-ui-standalone-preset.js" crossorigin></script>
+  <script>
+   window.onload = () => {
+      window.ui = SwaggerUIBundle({
+        url: "${jsonPath}",
+        dom_id: '#swagger-ui',
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+      });
+    };
+  </script>
+</body>
+</html>
+`);
+    };
+}
 // export let corsPolicy = cors({
 //     methods: ['GET', "POST", "DELETE", "PUT"],
 //     credentials: true,

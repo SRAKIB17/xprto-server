@@ -406,7 +406,10 @@ auth.post('/login', async (ctx) => {
         let { email, password, keep = false, role } = body;
 
         // Fetch user from DB
-        const sql = find(role === 'trainer' ? TABLES.TRAINERS.trainers : TABLES.CLIENTS.clients, {
+        let table = TABLES.CLIENTS.clients;
+        if (role === 'trainer') table = TABLES.TRAINERS.trainers;
+        if (role === 'gym') table = TABLES.GYMS.gyms
+        const sql = find(table, {
             where: `email = ${sanitize(email)}`,
             limitSkip: {
                 limit: 1
@@ -418,7 +421,7 @@ auth.post('/login', async (ctx) => {
         }
 
         const user = result[0];
-        const { hashed, salt, login_type, client_id, trainer_id } = user;
+        const { hashed, salt, login_type, client_id, trainer_id, gym_id } = user;
 
         if (login_type === 'google') {
             return ctx.json({
@@ -443,7 +446,7 @@ auth.post('/login', async (ctx) => {
             method: 'email',
             hashed,
             data: {
-                [client_id ? "client_id" : "trainer_id"]: client_id ?? trainer_id,
+                user_id: client_id ?? trainer_id ?? gym_id,
                 maxAge: keep ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days or 1 day
             },
             role: role || 'user',

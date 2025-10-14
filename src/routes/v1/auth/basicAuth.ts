@@ -7,13 +7,13 @@
 // import { wrappedCryptoToken } from "../../../utils/crypto.js";
 // import { decrypt } from "../../../utils/encrypted.js";
 
+import { find, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
 import { Context, NextCallback, TezXError } from "tezx";
 import { getCookie } from "tezx/helper";
-import { basicAuth, bearerAuth } from "tezx/middleware";
-import { decrypt } from "../../../utils/encrypted";
-import { find, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
+import { bearerAuth } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../models/index.js";
 import { wrappedCryptoToken } from "../../../utils/crypto.js";
+import { decrypt } from "../../../utils/encrypted";
 
 export async function AuthorizationControllerUser({ credentials = {}, ctx }: { ctx: Context, credentials?: any }) {
     let s_id = credentials?.token || getCookie(ctx, 's_id') || ctx.req.header("s_id");
@@ -24,9 +24,13 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
             let account = data?.account;
             let session = data?.session;
             let method = data?.method;
-            let user_id = data?.data?.client_id || data?.data?.trainer_id;
+            let user_id = data?.data?.user_id;
             let role = data?.role;
-            let table = role === 'trainer' ? TABLES.TRAINERS.trainers : TABLES.CLIENTS.clients;
+
+            // Fetch user from DB
+            let table = TABLES.CLIENTS.clients;
+            if (role === 'trainer') table = TABLES.TRAINERS.trainers;
+            if (role === 'gym') table = TABLES.GYMS.gyms
 
             let updateSql = update(table, {
                 values: {

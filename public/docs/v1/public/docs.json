@@ -1,0 +1,232 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Public API",
+        "version": "1.0.0",
+        "description": "API documentation for authentication + other public"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080",
+            "description": "Local development server"
+        }
+    ],
+    "paths": {
+        "/v1/auth/login": {
+            "post": {
+                "summary": "User login",
+                "description": "Authenticate a user and return an access token with optional remember-me functionality.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "mypassword123"
+                                    },
+                                    "keep": {
+                                        "type": "boolean",
+                                        "default": false,
+                                        "description": "If true, keeps user logged in (remember me)."
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "client",
+                                            "trainer",
+                                            "admin"
+                                        ],
+                                        "example": "client"
+                                    }
+                                },
+                                "required": [
+                                    "email",
+                                    "password",
+                                    "role"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "description": "JWT access token"
+                                        },
+                                        "user": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Rakibul Islam"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "rakib@example.com"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "trainer"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    },
+                    "400": {
+                        "description": "Missing or invalid input"
+                    }
+                }
+            }
+        },
+        "/v1/auth/join-gym": {
+            "post": {
+                "summary": "Register a new gym and its owner account",
+                "description": "Creates a new gym owner account, stores gym details, uploads optional files (owner photo, gym logo), and sends a verification email with temporary credentials.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fullName": {
+                                        "type": "string",
+                                        "example": "Rakibul Islam"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "rakib@example.com"
+                                    },
+                                    "mobile": {
+                                        "type": "string",
+                                        "example": "+8801712345678"
+                                    },
+                                    "gymName": {
+                                        "type": "string",
+                                        "example": "FitZone Gym"
+                                    },
+                                    "district": {
+                                        "type": "string",
+                                        "example": "Dhaka"
+                                    },
+                                    "state": {
+                                        "type": "string",
+                                        "example": "Bangladesh"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "House 10, Road 5, Uttara"
+                                    },
+                                    "postalCode": {
+                                        "type": "string",
+                                        "example": "1230"
+                                    },
+                                    "clients": {
+                                        "type": "integer",
+                                        "example": 120
+                                    },
+                                    "gymType": {
+                                        "type": "string",
+                                        "example": "Fitness & Bodybuilding"
+                                    },
+                                    "ownerPhoto": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "example": "/uploads/tmp/owner123.png"
+                                    },
+                                    "gymLogo": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "example": "/uploads/tmp/logo123.png"
+                                    }
+                                },
+                                "required": [
+                                    "fullName",
+                                    "email",
+                                    "mobile",
+                                    "gymName",
+                                    "district",
+                                    "state",
+                                    "address",
+                                    "postalCode",
+                                    "clients",
+                                    "gymType"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Gym registration successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Gym registered successfully! Please check your email for login details."
+                                        },
+                                        "tempPassword": {
+                                            "type": "string",
+                                            "example": "a8h2k9xq"
+                                        },
+                                        "gymId": {
+                                            "type": "integer",
+                                            "example": 42
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data"
+                    },
+                    "409": {
+                        "description": "Email already exists"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        }
+    }
+}
