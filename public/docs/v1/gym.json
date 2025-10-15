@@ -1,13 +1,13 @@
 {
     "openapi": "3.1.0",
     "info": {
-        "title": "Blog API",
+        "title": "Gym Owner API",
         "version": "1.0.0",
         "description": "API documentation for users and blog posts"
     },
     "servers": [
         {
-            "url": "http://localhost:3000",
+            "url": "http://localhost:8080",
             "description": "Local development server"
         }
     ],
