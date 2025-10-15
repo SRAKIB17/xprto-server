@@ -11,16 +11,17 @@
 // import { wrappedCryptoToken } from "../../../utils/crypto.js";
 // import { AuthorizationMiddlewareUser } from "../auth/basicAuth.js";
 // import user_account_bookmark from "./bookmark.js";
+
 import { destroy, find, insert, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../models/index.js";
 
-const client_skeletal_muscles = new Router({
-    basePath: '/clients/muscles-record'
+const client_health_conditions = new Router({
+    basePath: '/clients/health-condition'
 });
 
-client_skeletal_muscles.get('/stats/:type/:client_id', async (ctx) => {
+client_health_conditions.get('/stats/:client_id', async (ctx) => {
     try {
         const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
         const { role } = ctx.auth || {};
@@ -70,7 +71,7 @@ client_skeletal_muscles.get('/stats/:type/:client_id', async (ctx) => {
     }
 });
 
-client_skeletal_muscles.get("/:type", paginationHandler({
+client_health_conditions.get("/", paginationHandler({
     getDataSource: async (ctx, { page, limit, offset }) => {
         const { role } = ctx.auth || {};
         const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
@@ -78,34 +79,35 @@ client_skeletal_muscles.get("/:type", paginationHandler({
         if (role === 'trainer') {
             client_id = ctx?.req?.query?.client_id
         }
-        let condition = `client_id = ${client_id} AND cm.type=${sanitize(ctx.req.params?.type)}`;
+        let condition = `client_id = ${client_id}`;
         if (role === 'trainer') {
             condition += `AND added_by = ${user_id}`
         }
 
-        let sql = find(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
+        let sql = find(`${TABLES.CLIENTS.HEALTH_CONDITIONS} as hc`, {
             sort: {
                 created_at: -1
             },
             joins: [
                 {
                     type: "LEFT JOIN",
-                    on: `cm.added_by = trainers.trainer_id`,
+                    on: `hc.added_by = trainers.trainer_id`,
                     table: TABLES.TRAINERS.trainers
                 }
             ],
-            columns: `cm.*, trainers.fullname, trainers.avatar`,
+            columns: `hc.*, trainers.fullname, trainers.avatar`,
             limitSkip: {
                 limit: limit,
                 skip: offset
             },
             where: condition,
         })
-        let count = find(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
+        let count = find(`${TABLES.CLIENTS.MUSCLES_RECORD} as hc`, {
             columns: 'count(*) as count',
             where: condition,
         })
-        const { error, success, result } = await dbQuery<any[]>(`${sql}${count}`);
+        const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
+        console.log(error)
         if (!success) {
             return {
                 data: [],
@@ -117,10 +119,9 @@ client_skeletal_muscles.get("/:type", paginationHandler({
             total: result?.[1]?.[0]?.count
         }
     },
-})
-);
+}));
 
-client_skeletal_muscles.delete('/:type/delete/:id', async (ctx) => {
+client_health_conditions.delete('/delete/:id', async (ctx) => {
     const { id, type } = ctx.req.params;
     const { role, user_info } = ctx.auth || {};
     const userId = user_info?.user_id;
@@ -144,7 +145,7 @@ client_skeletal_muscles.delete('/:type/delete/:id', async (ctx) => {
     }
 });
 
-client_skeletal_muscles.post('/:type/add-edit', async (ctx) => {
+client_health_conditions.post('/add-edit', async (ctx) => {
     const { type } = ctx.req.params;
     const { role, user_info } = ctx.auth || {};
     const userId = user_info?.user_id;
@@ -230,4 +231,4 @@ client_skeletal_muscles.post('/:type/add-edit', async (ctx) => {
 });
 
 
-export default client_skeletal_muscles;
+export default client_health_conditions;
