@@ -37,8 +37,8 @@ app.get("/devtools", DevTools(app, {
   // extraTabs: (ctx) => [ ... ]
 }));
 
-
 app.get("/v1/docs/public", swaggerUI("/docs/v1/public/docs.json"))
+app.get("/v1/docs/gym", swaggerUI("/docs/v1/gym.json"))
 
 const PORT = process.env.PORT;
 

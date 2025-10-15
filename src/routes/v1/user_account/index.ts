@@ -14,22 +14,22 @@
 
 import { sanitize, update } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
+import { DirectoryServe, filename } from "../../../config.js";
 import { dbQuery } from "../../../models/index.js";
 import { wrappedCryptoToken } from "../../../utils/crypto.js";
+import { copyFile } from "../../../utils/fileExists.js";
 import { AuthorizationBasicAuthUser } from "../auth/basicAuth.js";
 import abuse_reports from "./abuse-reports.js";
-import my_documents from "./my-documents.js";
-import notifications from "./notifications.js";
-import trainers from "./trainers/index.js";
-import my_wallet from "./wallet.js";
-import support_tickets from "./support-ticket.js";
-import clients from "./clients/index.js";
-import { DirectoryServe, filename } from "../../../config.js";
-import { copyFile } from "../../../utils/fileExists.js";
 import chat_rooms from "./chat-rooms.js";
-import earningDashboardGymTrainer from "./earning-dashboard.js";
 import client_skeletal_muscles from "./client-muscles_record.js";
 import client_health_conditions from "./client_health_conditions.js";
+import clients from "./clients/index.js";
+import earningDashboardGymTrainer from "./earning-dashboard.js";
+import my_documents from "./my-documents.js";
+import notifications from "./notifications.js";
+import support_tickets from "./support-ticket.js";
+import trainers from "./trainers/index.js";
+import my_wallet from "./wallet.js";
 
 const user_account = new Router();
 user_account.use(AuthorizationBasicAuthUser());
@@ -98,7 +98,7 @@ user_account.use(client_health_conditions);
 //         return ctx.status(500).json({ error: "Failed to remove avatar" });
 //     }
 // });
-
+// !DONE DOCS
 user_account.put('/update/my-info', async (ctx) => {
     const body = await ctx.req.json();
     try {
@@ -112,6 +112,12 @@ user_account.put('/update/my-info', async (ctx) => {
             let success = await copyFile(body?.avatar, DirectoryServe.avatar(role, body?.avatar), true);
             if (success) {
                 body['avatar'] = `/${role}/${filename(body?.avatar)}`
+            }
+        }
+        if (body?.['logo_url']) {
+            let success = await copyFile(body?.avatar, DirectoryServe.logo(role, body?.avatar), true);
+            if (success) {
+                body['logo_url'] = `/${role}/${filename(body?.avatar)}`
             }
         }
         const { success, result, error } = await dbQuery(update(table, {
@@ -181,7 +187,7 @@ user_account.put('/update/my-info', async (ctx) => {
 //         return ctx.status(500).json({ success: false, message: "Something went wrong" });
 //     }
 // });
-
+// !DOCS DONE
 user_account.put('/update/change-password', async (ctx) => {
     const { role, oldPassword, newPassword } = await ctx.req.json();
     const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};

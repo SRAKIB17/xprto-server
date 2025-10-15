@@ -1,0 +1,274 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Blog API",
+        "version": "1.0.0",
+        "description": "API documentation for users and blog posts"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:3000",
+            "description": "Local development server"
+        }
+    ],
+    "paths": {
+        "/v1/account/update/change-password": {
+            "put": {
+                "tags": [
+                    "User Account"
+                ],
+                "summary": "Change user password",
+                "description": "Allows an authenticated user to change their password. Requires old password verification and rehashing the new password.",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "role": {
+                                        "type": "string",
+                                        "example": "client"
+                                    },
+                                    "oldPassword": {
+                                        "type": "string",
+                                        "example": "OldPass@123"
+                                    },
+                                    "newPassword": {
+                                        "type": "string",
+                                        "example": "NewPass@456"
+                                    }
+                                },
+                                "required": [
+                                    "oldPassword",
+                                    "newPassword"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password changed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Change password successfully."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request (invalid old password or mismatch)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Current password is incorrect."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized user",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error during password update",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password update failed. Please try again."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/account/update/my-info": {
+            "put": {
+                "summary": "Update my information, always pass string,, if has array make it JSON.stringify",
+                "tags": [
+                    "User Account"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fullname": {
+                                        "type": "string",
+                                        "description": "User's full name"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "description": "Phone number"
+                                    },
+                                    "avatar": {
+                                        "type": "string",
+                                        "description": "Path to avatar file (image)"
+                                    },
+                                    "logo_url": {
+                                        "type": "string",
+                                        "description": "Logo URL if applicable"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "description": "User address"
+                                    }
+                                },
+                                "example": {
+                                    "fullname": "John Doe",
+                                    "phone": "+8801712345678",
+                                    "avatar": "/tmp/avatar.jpg",
+                                    "logo_url": "/tmp/logo.jpg",
+                                    "address": "Dhaka, Bangladesh"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Update successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "result": {
+                                            "type": "object",
+                                            "description": "Updated user info object"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": true,
+                                    "result": {
+                                        "fullname": "John Doe",
+                                        "phone": "+8801712345678",
+                                        "avatar": "/user/avatar.jpg",
+                                        "logo_url": "/user/logo.jpg",
+                                        "address": "Dhaka, Bangladesh"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request or invalid fields",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "emailUpdateNotAllowed": {
+                                        "summary": "Attempt to update email",
+                                        "value": {
+                                            "message": "Email update is not allowed."
+                                        }
+                                    },
+                                    "invalidFields": {
+                                        "summary": "Request contains invalid fields",
+                                        "value": {
+                                            "message": "Invalid field(s) in update request."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "message": "Failed to update."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    }
+}

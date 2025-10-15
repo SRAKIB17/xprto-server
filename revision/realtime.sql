@@ -3,6 +3,7 @@ CREATE TABLE
     `room_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `room_name` varchar(255) DEFAULT NULL,
     `is_group` tinyint (1) DEFAULT '0',
+    `is_announcement` BOOLEAN DEFAULT FALSE,
     `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     `thumbnail` varchar(500) DEFAULT NULL
   ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
