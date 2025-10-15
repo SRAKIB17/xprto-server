@@ -7,13 +7,16 @@ import { performWalletTransaction } from "../../../../utils/createWalletTransact
 import { decrypt, encrypt } from "../../../../utils/encrypted.js";
 import { generateTxnID } from "../../../../utils/generateTxnID.js";
 import { AppNotificationRefetch, AppNotificationToast } from "../../../websocket/notification.js";
+import { AuthorizationBasicAuthAdmin } from "../../admin/auth/basicAuth.js";
+import { AuthorizationMiddlewarePublic } from "../../auth/basicAuth.js";
 
 const razorpay = new Router({
   basePath: "rzp"
 });
-razorpay.post('create/:type', async (ctx) => {
+razorpay.post('create/:type', AuthorizationMiddlewarePublic(), async (ctx) => {
   const { amount, prefill, ...rest } = await ctx.req.json();
   const { type } = ctx.req.params
+  const { role, user_info } = ctx.auth;
 
   const key_id: any = process.env.RAZORPAY_KEY_ID;
   const key_secret: any = process.env.RAZORPAY_KEY_SECRET;
@@ -31,11 +34,17 @@ razorpay.post('create/:type', async (ctx) => {
     receipt: "receipt#" + txn_id,
     notes: {}
   })
-
   if (create?.status === 'created') {
     const payload = {
       create: create,
-      prefill: prefill,
+      prefill: {
+        ...prefill,
+        role: role,
+        name: user_info?.fullname,
+        phone: user_info?.phone,
+        email: user_info?.email,
+        user_id: user_info?.user_id,
+      },
       type: type,
       exp: Date.now() + 10 * 60_000, // 60 min expiry
       reference_type: type?.toUpperCase().replace(/-/g, ' '),
