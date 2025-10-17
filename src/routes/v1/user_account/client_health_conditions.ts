@@ -170,45 +170,72 @@ client_health_conditions.post('/add-edit', async (ctx) => {
     const userId = user_info?.user_id;
 
     try {
+        const body = await ctx.req.json();
         const {
-            id,
-            client_id,
-            whole_body_percent,
-            trunk_percent,
-            arms_percent,
-            legs_percent,
-        } = await ctx.req.json();
+            created_at, health_id, updated_at, title, client_id, added_by, height_cm, weight_kg, fat_kg, visceral_fat_percent, subcutaneous_fat_percent, skeletal_muscle_percent, resting_metabolism, blood_pressure_systolic, blood_pressure_diastolic, heart_rate, body_temperature, blood_sugar_level, oxygen_saturation, chronic_diseases, medications, allergies, remarks, device_name
+        } = body;
 
         let query = '';
         let message = '';
         let action = '';
 
         // ✅ Update existing record
-        if (id) {
+        if (health_id) {
             query = update(TABLES.CLIENTS.HEALTH_CONDITIONS, {
                 values: {
-                    whole_body_percent,
-                    trunk_percent,
-                    arms_percent,
-                    legs_percent,
+                    title,
+                    health_id,
+                    client_id,
+                    added_by,
+                    height_cm,
+                    fat_kg,
+                    visceral_fat_percent,
+                    subcutaneous_fat_percent,
+                    skeletal_muscle_percent,
+                    resting_metabolism,
+                    blood_pressure_systolic,
+                    blood_pressure_diastolic,
+                    heart_rate,
+                    body_temperature,
+                    blood_sugar_level,
+                    oxygen_saturation,
+                    chronic_diseases,
+                    medications,
+                    allergies,
+                    remarks,
+                    device_name,
                     updated_at: mysql_datetime(),
                 },
-                where: `id = ${id}`,
+                where: `health_id = ${health_id}`,
             });
-            message = 'Skeletal record updated successfully';
+            message = 'Health record updated successfully';
             action = 'update';
         }
 
         // ✅ Insert new record
         else {
             query = insert(TABLES.CLIENTS.HEALTH_CONDITIONS, {
+                title,
+                health_id,
                 client_id: role === 'trainer' ? client_id : userId,
                 added_by: role === 'trainer' ? userId : undefined,
-                whole_body_percent,
-                trunk_percent,
-                type,
-                arms_percent,
-                legs_percent,
+                height_cm,
+                fat_kg,
+                visceral_fat_percent,
+                subcutaneous_fat_percent,
+                skeletal_muscle_percent,
+                resting_metabolism,
+                blood_pressure_systolic,
+                blood_pressure_diastolic,
+                heart_rate,
+                body_temperature,
+                blood_sugar_level,
+                oxygen_saturation,
+                chronic_diseases,
+                medications,
+                allergies,
+                remarks,
+                device_name,
                 updated_at: mysql_datetime(),
             });
             message = 'Skeletal record added successfully';
@@ -232,16 +259,12 @@ client_health_conditions.post('/add-edit', async (ctx) => {
             message,
             action,
             data: {
-                id: id || result.insertId,
+                ...body,
+                health_id: health_id || result.insertId,
                 client_id: role === 'trainer' ? client_id : userId,
-                whole_body_percent,
-                trunk_percent,
-                arms_percent,
-                legs_percent,
             },
         });
     } catch (err) {
-        console.error("Add/Edit Error:", err);
         return ctx.json({
             success: false,
             message: 'Internal server error',
