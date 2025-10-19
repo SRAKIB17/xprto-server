@@ -12,16 +12,16 @@
 // import { AuthorizationMiddlewareUser } from "../auth/basicAuth.js";
 // import user_account_bookmark from "./bookmark.js";
 
-import { find, sanitize, destroy } from "@tezx/sqlx/mysql";
+import { destroy, find, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
-import { dbQuery, TABLES } from "../../../models/index.js";
 import { paginationHandler } from "tezx/middleware";
+import { dbQuery, TABLES } from "../../../models/index.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const notifications = new Router({
     basePath: '/notifications'
 });
-
+//! docs done
 notifications.get(
     "/",
     paginationHandler({

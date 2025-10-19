@@ -10,7 +10,7 @@ import { AppNotificationToast } from "../../websocket/notification.js";
 const my_wallet = new Router({
     basePath: "my-wallet"
 });
-
+//! docs done
 my_wallet.get("/", async (ctx) => {
     const { user_id, email } = ctx.auth?.user_info || {};
     const { role } = ctx.auth || {};
@@ -71,6 +71,7 @@ my_wallet.get("/", async (ctx) => {
     });
 });
 
+//! docs done
 my_wallet.get("/transition-history", paginationHandler({
     getDataSource: async (ctx, { page, limit, offset }) => {
 
@@ -141,6 +142,7 @@ my_wallet.get("/transition-history", paginationHandler({
 })
 );
 
+//! docs done
 my_wallet.post('/withdraw', async (ctx) => {
     try {
         const body = await ctx.req.json();
@@ -244,7 +246,7 @@ my_wallet.post('/withdraw', async (ctx) => {
         });
     }
 });
-
+//! docs done
 my_wallet.get("/payout-history", paginationHandler({
     getDataSource: async (ctx, { page, limit, offset }) => {
 

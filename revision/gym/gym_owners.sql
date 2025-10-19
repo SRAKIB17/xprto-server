@@ -61,6 +61,14 @@ CREATE TABLE
         avatar VARCHAR(255) DEFAULT NULL,
         logo_url VARCHAR(255) DEFAULT NULL,
         invoice_prefix VARCHAR(20) DEFAULT 'GYM',
+        --new
+        tagline VARCHAR(500) DEFAULT NULL,
+        description TEXT DEFAULT NULL,
+        website VARCHAR(200) DEFAULT NULL,
+        operating_hours JSON DEFAULT NULL, -- Example: {"mon":"9.00AM-5.00PM","tue":"9.00AM-5.00PM"}
+        social_media JSON DEFAULT NULL, -- Example: {"facebook":"url","instagram":"url"}
+        facilities JSON DEFAULT NULL, -- Example: ["wifi","parking","cafe"]
+        --new
         notes TEXT DEFAULT NULL,
         registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -70,6 +78,7 @@ CREATE TABLE
         CONSTRAINT chk_subscription_dates_gyms CHECK (subscription_end >= subscription_start)
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
+-- tagline, description, webiste, operating hours, social media(facebook, instagram, twitter/x, facilities
 -- পারফরম্যান্স ইনডেক্স
 CREATE INDEX idx_gym_owners_status ON gym_owners (status);
 

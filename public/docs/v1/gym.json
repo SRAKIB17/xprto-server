@@ -260,6 +260,867 @@
                     }
                 }
             }
+        },
+        "/v1/account/my-wallet": {
+            "get": {
+                "summary": "Get wallet info",
+                "description": "Fetches the user's wallet and recent transactions. Creates wallet if not exists.",
+                "tags": [
+                    "Wallet"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Wallet fetched successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "wallet": {
+                                            "type": "object",
+                                            "properties": {
+                                                "wallet_id": {
+                                                    "type": "integer",
+                                                    "example": 101
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_role": {
+                                                    "type": "string",
+                                                    "example": "user"
+                                                },
+                                                "balance": {
+                                                    "type": "number",
+                                                    "example": 1500
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-19T12:34:56Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-19T12:34:56Z"
+                                                }
+                                            }
+                                        },
+                                        "transactions": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "transaction_id": {
+                                                        "type": "integer",
+                                                        "example": 201
+                                                    },
+                                                    "wallet_id": {
+                                                        "type": "integer",
+                                                        "example": 101
+                                                    },
+                                                    "amount": {
+                                                        "type": "number",
+                                                        "example": 500
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "credit"
+                                                    },
+                                                    "payment_method": {
+                                                        "type": "string",
+                                                        "example": "upi"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "completed"
+                                                    },
+                                                    "note": {
+                                                        "type": "string",
+                                                        "example": "Withdrawal request"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-10-19T12:34:56Z"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to create wallet"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/account/my-wallet/payout-history": {
+            "get": {
+                "summary": "Fetch payout history",
+                "description": "Retrieves wallet payout history with pagination and optional date filters.",
+                "tags": [
+                    "Wallet"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "start",
+                        "in": "query",
+                        "description": "Start date filter (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end",
+                        "in": "query",
+                        "description": "End date filter (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Transaction type filter: 'in' for credits, 'out' for debits",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "in",
+                                "out"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by transaction ID or idempotency key",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payout history fetched successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "payout_id": {
+                                                        "type": "integer",
+                                                        "example": 101
+                                                    },
+                                                    "wallet_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "payout_type": {
+                                                        "type": "string",
+                                                        "example": "upi"
+                                                    },
+                                                    "amount": {
+                                                        "type": "number",
+                                                        "example": 500
+                                                    },
+                                                    "fee": {
+                                                        "type": "number",
+                                                        "example": 10
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "requested"
+                                                    },
+                                                    "provider": {
+                                                        "type": "string",
+                                                        "example": "razorpay"
+                                                    },
+                                                    "payout_method": {
+                                                        "type": "string",
+                                                        "example": "razorpayx"
+                                                    },
+                                                    "upi_id": {
+                                                        "type": "string",
+                                                        "example": "example@upi"
+                                                    },
+                                                    "account_holder_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "external_txn_id": {
+                                                        "type": "string",
+                                                        "example": "WTDRW_123456"
+                                                    },
+                                                    "idempotency_key": {
+                                                        "type": "string",
+                                                        "example": "abcd1234"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-10-19T12:34:56Z"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 50
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to fetch payout history"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/account/my-wallet/transition-history": {
+            "get": {
+                "summary": "Fetch transaction history",
+                "description": "Retrieves wallet transaction history with pagination and optional filters.",
+                "tags": [
+                    "Wallet"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "start",
+                        "in": "query",
+                        "description": "Start date filter (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end",
+                        "in": "query",
+                        "description": "End date filter (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Transaction type filter: 'in' for credit, 'out' for debit",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "in",
+                                "out"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by idempotency key or external transaction ID",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction history fetched successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "txn_id": {
+                                                        "type": "integer",
+                                                        "example": 101
+                                                    },
+                                                    "wallet_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "amount": {
+                                                        "type": "number",
+                                                        "example": 500
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "credit"
+                                                    },
+                                                    "payment_method": {
+                                                        "type": "string",
+                                                        "example": "upi"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "completed"
+                                                    },
+                                                    "note": {
+                                                        "type": "string",
+                                                        "example": "Withdrawal request"
+                                                    },
+                                                    "idempotency_key": {
+                                                        "type": "string",
+                                                        "example": "abcd1234"
+                                                    },
+                                                    "external_txn_id": {
+                                                        "type": "string",
+                                                        "example": "WTDRW_123456"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-10-19T12:34:56Z"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 50
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to fetch transaction history"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/account/my-wallet/withdraw": {
+            "post": {
+                "summary": "Request wallet withdrawal",
+                "description": "Creates a withdrawal request, holds balance, and generates transaction ID.",
+                "tags": [
+                    "Wallet"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "withdraw": {
+                                        "type": "object",
+                                        "required": [
+                                            "amount",
+                                            "wallet_id"
+                                        ],
+                                        "properties": {
+                                            "amount": {
+                                                "type": "number",
+                                                "example": 500,
+                                                "description": "Amount to withdraw (must be > 0)"
+                                            },
+                                            "wallet_id": {
+                                                "type": "string",
+                                                "example": "12345",
+                                                "description": "ID of the wallet"
+                                            },
+                                            "fee": {
+                                                "type": "number",
+                                                "example": 10,
+                                                "description": "Withdrawal fee (optional)"
+                                            },
+                                            "payout_type": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "upi",
+                                                    "bank"
+                                                ],
+                                                "default": "upi",
+                                                "description": "Type of payout"
+                                            },
+                                            "provider": {
+                                                "type": "string",
+                                                "default": "razorpay",
+                                                "description": "Payout provider"
+                                            },
+                                            "payout_method": {
+                                                "type": "string",
+                                                "default": "razorpayx",
+                                                "description": "Method for payout"
+                                            },
+                                            "upi": {
+                                                "type": "string",
+                                                "example": "example@upi",
+                                                "description": "UPI ID (required if payout_type is upi)"
+                                            },
+                                            "account_holder_name": {
+                                                "type": "string",
+                                                "example": "John Doe",
+                                                "description": "Name of account holder"
+                                            }
+                                        }
+                                    },
+                                    "prefill": {
+                                        "type": "object",
+                                        "description": "Optional prefill data"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Withdrawal request submitted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Withdrawal request submitted successfully"
+                                        },
+                                        "txn_id": {
+                                            "type": "string",
+                                            "example": "WTDRW_1234567890"
+                                        },
+                                        "payout_id": {
+                                            "type": "integer",
+                                            "example": 101
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid withdrawal amount"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Internal Server Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/account/notifications/": {
+            "get": {
+                "summary": "Fetch user notifications",
+                "description": "Retrieves notifications for the authenticated user with pagination and optional search.",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of notifications per page",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search text in notification title or message",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notifications fetched successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "notification_id": {
+                                                        "type": "integer",
+                                                        "example": 101
+                                                    },
+                                                    "recipient_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "recipient_type": {
+                                                        "type": "string",
+                                                        "example": "user"
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "New Offer Available"
+                                                    },
+                                                    "message": {
+                                                        "type": "string",
+                                                        "example": "You have a new cashback offer"
+                                                    },
+                                                    "read": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "sent_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-10-19T12:34:56Z"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 25
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to fetch notifications"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/account/notifications/delete/:id": {
+            "delete": {
+                "summary": "Delete a notification",
+                "description": "Deletes a specific notification for the authenticated user.",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Notification ID to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 101
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification deleted successfully or failure message",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification deleted successfully"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Internal server error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
