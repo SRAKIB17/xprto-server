@@ -76,5 +76,5 @@ async function dbQuery<T = RowDataPacket[]>(sql: string): Promise<DBResponse<T>>
     }
 }
 
-export { pool, dbExecute, dbQuery, DBResponse };
+export { pool, dbExecute, dbQuery };
 export * from "./table.js";
