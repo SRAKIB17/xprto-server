@@ -4,6 +4,7 @@ const gateway = new Router({
     basePath: "gateway"
 });
 
+// !docs done
 gateway.use(razorpay)
 
 export default gateway;

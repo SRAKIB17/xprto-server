@@ -7,12 +7,13 @@ import { performWalletTransaction } from "../../../../utils/createWalletTransact
 import { decrypt, encrypt } from "../../../../utils/encrypted.js";
 import { generateTxnID } from "../../../../utils/generateTxnID.js";
 import { AppNotificationRefetch, AppNotificationToast } from "../../../websocket/notification.js";
-import { AuthorizationBasicAuthAdmin } from "../../admin/auth/basicAuth.js";
 import { AuthorizationMiddlewarePublic } from "../../auth/basicAuth.js";
+
 
 const razorpay = new Router({
   basePath: "rzp"
 });
+// !docs done
 razorpay.post('create/:type', AuthorizationMiddlewarePublic(), async (ctx) => {
   const { amount, prefill, ...rest } = await ctx.req.json();
   const { type } = ctx.req.params
