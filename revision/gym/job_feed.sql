@@ -1,6 +1,6 @@
 CREATE TABLE
     job_posts (
-        job_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        job_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         gym_id BIGINT UNSIGNED NOT NULL,
         posted_by BIGINT UNSIGNED NULL, -- admin id or gym_owner id
         -- Availability
@@ -47,7 +47,6 @@ CREATE TABLE
         currency VARCHAR(10) DEFAULT 'INR',
         -- Job Duration
         start_date DATE NULL,
-        end_date DATE NULL,
         -- Meta Info
         tags JSON DEFAULT NULL, -- e.g. ["fitness","personal training","yoga"]
         category VARCHAR(100) DEFAULT NULL, -- e.g. "Trainer", "Nutritionist"
@@ -64,7 +63,6 @@ CREATE TABLE
         -- Visibility / Control
         visibility ENUM ('gym_only', 'public') DEFAULT 'gym_only',
         status ENUM ('draft', 'published', 'closed', 'archived') DEFAULT 'draft',
-        featured BOOLEAN DEFAULT FALSE,
         priority ENUM ('low', 'medium', 'high') DEFAULT 'medium',
         -- Audit
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -86,7 +84,7 @@ CREATE TABLE
         INDEX (gender_preference),
         INDEX (salary_type),
         INDEX (min_experience_years),
-        INDEX (salary_amount),
+        INDEX (salary),
         INDEX (salary_min),
         INDEX (salary_max),
         INDEX (salary_unit),
@@ -100,7 +98,7 @@ CREATE TABLE
 INSERT INTO job_posts (
     gym_id, posted_by, title, subtitle, description, requirements, responsibilities,
     qualifications, experience_required, min_experience_years, job_type, employment_place,
-    gender_preference, salary_type, salary_amount, salary_min, salary_max, salary_unit,
+    gender_preference, salary_type, salary, salary_min, salary_max, salary_unit,
     currency, start_date, end_date, tags, category, location, city, state,
     video, images, attachments, faqs, benefits, extra, visibility, status, featured, priority
 )
@@ -249,7 +247,7 @@ VALUES
 ```
 -- Applications by trainers
 CREATE TABLE
-    job_applications (
+    trainer_job_applications (
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         job_id BIGINT UNSIGNED NOT NULL,
         trainer_id BIGINT UNSIGNED NOT NULL,
@@ -281,9 +279,9 @@ CREATE TABLE
         notes TEXT DEFAULT NULL,
         extra JSON DEFAULT NULL, -- e.g. available_days, preferred_shift, sample_videos
         UNIQUE (job_id, trainer_id),
-        FOREIGN KEY (job_id) REFERENCES job_posts (job_id) ON DELETE CASCADE,
-        FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE CASCADE,
         INDEX (job_id),
         INDEX (trainer_id),
-        INDEX (status)
+        INDEX (status),
+        FOREIGN KEY (job_id) REFERENCES job_posts (job_id) ON DELETE CASCADE,
+        FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE CASCADE
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;

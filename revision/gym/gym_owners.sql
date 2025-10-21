@@ -10,6 +10,7 @@ CREATE TABLE
         dob DATE DEFAULT NULL,
         gym_name VARCHAR(150) NOT NULL,
         address TEXT DEFAULT NULL,
+        about TEXT DEFAULT NULL,
         gym_type VARCHAR(100) DEFAULT NULL,
         postal_code VARCHAR(20) DEFAULT NULL,
         country VARCHAR(50) DEFAULT NULL,

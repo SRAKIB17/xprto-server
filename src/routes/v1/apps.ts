@@ -15,6 +15,9 @@ let apps = {
             currency: "INR",
         }
     },
+    job_apply: {
+        amount: 400,
+    },
     kyc_amount: {
         amount: 200,
         currency: "INR"

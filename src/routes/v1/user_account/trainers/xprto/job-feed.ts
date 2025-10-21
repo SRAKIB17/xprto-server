@@ -43,15 +43,54 @@ xprtoJobFeed.get(
             let sql = find(`${TABLES.GYMS.job_posts} as jp`, {
                 sort: sort,
                 joins: `LEFT JOIN ${TABLES.GYMS.gyms} as g ON jp.gym_id = g.gym_id`,
-                columns: `jp.*,
-                g.gym_name as gym_name,
-                g.lat as gym_lat,
-                g.lng as gym_lng,
-                g.district as gym_district,
-                g.state as gym_state,
-                g.address as gym_address,
-                g.logo_url as gym_logo,
-                g.country as gym_country`,
+                columns: `
+            jp.job_id,
+            jp.gym_id,
+            jp.posted_by,
+            jp.available_slots,
+            jp.vacancies,
+            jp.title,
+            jp.subtitle,
+            jp.requirements,
+            jp.responsibilities,
+            jp.qualifications,
+            jp.experience_required,
+            jp.min_experience_years,
+            jp.job_type,
+            jp.employment_place,
+            jp.gender_preference,
+            jp.salary_type,
+            jp.salary,
+            jp.salary_min,
+            jp.salary_max,
+            jp.salary_unit,
+            jp.currency,
+            jp.start_date,
+            jp.tags,
+            jp.category,
+            jp.location,
+            jp.city,
+            jp.state,
+            jp.video,
+            jp.images,
+            jp.attachments,
+            jp.faqs,
+            jp.benefits,
+            jp.extra,
+            jp.visibility,
+            jp.status,
+            jp.priority,
+            jp.created_at,
+            jp.updated_at,
+            g.gym_name as gym_name,
+            g.lat as gym_lat,
+            g.lng as gym_lng,
+            g.district as gym_district,
+            g.state as gym_state,
+            g.address as gym_address,
+            g.logo_url as gym_logo,
+            g.country as gym_country
+            `,
                 limitSkip: {
                     limit: limit,
                     skip: offset
@@ -101,20 +140,31 @@ xprtoJobFeed.get('/:id', async (ctx) => {
             condition += ` AND jp.gym_id = ${sanitize(userId)}`;
         }
 
-        let sql = find(`${TABLES.GYMS.job_posts} as jp`, {
-            joins: `LEFT JOIN ${TABLES.GYMS.gyms} as g ON jp.gym_id = g.gym_id`,
-            columns: `jp.*,
-                g.gym_name as gym_name,
-                g.lat as gym_lat,
-                g.lng as gym_lng,
-                g.district as gym_district,
-                g.state as gym_state,
-                g.address as gym_address,
-                g.logo_url as gym_logo,
-                g.country as gym_country`,
+        const joinsArr = [
+            `LEFT JOIN ${TABLES.GYMS.gyms} as g ON jp.gym_id = g.gym_id`,
+            `LEFT JOIN ${TABLES.TRAINERS.job_applications} as jt ON jt.job_id = jp.job_id`,
+        ];
 
-            where: `{condition}`,
+        let sql = find(`${TABLES.GYMS.job_posts} as jp`, {
+            joins: joinsArr.join(' '),
+            groupBy: `jp.job_id`,
+            columns: `jp.*,
+            g.gym_name as gym_name,
+            g.lat as gym_lat,
+            g.lng as gym_lng,
+            g.district as gym_district,
+            g.about as gym_about,
+            g.state as gym_state,
+            g.address as gym_address,
+            g.logo_url as gym_logo,
+            g.country as gym_country,
+            CASE WHEN jt.id IS NOT NULL THEN 'applied' ELSE 'not_applied' END as application_status,
+            COUNT(jt.id) as total_applications
+            `,
+            where: condition
         });
+        console.log(sql);
+        return ctx.json(await dbQuery<any>(sql));
 
     } catch (err) {
         return ctx.json({ success: false, message: "Internal server error" });
