@@ -36,6 +36,7 @@ export const DirectoryServe = {
     },
     chat_messages: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "chats", filename(pathname)),
     supportTicket: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "support-tickets", filename(pathname)),
+    jobAttachments: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "job-applications", filename(pathname)),
     avatar: (role: string, pathname: string) => path.join(path.resolve(), "uploads", "avatars", role, "kyc", filename(pathname)),
     logo: (role: string, pathname: string) => path.join(path.resolve(), "uploads", "logo", role, "kyc", filename(pathname)),
     verifications: {

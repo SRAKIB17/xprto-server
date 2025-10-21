@@ -150,7 +150,6 @@ support_tickets.post('/:ticket_id/reply', async (ctx) => {
 
     try {
         const { message, attachments, status } = await ctx.req.json();
-        console.log(status)
         let finalAttachments: string[] = [];
 
         if (Array.isArray(attachments)) {

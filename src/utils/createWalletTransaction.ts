@@ -1,4 +1,3 @@
-import { Context } from 'tezx';
 import { generateUUID } from 'tezx/helper';
 import { pool, TABLES } from '../models/index.js';
 import { generateTxnID } from './generateTxnID.js';

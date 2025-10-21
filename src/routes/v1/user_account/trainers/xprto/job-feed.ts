@@ -1,10 +1,13 @@
-import { destroy, find, insert, mysql_date, mysql_datetime, sanitize, SortType, update } from "@tezx/sqlx/mysql";
+import { find, insert, sanitize, SortType } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
 import { DirectoryServe, filename } from "../../../../../config.js";
 import { dbQuery } from "../../../../../models/index.js";
 import { TABLES } from "../../../../../models/table.js";
-import { copyFile, safeUnlink } from "../../../../../utils/fileExists.js";
+import { copyFile } from "../../../../../utils/fileExists.js";
+import { performWalletTransaction } from "../../../../../utils/createWalletTransaction.js";
+import { generateTxnID } from "../../../../../utils/generateTxnID.js";
+import { generateUUID } from "tezx/helper";
 
 // import user_account_document_flag from "./flag-document.js";
 const xprtoJobFeed = new Router({
@@ -158,7 +161,7 @@ xprtoJobFeed.get('/:id', async (ctx) => {
             g.address as gym_address,
             g.logo_url as gym_logo,
             g.country as gym_country,
-            CASE WHEN jt.id IS NOT NULL THEN 'applied' ELSE 'not_applied' END as application_status,
+            CASE WHEN jt.id IS NOT NULL AND jt.trainer_id = ${sanitize(userId)} THEN 'applied' ELSE 'not_applied' END as application_status,
             COUNT(jt.id) as total_applications
             `,
             where: condition
@@ -171,30 +174,61 @@ xprtoJobFeed.get('/:id', async (ctx) => {
     }
 });
 
-// xprtoJobFeed.put('/:id/publish', async (ctx) => {
-//     const { id } = ctx.req.params;
-//     const { role, user_info } = ctx.auth || {};
-//     const userId = user_info?.user_id;
-//     if (!id) {
-//         return ctx.json({ success: false, message: "Service ID is required" });
-//     }
-//     try {
-//         const sql = update(TABLES.TRAINERS.services, {
-//             values: {
-//                 status: 'active',
-//             },
-//             where: `service_id = ${sanitize(id)} AND trainer_id = ${userId}`
-//         })
-//         const { success } = await dbQuery(sql);
-//         if (success) {
-//             return ctx.json({ success: true, message: "Service publish successfully. Wait for approval" });
-//         } else {
-//             return ctx.json({ success: false, message: "Failed to publish service" });
-//         }
-//     } catch (err) {
-//         return ctx.json({ success: false, message: "Internal server error" });
-//     }
-// });
+xprtoJobFeed.post('/:id/apply', async (ctx) => {
+    const { id } = ctx.req.params;
+    const { role, user_info } = ctx.auth || {};
+    const userId = user_info?.user_id;
+    if (!id) {
+        return ctx.json({ success: false, message: "Job id is required" });
+    }
+
+    try {
+        const { cover_letter, attachment, notes, amount } = await ctx.req.json();
+        let finalAttachments: string[] = [];
+
+        if (Array.isArray(attachment)) {
+            for (const att of attachment) {
+                // ধরে নিচ্ছি att হচ্ছে client থেকে আসা temp path বা file name
+                const fileName = filename(att);
+                let check = await copyFile(att, DirectoryServe.jobAttachments(fileName));
+                if (check) {
+                    finalAttachments.push(`/${fileName}`);
+                }
+            }
+        }
+        const sql = insert(TABLES.TRAINERS.job_applications, {
+            job_id: id,
+            notes,
+            cover_letter,
+            attachment: finalAttachments.length > 0 ? JSON.stringify(finalAttachments) : undefined,
+            trainer_id: userId
+        })
+        let txn_id = generateTxnID("JOB");
+
+        const { success, error } = await dbQuery(sql);
+        console.log(error)
+        if (success) {
+            await performWalletTransaction({
+                role: role,
+                user_id: userId,
+            }, {
+                amount: amount,
+                type: 'payment',
+                payment_method: "wallet",
+                external_txn_id: txn_id,
+                idempotency_key: generateUUID(),
+                note: "Payment Job application",
+                reference_type: "job_application"
+            })
+
+            return ctx.json({ success: true, message: "Successfully applied to the job" });
+        } else {
+            return ctx.json({ success: false, message: "Failed to apply to the job" });
+        }
+    } catch (err) {
+        return ctx.json({ success: false, message: "Internal server error" });
+    }
+});
 
 // xprtoJobFeed.put('/add-update', async (ctx) => {
 //     const { role, user_info } = ctx.auth || {};
