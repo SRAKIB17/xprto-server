@@ -118,7 +118,7 @@ my_documents.post("/", async (ctx) => {
 
 
 // ✅ Delete document
-my_documents.put("/:ticket_id", async (ctx) => {
+my_documents.put("/:id", async (ctx) => {
     try {
         const { user_id } = ctx.auth?.user_info || {};
         const { role } = ctx.auth ?? {};

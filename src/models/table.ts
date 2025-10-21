@@ -21,6 +21,7 @@ export const TABLES = {
         trainers: concat("trainers"),
     },
     GYMS: {
+        job_posts: concat("job_posts"),
         gyms: concat("gyms"),
     },
     ADMIN: {
