@@ -132,7 +132,7 @@ xprtoJobFeed.get('/:id', async (ctx) => {
     }
     try {
         let condition = `jp.job_id = ${sanitize(id)}`;
-        if ((role === 'gym' || role === 'admin') && !status) {
+        if ((role === 'gym' || role === 'admin')) {
             condition += " AND jp.status IN ('draft', 'published', 'closed', 'archived')"
         }
         else {
@@ -183,7 +183,10 @@ xprtoJobFeed.post('/:id/apply', async (ctx) => {
     }
 
     try {
-        const { cover_letter, attachment, notes, amount } = await ctx.req.json();
+        const { cover_letter, attachment, notes, amount,
+            expected_salary,
+            expected_salary_unit,
+        } = await ctx.req.json();
         let finalAttachments: string[] = [];
 
         if (Array.isArray(attachment)) {
@@ -230,86 +233,115 @@ xprtoJobFeed.post('/:id/apply', async (ctx) => {
     }
 });
 
-// xprtoJobFeed.put('/add-update', async (ctx) => {
-//     const { role, user_info } = ctx.auth || {};
-//     const userId = user_info?.user_id;
-//     if (!userId) return ctx.json({ success: false, message: "Unauthorized" });
+xprtoJobFeed.get(
+    "/my-applications",
+    paginationHandler({
+        getDataSource: async (ctx, { page, limit, offset }) => {
+            const { role } = ctx.auth || {};
+            if (role === 'trainer') {
 
-//     const body = await ctx.req.json();
+                const { search, verify, mode, status } = ctx?.req.query;
+                const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
+                let condition = "";
+                if ((role === 'gym' || role === 'admin')) {
+                    condition = "jp.status IN ('draft', 'published', 'closed', 'archived')"
+                }
+                else {
+                    condition = `jp.status = "published"`
+                }
 
-//     const {
-//         title, description, duration_minutes, package_name, package_features, price, discount,
-//         delivery_mode, requirements, video, images, certificates, faqs, mode, status, service_id,
-//         per_unit, recurrence_days, recurrence_type, time_from
-//     } = body;
+                if (status) {
+                    condition += ` AND jt.status = ${sanitize(status)}`;
+                }
+                if (role === 'gym') {
+                    condition += ` AND jp.gym_id = ${sanitize(user_id)}`;
+                }
 
-//     let finalVideo = undefined;
-//     // Parse arrays and JSON fields
-//     if (video) {
-//         if (await copyFile(video, DirectoryServe.myServices.video(video), true)) {
-//             finalVideo = filename(video);
-//         }
-//     }
-//     let finalImages = [];
-//     if (Array.isArray(images)) {
-//         for (const img of images) {
-//             if (await copyFile(img, DirectoryServe.myServices.images(img), true)) {
-//                 finalImages.push(filename(img));
-//             }
-//         }
-//     }
-//     let finalAttachments = [];
-//     if (Array.isArray(certificates)) {
-//         for (const cert of certificates) {
-//             if (await copyFile(cert, DirectoryServe.myServices.images(cert), true)) {
-//                 finalAttachments.push(filename(cert));
-//             }
-//         }
-//     }
-//     const json = {
-//         title,
-//         time_from,
-//         trainer_id: userId,
-//         description,
-//         per_unit,
-//         recurrence_days: Array.isArray(recurrence_days) && recurrence_days?.length ? JSON.stringify(recurrence_days) : undefined,
-//         recurrence_type,
-//         duration_minutes: duration_minutes || undefined,
-//         package_name: package_name || undefined,
-//         package_features: Array.isArray(package_features) ? JSON.stringify(package_features) : undefined,
-//         price,
-//         discount: discount || "0",
-//         delivery_mode,
-//         verify_status: 'pending',
-//         requirements: requirements || undefined,
-//         video: finalVideo || undefined,
-//         images: finalImages.length ? JSON.stringify(finalImages) : undefined,
-//         attachments: finalAttachments.length ? JSON.stringify(finalAttachments) : undefined,
-//         faqs: Array.isArray(faqs) ? JSON.stringify(faqs.map(r => ({
-//             question: r?.question,
-//             answer: r?.answer
-//         })).filter(Boolean)) : undefined,
-//         updated_at: mysql_datetime(),
-//         status: status === 'draft' ? 'draft' : 'active',
-//     };
+                let sort = {
+                    created_at: -1
+                } as SortType<any>
 
-//     try {
-//         if (mode === 'edit' && service_id) {
-//             // Update existing service
-//             const updateSql = update(TABLES.TRAINERS.services, {
-//                 values: json,
-//                 where: `service_id = ${sanitize(service_id)} AND trainer_id = ${sanitize(userId)}`
-//             })
-//             const { success } = await dbQuery(updateSql);
-//             return ctx.json({ success, message: success ? "Service updated successfully" : "Failed to update service" });
-//         } else {
-//             const insertSql = insert(TABLES.TRAINERS.services, json)
-//             const { success, result: { insertId } } = await dbQuery<any>(insertSql);
-//             return ctx.json({ success, service_id: insertId, message: success ? "Service created successfully" : "Failed to create service" });
-//         }
-//     } catch (err) {
-//         return ctx.json({ success: false, message: "Internal server error" });
-//     }
-// });
+                let sql = find(`${TABLES.GYMS.job_posts} as jp`, {
+                    sort: sort,
+                    joins: `LEFT JOIN ${TABLES.GYMS.gyms} as g ON jp.gym_id = g.gym_id RIGHT JOIN ${TABLES.TRAINERS.job_applications} as jt ON jt.job_id = jp.job_id AND jt.trainer_id = ${sanitize(user_id)}`,
+                    limitSkip: {
+                        limit: limit,
+                        skip: offset
+                    },
+                    columns: `jt.*,
+            jp.job_id,
+            jp.gym_id,
+            jp.posted_by,
+            jp.available_slots,
+            jp.vacancies,
+            jp.title,
+            jp.subtitle,
+            jp.requirements,
+            jp.responsibilities,
+            jp.qualifications,
+            jp.experience_required,
+            jp.min_experience_years,
+            jp.job_type,
+            jp.employment_place,
+            jp.gender_preference,
+            jp.salary_type,
+            jp.salary,
+            jp.salary_min,
+            jp.salary_max,
+            jp.salary_unit,
+            jp.currency,
+            jp.start_date,
+            jp.tags,
+            jp.category,
+            jp.location,
+            jp.city,
+            jp.state,
+            jp.video,
+            jp.images,
+            jp.attachments,
+            jp.faqs,
+            jp.benefits,
+            jp.extra,
+            jp.visibility,
+            jp.priority,
+            jp.created_at,
+            jp.updated_at,
+            g.gym_name as gym_name,
+            g.lat as gym_lat,
+            g.lng as gym_lng,
+            g.district as gym_district,
+            g.state as gym_state,
+            g.address as gym_address,
+            g.logo_url as gym_logo,
+            g.country as gym_country
+                    `,
+                    where: condition,
+                })
+                let count = find(`${TABLES.GYMS.job_posts} as jp`, {
+                    columns: 'count(*) as count',
+                    joins: `LEFT JOIN ${TABLES.GYMS.gyms} as g ON jp.gym_id = g.gym_id RIGHT JOIN ${TABLES.TRAINERS.job_applications} as jt ON jt.job_id = jp.job_id AND jt.trainer_id = ${sanitize(user_id)}`,
+                    where: condition,
+                })
+                const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
+                if (!success) {
+                    return {
+                        data: [],
+                        total: 0
+                    }
+                }
+                return {
+                    data: result?.[0],
+                    total: result?.[1]?.[0]?.count
+                }
+            }
+            else {
+                return {
+                    data: [],
+                    total: 0
+                }
+            }
+        },
+    })
+);
 
 export default xprtoJobFeed;
