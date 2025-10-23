@@ -19,8 +19,9 @@ xprtoJobFeed.get(
         getDataSource: async (ctx, { page, limit, offset }) => {
             const { role } = ctx.auth || {};
             const { search, verify, mode, status } = ctx?.req.query;
-            const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
+            const { user_id, username, hashed, salt, } = ctx.auth?.user_info || {};
             let condition = "";
+
             if ((role === 'gym' || role === 'admin') && !status) {
                 condition = "jp.status IN ('draft', 'published', 'closed', 'archived')"
             }
@@ -34,6 +35,7 @@ xprtoJobFeed.get(
             if (status) {
                 condition += ` AND jp.status = ${sanitize(status)}`;
             }
+
 
             if (search) {
                 // condition += ` AND MATCH(title, description, subtitle) AGAINST (${sanitize(search)} IN NATURAL LANGUAGE MODE)`;
@@ -241,8 +243,8 @@ xprtoJobFeed.get(
             const { role } = ctx.auth || {};
             if (role === 'trainer') {
 
-                const { search, verify, mode, status } = ctx?.req.query;
-                const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
+                const { search, verify, mode, status, job_id } = ctx?.req.query;
+                const { user_id, username, hashed, salt, } = ctx.auth?.user_info || {};
                 let condition = "";
                 if ((role === 'gym' || role === 'admin')) {
                     condition = "jp.status IN ('draft', 'published', 'closed', 'archived')"
@@ -256,6 +258,9 @@ xprtoJobFeed.get(
                 }
                 if (role === 'gym') {
                     condition += ` AND jp.gym_id = ${sanitize(user_id)}`;
+                }
+                if (job_id) {
+                    condition += ` AND jt.job_id = ${sanitize(job_id)}`;
                 }
 
                 let sort = {
