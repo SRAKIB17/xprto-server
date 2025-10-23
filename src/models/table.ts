@@ -11,6 +11,7 @@ export const TABLES = {
         clients: concat("clients")
     },
     TRAINERS: {
+        LEAVE_REQUESTS: concat("trainer_leaves"),
         job_applications: concat("trainer_job_applications"),
         WEEKLY_SLOTS: {
             WEEKLY_SLOTS: concat("trainer_weekly_slots"),
