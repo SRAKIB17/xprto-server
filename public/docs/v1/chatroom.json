@@ -1,0 +1,423 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Chat Rooms API",
+        "version": "1.0.0",
+        "description": "Chat Room management and WebSocket messaging API for trainer-client communication, group chats, and message streaming."
+    },
+    "tags": [
+        {
+            "name": "Chat Rooms",
+            "description": "Room list and room details APIs"
+        },
+        {
+            "name": "Messages",
+            "description": "Room chat messages (pagination)"
+        },
+        {
+            "name": "WebSocket",
+            "description": "Realtime messaging via WebSocket"
+        }
+    ],
+    "paths": {
+        "/v1/account/chat-rooms": {
+            "get": {
+                "summary": "Get User Chat Rooms",
+                "description": "Fetch a paginated list of chat rooms for the authenticated user (trainer, client, or gym). Returns latest message preview per room.",
+                "tags": [
+                    "Chat Rooms"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of chat rooms",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ChatRoom"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/v1/account/chat-rooms/{room_id}": {
+            "get": {
+                "summary": "Get Chat Room Details",
+                "description": "Retrieve chat room info and its members (either group members or single trainer/client).",
+                "tags": [
+                    "Chat Rooms"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "room_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Chat room ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chat room details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "example": "group"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ChatRoomDetails"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/v1/account/chat-rooms/{room_id}/chats": {
+            "get": {
+                "summary": "Get Room Messages (Paginated)",
+                "description": "Retrieve all messages from a specific chat room with pagination (latest first).",
+                "tags": [
+                    "Messages"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "room_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Chat room ID"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 30
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of messages with total count",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Message"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ChatRoom": {
+                "type": "object",
+                "properties": {
+                    "room_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Trainer John - Client Arif"
+                    },
+                    "is_group": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "See you at 6 PM!"
+                    },
+                    "last_message_updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-10-22T08:30:00Z"
+                    }
+                }
+            },
+            "ChatRoomDetails": {
+                "type": "object",
+                "properties": {
+                    "room_id": {
+                        "type": "integer"
+                    },
+                    "is_group": {
+                        "type": "boolean"
+                    },
+                    "room_name": {
+                        "type": "string"
+                    },
+                    "members": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ChatMember"
+                        }
+                    }
+                }
+            },
+            "ChatMember": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer"
+                    },
+                    "user_role": {
+                        "type": "string",
+                        "enum": [
+                            "trainer",
+                            "client",
+                            "gym",
+                            "admin"
+                        ]
+                    },
+                    "fullname": {
+                        "type": "string"
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "example": "/avatars/123.jpg"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+8801700000000"
+                    },
+                    "verified": {
+                        "type": "boolean"
+                    },
+                    "badge": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Message": {
+                "type": "object",
+                "properties": {
+                    "message_id": {
+                        "type": "integer",
+                        "example": 321
+                    },
+                    "room_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 55
+                    },
+                    "sender_role": {
+                        "type": "string",
+                        "example": "trainer"
+                    },
+                    "text": {
+                        "type": "string",
+                        "example": "Let’s start tomorrow!"
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "example": "/uploads/chat/abc.jpg"
+                        }
+                    },
+                    "is_read": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-10-22T09:00:00Z"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    },
+    "x-websocket": {
+        "url": "wss://your-domain.com/v1/account/chat-rooms/{room_id}?s_id={session_token}",
+        "description": "Realtime chat communication for a given room. Requires `s_id` (session token).",
+        "events": {
+            "connecting": {
+                "example": {
+                    "type": "connecting",
+                    "payload": {
+                        "user_role": "trainer",
+                        "user_id": 22,
+                        "avatar": "/a.jpg"
+                    }
+                },
+                "description": "When user connects to a chat room."
+            },
+            "typing": {
+                "example": {
+                    "type": "typing",
+                    "is_typing": true
+                },
+                "description": "Send when user is typing."
+            },
+            "blurred": {
+                "example": {
+                    "type": "blurred"
+                },
+                "description": "Send when user stops typing or switches away."
+            },
+            "message": {
+                "example": {
+                    "type": "message",
+                    "message_type": "text",
+                    "text": "Hello!",
+                    "attachments": []
+                },
+                "description": "Send a new message (text or attachment)."
+            },
+            "read": {
+                "example": {
+                    "type": "read",
+                    "room_id": 1,
+                    "last_message_id": 123,
+                    "user_id": 22,
+                    "role": "trainer"
+                },
+                "description": "Mark messages as read up to a specific message."
+            },
+            "serverEvents": {
+                "examples": [
+                    {
+                        "type": "inbox",
+                        "message": {
+                            "room_id": 1,
+                            "user_id": 22,
+                            "text": "Hello",
+                            "sender_role": "trainer"
+                        }
+                    },
+                    {
+                        "type": "read_receipt",
+                        "user_id": 33,
+                        "last_message_id": 123
+                    },
+                    {
+                        "type": "typing",
+                        "info": {
+                            "fullname": "John Trainer"
+                        }
+                    },
+                    {
+                        "type": "blurred",
+                        "info": {
+                            "fullname": "John Trainer"
+                        }
+                    },
+                    {
+                        "type": "online",
+                        "online": [
+                            {
+                                "user_role": "client",
+                                "user_id": 55
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}
