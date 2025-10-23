@@ -201,6 +201,8 @@ xprtoJobFeed.post('/:id/apply', async (ctx) => {
         }
         const sql = insert(TABLES.TRAINERS.job_applications, {
             job_id: id,
+            expected_salary,
+            expected_salary_unit,
             notes,
             cover_letter,
             attachment: finalAttachments.length > 0 ? JSON.stringify(finalAttachments) : undefined,
@@ -209,7 +211,6 @@ xprtoJobFeed.post('/:id/apply', async (ctx) => {
         let txn_id = generateTxnID("JOB");
 
         const { success, error } = await dbQuery(sql);
-        console.log(error)
         if (success) {
             await performWalletTransaction({
                 role: role,
@@ -258,7 +259,7 @@ xprtoJobFeed.get(
                 }
 
                 let sort = {
-                    created_at: -1
+                    applied_at: -1
                 } as SortType<any>
 
                 let sql = find(`${TABLES.GYMS.job_posts} as jp`, {
