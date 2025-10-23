@@ -39,6 +39,7 @@ app.get("/devtools", DevTools(app, {
 
 app.get("/v1/docs/public", swaggerUI("/docs/v1/public/docs.json"))
 app.get("/v1/docs/gym", swaggerUI("/docs/v1/gym.json"))
+app.get("/v1/docs/gym/document", swaggerUI("/docs/v1/gym/document.json"))
 
 const PORT = process.env.PORT;
 

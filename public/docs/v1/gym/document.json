@@ -1,0 +1,317 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "My Documents API",
+        "version": "1.0.0",
+        "description": "API endpoints for managing user documents (upload, fetch, and delete) for gym, trainer, client, or admin."
+    },
+    "paths": {
+        "/my-documents": {
+            "get": {
+                "summary": "Get My Documents",
+                "description": "Retrieve all uploaded documents for the authenticated user (based on user_id and role).",
+                "tags": [
+                    "My Documents"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of user documents",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Document"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Upload Documents",
+                "description": "Upload one or multiple documents for the authenticated user. Each document entry must contain file metadata (path, mime, etc).",
+                "tags": [
+                    "My Documents"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/NewDocument"
+                                    },
+                                    {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/NewDocument"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Documents uploaded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "documents": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Document"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
+        },
+        "/my-documents/{id}": {
+            "put": {
+                "summary": "Delete a Document",
+                "description": "Deletes a document record and removes its file from storage for the authenticated user.",
+                "tags": [
+                    "My Documents"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Document ID"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "storage_path": {
+                                        "type": "string",
+                                        "example": "/uploads/documents/my-documents/abc123.pdf"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Document deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Document not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "NewDocument": {
+                "type": "object",
+                "properties": {
+                    "document_type": {
+                        "type": "string",
+                        "example": "nid_front"
+                    },
+                    "original_name": {
+                        "type": "string",
+                        "example": "nid_front.jpg"
+                    },
+                    "user_type": {
+                        "type": "string",
+                        "enum": [
+                            "client",
+                            "gym",
+                            "trainer",
+                            "admin"
+                        ],
+                        "example": "trainer"
+                    },
+                    "stored_name": {
+                        "type": "string",
+                        "example": "file_12345.jpg"
+                    },
+                    "storage_path": {
+                        "type": "string",
+                        "example": "/tmp/uploads/file_12345.jpg"
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "example": "image/jpeg"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "example": 230400
+                    },
+                    "checksum": {
+                        "type": "string",
+                        "example": "e3b0c44298fc1c149afbf4c8996fb924..."
+                    }
+                },
+                "required": [
+                    "document_type",
+                    "original_name",
+                    "stored_name",
+                    "storage_path",
+                    "mime_type",
+                    "size",
+                    "user_type"
+                ]
+            },
+            "Document": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 101
+                    },
+                    "uuid": {
+                        "type": "string",
+                        "example": "4a2e5a23-8934-4dce-a521-9ff0b1a47c3b"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "user_type": {
+                        "type": "string",
+                        "enum": [
+                            "client",
+                            "gym",
+                            "trainer",
+                            "admin"
+                        ]
+                    },
+                    "document_type": {
+                        "type": "string",
+                        "example": "nid_front"
+                    },
+                    "original_name": {
+                        "type": "string",
+                        "example": "nid_front.jpg"
+                    },
+                    "stored_name": {
+                        "type": "string",
+                        "example": "file_12345.jpg"
+                    },
+                    "storage_path": {
+                        "type": "string",
+                        "example": "/uploads/documents/my-documents/file_12345.jpg"
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "example": "image/jpeg"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "example": 230400
+                    },
+                    "checksum": {
+                        "type": "string",
+                        "example": "e3b0c44298fc1c149afbf4c8996fb924..."
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-10-22T08:15:30Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-10-22T09:00:00Z"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "My Documents",
+            "description": "Manage user-uploaded documents (fetch, upload, delete)."
+        }
+    ]
+}

@@ -116,7 +116,6 @@ my_documents.post("/", async (ctx) => {
     }
 });
 
-
 // ✅ Delete document
 my_documents.put("/:id", async (ctx) => {
     try {
@@ -158,4 +157,5 @@ my_documents.put("/:id", async (ctx) => {
         return ctx.status(500).json({ success: false, message: "Server error", error: err?.message });
     }
 });
+
 export default my_documents;
