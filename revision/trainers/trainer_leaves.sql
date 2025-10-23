@@ -18,6 +18,7 @@ CREATE TABLE
         attachment JSON DEFAULT NULL, -- e.g. medical certificate, supporting docs
         start_date DATE NOT NULL,
         end_date DATE NOT NULL,
+        retroactive BOOLEAN DEFAULT FALSE,
         total_days DECIMAL(5, 2) GENERATED ALWAYS AS (DATEDIFF (end_date, start_date) + 1) STORED,
         -- Leave Status
         status ENUM (

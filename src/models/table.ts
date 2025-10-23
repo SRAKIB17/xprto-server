@@ -10,7 +10,11 @@ export const TABLES = {
         MUSCLES_RECORD: concat("client_muscles_record"),
         clients: concat("clients")
     },
+    MEMBERSHIP_JOIN: {
+        TRAINER_GYMS: concat("trainer_gyms")
+    },
     TRAINERS: {
+
         LEAVE_REQUESTS: concat("trainer_leaves"),
         job_applications: concat("trainer_job_applications"),
         WEEKLY_SLOTS: {

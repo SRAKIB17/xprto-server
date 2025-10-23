@@ -122,7 +122,7 @@ manipulateDoc.post('/new', async (ctx) => {
         let thumbnail = path.join(path.dirname(targetDir), 'thumbnails', type, thumbnailFilename);
         try {
           if (doc.thumbnail && await fileExists(doc.thumbnail)) {
-            await copyFile(doc.thumbnail, thumbnail);
+            await copyFile(doc.thumbnail, thumbnail, true);
             await safeUnlink(doc.thumbnail);
           }
           else {

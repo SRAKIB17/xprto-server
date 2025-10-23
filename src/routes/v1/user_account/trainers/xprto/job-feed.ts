@@ -195,12 +195,26 @@ xprtoJobFeed.post('/:id/apply', async (ctx) => {
             for (const att of attachment) {
                 // ধরে নিচ্ছি att হচ্ছে client থেকে আসা temp path বা file name
                 const fileName = filename(att);
-                let check = await copyFile(att, DirectoryServe.jobAttachments(fileName));
+                let check = await copyFile(att, DirectoryServe.jobAttachments(fileName), true);
                 if (check) {
                     finalAttachments.push(`/${fileName}`);
                 }
             }
         }
+        let txn_id = generateTxnID("JOB");
+        let { success } = await performWalletTransaction({
+            role: role,
+            user_id: userId,
+        }, {
+            amount: amount,
+            type: 'payment',
+            payment_method: "wallet",
+            external_txn_id: txn_id,
+            idempotency_key: generateUUID(),
+            note: "Payment Job application",
+            reference_type: "job_application"
+        })
+
         const sql = insert(TABLES.TRAINERS.job_applications, {
             job_id: id,
             expected_salary,
@@ -210,24 +224,10 @@ xprtoJobFeed.post('/:id/apply', async (ctx) => {
             attachment: finalAttachments.length > 0 ? JSON.stringify(finalAttachments) : undefined,
             trainer_id: userId
         })
-        let txn_id = generateTxnID("JOB");
 
-        const { success, error } = await dbQuery(sql);
         if (success) {
-            await performWalletTransaction({
-                role: role,
-                user_id: userId,
-            }, {
-                amount: amount,
-                type: 'payment',
-                payment_method: "wallet",
-                external_txn_id: txn_id,
-                idempotency_key: generateUUID(),
-                note: "Payment Job application",
-                reference_type: "job_application"
-            })
-
-            return ctx.json({ success: true, message: "Successfully applied to the job" });
+            const { success, error } = await dbQuery(sql);
+            return ctx.json({ success: success, message: "Successfully applied to the job" });
         } else {
             return ctx.json({ success: false, message: "Failed to apply to the job" });
         }
