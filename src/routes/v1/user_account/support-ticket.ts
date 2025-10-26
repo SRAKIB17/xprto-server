@@ -1,25 +1,10 @@
-// import { mysql_datetime, sanitize } from "@dbnx/mysql";
-// import fs, { existsSync, renameSync } from "node:fs";
-// import path from "node:path";
-// import sharp from "sharp";
-// import { Router } from "tezx";
-// import { useFormData } from "tezx/helper";
-// import { paginationHandler } from "tezx/middleware/pagination";
-// import { support_email } from "../../../config.js";
-// import { sendEmail } from "../../../email/mailer.js";
-// import { db, table_schema } from "../../../models/index.js";
-// import { wrappedCryptoToken } from "../../../utils/crypto.js";
-// import { AuthorizationMiddlewareUser } from "../auth/basicAuth.js";
-// import user_account_bookmark from "./bookmark.js";
-
 import { find, insert, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
-import path from "node:path";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
+import { DirectoryServe, filename } from "../../../config.js";
 import { dbQuery, TABLES } from "../../../models/index.js";
 import { CtxAuth } from "../../../types.js";
 import { copyFile } from "../../../utils/fileExists.js";
-import { DirectoryServe, filename } from "../../../config.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const support_tickets = new Router({
@@ -95,6 +80,126 @@ support_tickets.get(
         },
     })
 );
+support_tickets.post('/', async (c) => {
+    try {
+        const body = await c.req.json();
+        const {
+            priority,
+            assignTo,
+            subject,
+            gym_id,
+            trainer_id,
+            category,
+            description,
+            attachments
+        } = body;
+
+        const { role, user_info } = (c.auth || {}) as CtxAuth;
+        const { user_id, username, email } = user_info || {};
+
+        // 🧩 Identify role column dynamically
+        const roleColumn =
+            role === "admin"
+                ? "admin_id"
+                : role === "client"
+                    ? "client_id"
+                    : role === "gym"
+                        ? "gym_id"
+                        : role === "trainer"
+                            ? "trainer_id"
+                            : null;
+
+        if (!roleColumn) {
+            return c.json({
+                success: false,
+                message: "Unauthorized: Invalid role.",
+            });
+        }
+
+        // 🧩 Validation
+        if (!subject || !category || !description) {
+            return c.json({
+                success: false,
+                message: "Missing required fields: subject, category, or description.",
+            });
+        }
+
+        // 🧩 Build main ticket payload
+        const ticketPayload = {
+            category,
+            priority: priority || "medium",
+            subject,
+            created_by: role,
+            gym_id: gym_id || null,
+            trainer_id: trainer_id || null,
+            [roleColumn]: user_id,
+        };
+
+        // ✅ Insert ticket record
+        const { success, result, error } = await dbQuery<any>(
+            insert(TABLES.SUPPORT_TICKETS.SUPPORT_TICKETS, ticketPayload)
+        );
+
+        if (!success || !result?.insertId) {
+            return c.json({
+                success: false,
+                message: "Failed to create support ticket.",
+            });
+        }
+
+        const ticketId = result.insertId;
+        let finalAttachments: string[] = [];
+
+        // 🧩 Process attachments
+        if (Array.isArray(attachments) && attachments.length > 0) {
+            for (const att of attachments) {
+                try {
+                    const fileName = filename(att);
+                    const destPath = DirectoryServe.supportTicket(fileName);
+                    const copied = await copyFile(att, destPath, true);
+                    if (copied) finalAttachments.push(destPath);
+                } catch (e) {
+                    console.warn(`Attachment copy failed: ${att}`, e);
+                }
+            }
+        }
+
+        // ✅ Insert first message in support_messages
+        const { success: msgSuccess } = await dbQuery(
+            insert(TABLES.SUPPORT_TICKETS.SUPPORT_MESSAGES, {
+                ticket_id: ticketId,
+                sender_id: user_id,
+                sender_role: role,
+                message: description,
+                attachments: finalAttachments.length > 0 ? JSON.stringify(finalAttachments) : undefined,
+            })
+        );
+
+        if (!msgSuccess) {
+            return c.json({
+                success: false,
+                message: "Ticket created, but message could not be saved.",
+            });
+        }
+
+        return c.json({
+            success: true,
+            message: "Support ticket created successfully.",
+            data: {
+                ticket_id: ticketId,
+                subject,
+                category,
+                priority,
+                created_by: role,
+            },
+        });
+    } catch (err) {
+        return c.json({
+            success: false,
+            message: "Internal server error.",
+        });
+    }
+});
 
 support_tickets.get('/:ticket_id', async (ctx) => {
     const ticket_id = Number(ctx.req.params?.ticket_id);
