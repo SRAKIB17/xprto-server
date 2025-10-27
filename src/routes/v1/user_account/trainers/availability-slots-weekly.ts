@@ -16,7 +16,9 @@ availabilitySlotsWeekly.get("/:gym_id/:trainer_id", async (ctx) => {
     let condition = `(ws.trainer_id = ${sanitize(trainer_id)} OR ws.replacement_trainer_id = ${sanitize(trainer_id)}) AND ws.gym_id = ${sanitize(gym_id)}`;
 
     let sql = find(`${TABLES.TRAINERS.WEEKLY_SLOTS.WEEKLY_SLOTS} as ws`, {
-        joins: `LEFT JOIN ${TABLES.GYMS.SESSIONS} as gs on gs.session_id = ws.session_id`,
+        joins: `LEFT JOIN ${TABLES.GYMS.SESSIONS} as gs on gs.session_id = ws.session_id
+        LEFT JOIN ${TABLES.TRAINERS.trainers} as T ON T.trainer_id = ws.replacement_trainer_id`,
+        columns: `ws.*, gs.*, T.fullname as replacement_trainer_name`,
         sort: {
             "ws.slot_id": -1
         },
@@ -25,7 +27,7 @@ availabilitySlotsWeekly.get("/:gym_id/:trainer_id", async (ctx) => {
     return ctx.json(await dbQuery<any[]>(`${sql}`));
 });
 
-availabilitySlotsWeekly.post('/update/:slot_id', async (ctx) => {
+availabilitySlotsWeekly.put('/update/:slot_id', async (ctx) => {
     try {
         const { role, user_info } = ctx.auth || {};
         if (role !== 'gym') {

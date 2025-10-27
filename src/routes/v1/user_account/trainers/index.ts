@@ -11,7 +11,7 @@ const trainers = new Router({
     basePath: "/trainers"
 });
 trainers.use((ctx, next) => {
-    if (ctx.auth?.role === 'trainer') {
+    if (ctx.auth?.role === 'trainer' || ctx.auth?.role === 'gym') {
         return next();
     }
     throw new TezXError("unauthorized");
