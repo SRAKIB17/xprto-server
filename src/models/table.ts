@@ -14,6 +14,7 @@ export const TABLES = {
         TRAINER_GYMS: concat("trainer_gyms")
     },
     TRAINERS: {
+        RED_FLAGS: concat("trainer_red_flags"),
         LEAVE_REQUESTS: concat("trainer_leaves"),
         job_applications: concat("trainer_job_applications"),
         WEEKLY_SLOTS: {

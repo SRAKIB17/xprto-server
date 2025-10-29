@@ -24,7 +24,8 @@ clientFeedback.get('/dashboard', async (ctx) => {
                 limit: 2,
             },
             where: `trainer_id = ${user_id}`
-        })
+        });
+
         let matrix = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
             columns: `
                     ROUND(AVG(rating), 2) AS average_score,

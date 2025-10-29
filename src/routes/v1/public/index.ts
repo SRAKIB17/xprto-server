@@ -1,8 +1,11 @@
 import { Router } from "tezx";
-import trainers from "./trainers.js";
-const publicData = new Router();
+import trainersList from "./trainers.js";
 
-publicData.use('/public', trainers)
+const publicApi = new Router({
+    basePath: 'public'
+});
+
+publicApi.use('/trainers', trainersList)
 // publicData.addRouter('/help-center', helpCenter)
 // publicData.addRouter('/about-us', aboutUs);
 // publicData.addRouter('/contact-us', contactUs);
@@ -10,4 +13,4 @@ publicData.use('/public', trainers)
 // publicData.addRouter('/privacy-policy', privacy);
 // publicData.addRouter('/cookie-policy', cookie);
 
-export { publicData };
+export default publicApi;

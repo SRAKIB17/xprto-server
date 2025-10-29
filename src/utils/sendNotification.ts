@@ -1,7 +1,7 @@
 import { insert } from "@tezx/sqlx/mysql";
 import { dbQuery, TABLES } from "../models";
 
-/**
+/** //! Notifications + Email
  * 1. wallet add fund
  * 2. withdraw
  * 3. support ticket reply

@@ -44,6 +44,23 @@ CREATE TABLE
         FOREIGN KEY (gym_id) REFERENCES gyms (gym_id) ON DELETE SET NULL
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
+CREATE TABLE trainer_red_flags (
+    red_flag_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    trainer_id BIGINT UNSIGNED NOT NULL,
+    type ENUM('kyc_issue', 'low_rating', 'complaint', 'temporary_block', 'suspended') NOT NULL,
+    reason TEXT DEFAULT NULL,
+    severity ENUM('low', 'medium', 'high') DEFAULT 'medium',
+    status ENUM('active', 'resolved') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP NULL DEFAULT NULL,
+    
+    FOREIGN KEY (trainer_id) REFERENCES trainers(trainer_id) ON DELETE CASCADE,
+    INDEX (trainer_id),
+    INDEX (status),
+    INDEX (severity)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 CREATE TABLE trainer_kyc_verification (
     kyc_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     trainer_id BIGINT UNSIGNED NOT NULL ,
