@@ -33,7 +33,6 @@ availabilitySlotsWeekly.put('/update/:slot_id', async (ctx) => {
         if (role !== 'gym') {
             return ctx.json({ success: false, message: "Unauthorized!" });
         }
-
         const { slot_id } = ctx.req.params;
         const userId = user_info?.user_id;
         const body = await ctx.req.json();
