@@ -13,7 +13,7 @@ availabilitySlotsWeekly.get("/:gym_id/:trainer_id", async (ctx) => {
     const { user_id } = ctx.auth?.user_info || {};
     const { gym_id, trainer_id } = ctx.req.params;
 
-    let condition = `(ws.trainer_id = ${sanitize(trainer_id)} OR ws.replacement_trainer_id = ${sanitize(trainer_id)}) AND ws.gym_id = ${sanitize(gym_id)}`;
+    let condition = `(ws.trainer_id = ${sanitize(trainer_id)} OR ws.replacement_trainer_id = ${sanitize(trainer_id)}) AND gs.gym_id = ${sanitize(gym_id)}`;
 
     let sql = find(`${TABLES.TRAINERS.WEEKLY_SLOTS.WEEKLY_SLOTS} as ws`, {
         joins: `LEFT JOIN ${TABLES.GYMS.SESSIONS} as gs on gs.session_id = ws.session_id

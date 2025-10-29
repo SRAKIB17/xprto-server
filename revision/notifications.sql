@@ -19,7 +19,7 @@ CREATE TABLE
             'payment_due',
             'class_schedule',
             'feedback',
-        'achievement',
+            'achievement',
             'system_event'
         ) NOT NULL DEFAULT 'alert',
         metadata JSON NULL,

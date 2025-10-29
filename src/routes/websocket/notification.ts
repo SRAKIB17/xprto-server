@@ -1,6 +1,7 @@
 import { Callback, Context, Router } from "tezx";
 import { upgradeWebSocket } from "tezx/bun";
 import { generateUUID } from "tezx/helper";
+import { NotificationPayload } from "../../utils/sendNotification";
 
 export const clients = new Map<string, WebSocket>(); // store user_id/request_id → ws
 
@@ -15,7 +16,7 @@ export function AppNotificationToast(ctx: Context, message: {
     socket_id?: string,
     message?: string;
     duration?: number; // ms, 0 = persistent
-}) {
+} & NotificationPayload) {
     let socket_id = ctx.req.header("socket-id") ?? message?.socket_id;
     if (!socket_id) return;
     return clients.get(socket_id)?.send(JSON.stringify({
@@ -52,10 +53,11 @@ notifications.get(
                 clients.set(userId!, ws);
                 ws.send(JSON.stringify({ 'type': "connect", "socket-id": userId }))
             },
-            message(ws, data) {
+            message(ws, data: any) {
                 try {
                     const parsed = JSON.parse(data.toString());
-                    const { type, title, message, to } = parsed;
+
+                    const { type, title, message, to, ...rest } = parsed;
 
                     if (to === "all") {
                         // Broadcast to everyone
@@ -70,7 +72,13 @@ notifications.get(
                         if (client.readyState === 1) {
                             client.send(JSON.stringify({ type, title, message }));
                         }
-                    } else {
+                    }
+                    else if (type === 'replace') {
+                        clients.delete(rest?.replace_id);
+                        clients.set(rest?.id, ws);
+                        ws.send(JSON.stringify({ type: 'replace', id: rest?.id }))
+                    }
+                    else {
                         // Echo back if invalid
                         ws.send(JSON.stringify({ type: "error", message: "Invalid target" }));
                     }
