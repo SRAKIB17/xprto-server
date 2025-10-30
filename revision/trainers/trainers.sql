@@ -7,6 +7,7 @@ CREATE TABLE
         gym_id BIGINT UNSIGNED DEFAULT NULL,
         xprto BOOLEAN DEFAULT TRUE,
         postal_code VARCHAR(20) DEFAULT NULL,
+        is_online BOOLEAN DEFAULT TRUE,
         country VARCHAR(50) DEFAULT NULL,
         state VARCHAR(50) DEFAULT NULL,
         district VARCHAR(50) DEFAULT NULL,

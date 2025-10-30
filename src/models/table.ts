@@ -24,6 +24,7 @@ export const TABLES = {
         kyc_verification: concat("trainer_kyc_verification"),
         badge_verification: concat("trainer_badge_verification"),
         trainers: concat("trainers"),
+        BOOKING_REQUESTS: concat("booking_requests")
     },
     GYMS: {
         SESSIONS: concat('gym_sessions'),

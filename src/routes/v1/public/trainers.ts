@@ -9,7 +9,7 @@ trainersList.get("/", paginationHandler({
         const { role } = ctx.auth || {};
         const { search, verify, mode, status } = ctx?.req.query;
         const { user_id, username, hashed, salt, } = ctx.auth?.user_info || {};
-        let condition = "";
+        let condition = "t.is_online = 1";
 
         // if ((role === 'gym' || role === 'admin') && !status) {
         //     condition = "jp.status IN ('draft', 'published', 'closed', 'archived')"
@@ -61,7 +61,7 @@ trainersList.get("/", paginationHandler({
         });
 
 
-        let count = find(`${TABLES.TRAINERS.trainers}`, {
+        let count = find(`${TABLES.TRAINERS.trainers} as t`, {
             columns: 'count(*) as count',
             // joins: `LEFT JOIN ${TABLES.GYMS.gyms} as g ON jp.gym_id = g.gym_id`,
             where: condition,

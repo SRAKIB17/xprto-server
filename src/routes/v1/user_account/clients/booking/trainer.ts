@@ -1,14 +1,42 @@
-import { find, sanitize } from "@tezx/sqlx/mysql";
+import { find, insert, mysql_datetime, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
-import { dbQuery, TABLES } from "../../../../../models/index.js";
 import { generateUUID } from "tezx/helper";
+import { dbQuery, TABLES } from "../../../../../models/index.js";
+import { performWalletTransaction } from "../../../../../utils/createWalletTransaction.js";
 import { generateTxnID } from "../../../../../utils/generateTxnID.js";
-
 
 // import user_account_document_flag from "./flag-document.js";
 const trainerBooking = new Router({
     basePath: '/trainers'
 });
+
+trainerBooking.get("/:trainer_id", async (ctx) => {
+    let condition = `t.is_online = 1 AND t.trainer_id = ${sanitize(ctx?.params?.trainer_id)}`;
+
+    let sql = find(`${TABLES.TRAINERS.trainers} as t`, {
+        joins: `
+    LEFT JOIN ${TABLES.TRAINERS.RED_FLAGS} as rf ON t.trainer_id = rf.trainer_id AND rf.status = 'active'
+    LEFT JOIN ${TABLES.FEEDBACK.CLIENT_TRAINER} as fb ON fb.trainer_id = t.trainer_id
+    LEFT JOIN ${TABLES.TRAINERS.services} as ms ON ms.trainer_id = t.trainer_id AND ms.status = 'active'
+  `,
+        columns: `
+    t.*,
+    COUNT(DISTINCT rf.red_flag_id) AS active_red_flags_count,
+    ROUND(AVG(fb.rating), 2) AS rating,
+    COUNT(DISTINCT fb.feedback_id) AS reviews,
+    MIN(ms.price) AS min_price,
+    TIMESTAMPDIFF(YEAR, t.dob, CURDATE()) as age,
+    MAX(ms.price) AS max_price,
+    COUNT(DISTINCT ms.service_id) AS total_services,
+    GROUP_CONCAT(DISTINCT ms.delivery_mode) AS delivery_modes
+  `,
+        where: condition,
+        groupBy: 't.trainer_id'
+    });
+    let { success, result } = await dbQuery(sql);
+    return ctx.json({ success: success, trainer: result?.[0] })
+})
+
 trainerBooking.get('/:trainer_id/services', async (ctx) => {
     let { trainer_id } = await ctx.req.params;
 
@@ -34,84 +62,112 @@ trainerBooking.get('/:trainer_id/services', async (ctx) => {
 trainerBooking.post("service", async (ctx) => {
     const { user_id, email } = ctx.auth?.user_info || {};
     const { role } = ctx.auth || {};
+
     if (!user_id || !role) {
-        return ctx.status(401).json({ message: "Unauthorized" });
+        return ctx.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    let { payment_status, slot, client_note, range, select, location } = await ctx.req.json();
-    let {
-        service_id, trainer_id, title, description, details, package_name, package_features, price, discount, currency, duration_minutes, delivery_mode, requirements, video, images, faqs, status, verify_status, created_at, updated_at, attachments, per_unit, recurrence_type, recurrence_days, time_from, fullname, avatar, active_red_flags_count
+    // Extract payload from request
+    const { payment_status, slot, client_note, range, select, location } = await ctx.req.json();
+    const {
+        service_id,
+        trainer_id,
+        title,
+        description,
+        details,
+        package_name,
+        package_features,
+        price,
+        discount,
+        currency,
+        duration_minutes,
+        delivery_mode,
+        requirements,
+        video,
+        images,
+        faqs,
+        status,
+        verify_status,
+        created_at,
+        updated_at,
+        attachments,
+        per_unit,
+        recurrence_type,
+        recurrence_days,
+        time_from,
+        fullname,
+        avatar,
+        active_red_flags_count,
     } = select;
-    const { end, start } = range;
-    let booking_code = generateTxnID("BK");
-    let txn_id = generateTxnID("KYC");
-    console.log(slot)
-    let idempotency_key = generateUUID();
+
+    const { start: startDate, end: endDate } = range;
+
+    const requested_start = mysql_datetime(startDate);
+    const requested_end = mysql_datetime(endDate);
+
+    const booking_code = generateTxnID("BK");
+    const txn_id = generateTxnID("KYC");
+    const idempotency_key = generateUUID();
+
+    // Calculate final price
     const discountAmount = (Number(price) * Number(discount || 0)) / 100;
     const finalPrice = Number(price) - discountAmount;
 
-    //         requested_start DATETIME NULL,
-    //         requested_end DATETIME NULL,
-    //         -- scheduled times (what trainer accepted / admin scheduled)
-    //         scheduled_start DATETIME NULL,
-    //         scheduled_end DATETIME NULL,
-    //         duration_minutes INT NULL,
-    //         -- meeting / delivery details
-    //         delivery_mode ENUM ('online', 'doorstep', 'hybrid') NOT NULL DEFAULT 'online',
-    //         location TEXT NULL, -- user provided address (if applicable)
-    //         meet_link VARCHAR(1000) NULL, -- zoom/meet link or similar
-    //         -- notes
-    //         client_note TEXT NULL, -- note from client while requesting
-    //         trainer_note TEXT NULL, -- trainer can add private/public notes
-    //         admin_note TEXT NULL, -- optional admin note
-    //         -- status & flow
-    //         status ENUM (
-    //             'pending',
-    //             'accepted',
-    //             'confirmed',
-    //             'rejected',
-    //             'cancelled',
-    //             'rescheduled',
-    //             'completed'
-    //         ) NOT NULL DEFAULT 'pending',
-    //         status_reason VARCHAR(255) NULL, -- short reason/reject note
-    //         cancelled_by ENUM ('client', 'trainer', 'admin') NULL,
-    //         -- payment
-    //         payment_status ENUM (
-    //             'unpaid',
-    //             'initiated',
-    //             'paid',
-    //             'refunded',
-    //             'failed'
-    //         ) DEFAULT 'unpaid',
-    //         payment_txn_id VARCHAR(100) NULL,
-    //         idempotency_key VARCHAR(191) DEFAULT NULL, -- ensure idempotent ops,
-    //         -- meta
-    //         created_by BIGINT UNSIGNED NULL,
-    //         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    //         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    //         responded_at DATETIME NULL, -- when trainer accepted/rejected
-    //         responded_by BIGINT UNSIGNED NULL, -- trainer/admin id who responded
-    //         PRIMARY KEY (booking_id),
-    //         INDEX idx_trainer_status (trainer_id, status, created_at),
-    //         INDEX idx_client (client_id, created_at),
-    //         INDEX idx_service (service_id),
-    //         INDEX idx_booking_code (booking_code),
-    //         CONSTRAINT fk_br_client FOREIGN KEY (client_id) REFERENCES users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    //         CONSTRAINT fk_br_trainer FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE CASCADE ON UPDATE CASCADE
-    let payload = {
+    // Perform wallet transaction
+    const { success: walletSuccess } = await performWalletTransaction(
+        { role, user_id },
+        {
+            amount: finalPrice,
+            type: "hold",
+            payment_method: "wallet",
+            external_txn_id: txn_id,
+            idempotency_key,
+            note: `Payment Booking Trainer (${fullname})`,
+            reference_type: "booking_trainer",
+        }
+    );
+
+    if (!walletSuccess) {
+        return ctx.status(400).json({ success: false, message: "Wallet transaction failed" });
+    }
+
+    // Insert booking into database
+    const payload = {
         wallet_used: true,
+        booking_code,
+        delivery_mode,
         client_id: user_id,
         trainer_id,
-        requested_start: "",
-        requested_end: '',
-        price,
+        requested_start,
+        requested_end,
+        price: finalPrice,
+        client_note,
+        payment_txn_id: txn_id,
+        idempotency_key,
+        duration_minutes,
+        time_from,
+        location: location ?? null,
         discount_percent: discount,
         service_id,
         per_unit,
+    };
+
+    const { success: dbSuccess, result } = await dbQuery(
+        insert(TABLES.TRAINERS.BOOKING_REQUESTS, payload as any)
+    );
+
+    if (!dbSuccess) {
+        return ctx.status(500).json({ success: false, message: "Failed to create booking" });
     }
 
-    return ctx.json({})
-})
+    return ctx.json({
+        success: true,
+        message: "Booking successful",
+        booking_code,
+        payment_txn_id: txn_id,
+        booking: result,
+    });
+});
+
 
 export default trainerBooking;

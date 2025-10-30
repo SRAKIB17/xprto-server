@@ -16,7 +16,6 @@ myServices.get(
         getDataSource: async (ctx, { page, limit, offset }) => {
             const { role } = ctx.auth || {};
             const { search, verify, mode } = ctx?.req.query;
-            console.log(ctx?.req.query)
             const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
             let condition = `trainer_id = ${user_id}`
             if (search) {

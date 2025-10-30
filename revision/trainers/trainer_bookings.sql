@@ -19,7 +19,8 @@ CREATE TABLE
         -- scheduled times (what trainer accepted / admin scheduled)
         scheduled_start DATETIME NULL,
         scheduled_end DATETIME NULL,
-        duration_minutes INT NULL,
+        time_from TIME NOT NULL, -- FIXED: was DATE
+        duration_minutes INT UNSIGNED DEFAULT 60,
         -- meeting / delivery details
         delivery_mode ENUM ('online', 'doorstep', 'hybrid') NOT NULL DEFAULT 'online',
         location TEXT NULL, -- user provided address (if applicable)
@@ -58,10 +59,10 @@ CREATE TABLE
         responded_at DATETIME NULL, -- when trainer accepted/rejected
         responded_by BIGINT UNSIGNED NULL, -- trainer/admin id who responded
         PRIMARY KEY (booking_id),
-        INDEX idx_trainer_status (trainer_id, status, created_at),
-        INDEX idx_client (client_id, created_at),
-        INDEX idx_service (service_id),
-        INDEX idx_booking_code (booking_code),
-        CONSTRAINT fk_br_client FOREIGN KEY (client_id) REFERENCES users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-        CONSTRAINT fk_br_trainer FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE CASCADE ON UPDATE CASCADE
+        INDEX (trainer_id, status, created_at),
+        INDEX (client_id, created_at),
+        INDEX (service_id),
+        INDEX (booking_code),
+        FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE CASCADE ON UPDATE CASCADE,
+        FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
