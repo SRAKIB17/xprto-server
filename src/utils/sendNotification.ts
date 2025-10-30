@@ -28,7 +28,7 @@ export type DeliveryMethod = 'app' | 'email' | 'sms' | 'whatsapp';
 
 export interface NotificationPayload {
     recipientId?: number;
-    recipientType: 'client' | 'trainer' | 'gym' | 'admin';
+    recipientType?: 'client' | 'trainer' | 'gym' | 'admin';
     senderType?: 'system' | 'admin' | 'gym' | 'trainer' | 'client';
     senderId?: number;
     title: string;

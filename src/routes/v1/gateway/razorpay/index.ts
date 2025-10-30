@@ -104,7 +104,7 @@ razorpay.post('/checkout', async (ctx) => {
         socket_id: prefill?.socket_id,
         title: "Payment Failed",
         message: "Payment verification failed.",
-        type: "error"
+        type: "error" as unknown as any,
       });
 
       return ctx.json({ success: false, message: "Payment verification failed" });
