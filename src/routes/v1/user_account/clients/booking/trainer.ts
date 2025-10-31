@@ -209,6 +209,5 @@ trainerBooking.get("/:trainer_id/unavailability/:service_id", async (ctx) => {
         result: [...new Set(flatDates)], // remove duplicate dates
     });
 });
-console.log(mysql_date.toString())
 
 export default trainerBooking;

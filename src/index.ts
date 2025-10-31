@@ -22,7 +22,6 @@ app.use(corsPolicy)
 app.use([logger({ enabled: process.env.NODE_ENV === "development" })]);
 
 app.get("/", (ctx) => {
-  console.log(ctx.env)
   return ctx.text("Hello from TezX (bun)");
 });
 

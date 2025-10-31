@@ -1,4 +1,4 @@
-import { find, sanitize } from "@tezx/sqlx/mysql";
+import { destroy, find, insert, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../models/index.js";
@@ -224,6 +224,79 @@ chat_rooms.get("/:room_id", async (ctx) => {
     // 6️⃣ Default fallback
     return ctx.json({ success: false, message: "No members found" });
 });
+
+chat_rooms.post('/create-room', async (ctx) => {
+    let body = await ctx.req.json();
+    const {
+        room_name,
+        is_group,
+        is_announcement,
+        created_at,
+        thumbnail
+    } = body;
+
+    try {
+        return ctx.json(await dbQuery(insert(TABLES.CHAT_ROOMS.chat_rooms, {
+            room_name,
+            is_group,
+            is_announcement,
+            thumbnail,
+        })))
+    } catch (err) {
+        return ctx.json({ success: false, message: "Internal Server Error" });
+    }
+})
+
+chat_rooms.delete('/delete-room/:room_id', async (ctx) => {
+    try {
+        return ctx.json(await dbQuery(destroy(TABLES.CHAT_ROOMS.chat_rooms, {
+            where: `room_id = ${sanitize(ctx.req.params.room_id)}`
+        })))
+    } catch (err) {
+        return ctx.json({ success: false, message: "Internal Server Error" });
+    }
+})
+
+chat_rooms.post('/:room_id/add-member', async (ctx) => {
+    let body = await ctx.req.json();
+    const {
+        user_id,
+        user_role,
+    } = body;
+    try {
+        return ctx.json(await dbQuery(insert(TABLES.CHAT_ROOMS.memberships, {
+            user_id,
+            user_role,
+        })))
+    } catch (err) {
+        return ctx.json({ success: false, message: "Internal Server Error" });
+    }
+});
+
+chat_rooms.post('/:room_id/delete-member', async (ctx) => {
+    let body = await ctx.req.json();
+    const {
+        user_id,
+        user_role,
+    } = body;
+    try {
+        return ctx.json(await dbQuery(destroy(TABLES.CHAT_ROOMS.memberships, {
+            where: `user_id = ${sanitize(user_id)} AND user_role = ${sanitize(user_role)}`
+        })))
+    } catch (err) {
+        return ctx.json({ success: false, message: "Internal Server Error" });
+    }
+})
+
+chat_rooms.delete('/delete-room/:room_id', async (ctx) => {
+    try {
+        return ctx.json(await dbQuery(destroy(TABLES.CHAT_ROOMS.chat_rooms, {
+            where: `room_id = ${sanitize(ctx.req.params.room_id)}`
+        })))
+    } catch (err) {
+        return ctx.json({ success: false, message: "Internal Server Error" });
+    }
+})
 
 
 chat_rooms.get("/:room_id/chats", paginationHandler({
