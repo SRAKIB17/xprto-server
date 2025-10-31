@@ -14,11 +14,11 @@ CREATE TABLE
         final_price DECIMAL(10, 2) AS (price - (price * discount_percent / 100)) STORED,
         per_unit ENUM ('session', 'hour', 'day', 'week', 'month') DEFAULT 'session',
         -- requested times (what client asked for)
-        requested_start DATETIME NULL,
-        requested_end DATETIME NULL,
+        requested_start DATE NULL,
+        requested_end DATE NULL,
         -- scheduled times (what trainer accepted / admin scheduled)
-        scheduled_start DATETIME NULL,
-        scheduled_end DATETIME NULL,
+        scheduled_start DATE NULL,
+        scheduled_end DATE NULL,
         time_from TIME NOT NULL, -- FIXED: was DATE
         duration_minutes INT UNSIGNED DEFAULT 60,
         -- meeting / delivery details

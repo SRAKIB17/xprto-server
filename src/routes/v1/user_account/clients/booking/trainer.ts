@@ -1,4 +1,4 @@
-import { find, insert, mysql_datetime, sanitize } from "@tezx/sqlx/mysql";
+import { find, insert, mysql_date, mysql_datetime, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { generateUUID } from "tezx/helper";
 import { dbQuery, TABLES } from "../../../../../models/index.js";
@@ -102,8 +102,8 @@ trainerBooking.post("service", async (ctx) => {
 
     const { start: startDate, end: endDate } = range;
 
-    const requested_start = mysql_datetime(startDate);
-    const requested_end = mysql_datetime(endDate);
+    const requested_start = mysql_date(startDate);
+    const requested_end = mysql_date(endDate);
 
     const booking_code = generateTxnID("BK");
     const txn_id = generateTxnID("KYC");
@@ -169,5 +169,45 @@ trainerBooking.post("service", async (ctx) => {
     });
 });
 
+
+trainerBooking.get("/:trainer_id/unavailability/:service_id", async (ctx) => {
+    const { trainer_id, service_id } = ctx.params;
+
+    if (!trainer_id || !service_id) {
+        return ctx.status(400).json({ success: false, message: "Trainer ID required" });
+    }
+
+    let where = `trainer_id = ${sanitize(trainer_id)} AND status IN ('accepted','confirmed') AND service_id = ${sanitize(service_id)} AND requested_end >= NOW()`;
+
+    let sql = find(TABLES.TRAINERS.BOOKING_REQUESTS, {
+        columns: `
+      requested_start,
+      requested_end,
+      duration_minutes
+    `,
+        where,
+    });
+    function getDatesBetween(start: Date, end: Date) {
+        const dates = [];
+        let current = new Date(start);
+
+        while (current <= end) {
+            dates.push(mysql_date(current));
+            current.setDate(current.getDate() + 1);
+        }
+        return dates;
+    }
+
+    const { success, result } = await dbQuery(sql);
+    const flatDates = (result || []).flatMap((row) => {
+        const startDate = new Date(`${row.requested_start}`);
+        const endDate = new Date(row?.requested_end);
+        return getDatesBetween(startDate, endDate);
+    });
+    return ctx.json({
+        success,
+        result: [...new Set(flatDates)], // remove duplicate dates
+    });
+});
 
 export default trainerBooking;
