@@ -2,6 +2,8 @@ import { destroy, find, insert, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../models/index.js";
+import { copyFile } from "../../../utils/fileExists.js";
+import { DirectoryServe, filename } from "../../../config.js";
 
 const chat_rooms = new Router({
     basePath: "chat-rooms"
@@ -234,13 +236,18 @@ chat_rooms.post('/create-room', async (ctx) => {
         created_at,
         thumbnail
     } = body;
-
+    let finalThumbnail: string | undefined = undefined
+    if (thumbnail) {
+        if (await copyFile(thumbnail, DirectoryServe.thumbnail.chat(thumbnail), true)) {
+            finalThumbnail = filename(thumbnail);
+        }
+    }
     try {
         return ctx.json(await dbQuery(insert(TABLES.CHAT_ROOMS.chat_rooms, {
             room_name,
             is_group,
             is_announcement,
-            thumbnail,
+            thumbnail: finalThumbnail ?? undefined,
         })))
     } catch (err) {
         return ctx.json({ success: false, message: "Internal Server Error" });
