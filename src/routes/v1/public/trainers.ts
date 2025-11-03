@@ -82,56 +82,115 @@ trainersList.get("/", paginationHandler({
 })
 );
 
-// xprtoJobFeed.get('/:id', async (ctx) => {
-//     const { id } = ctx.req.params;
-//     const { role, user_info } = ctx.auth || {};
-//     const userId = user_info?.user_id;
-//     const { images, video } = await ctx.req.json();
+trainersList.get('/feedback/dashboard/:trainer_id', async (ctx) => {
+    try {
+        const user_id = sanitize(ctx.req.params?.trainer_id)
+        let sql = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
+            sort: {
+                feedback_id: -1
+            },
+            limitSkip: {
+                limit: 3,
+            },
+            where: `trainer_id = ${user_id}`
+        });
 
-//     if (!id) {
-//         return ctx.json({ success: false, message: "Service ID is required" });
-//     }
-//     try {
-//         let condition = `jp.job_id = ${sanitize(id)}`;
-//         if ((role === 'gym' || role === 'admin')) {
-//             condition += " AND jp.status IN ('draft', 'published', 'closed', 'archived')"
-//         }
-//         else {
-//             condition += ` AND jp.status = "published"`
-//         }
+        let matrix = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
+            columns: `
+                    ROUND(AVG(rating), 2) AS average_score,
+                    SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) AS positive_count,
+                    SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) AS neutral_count,
+                    SUM(CASE WHEN rating <= 2 THEN 1 ELSE 0 END) AS negative_count,
+                    CONCAT(
+                        ROUND(
+                            SUM(CASE WHEN reply IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*) * 100, 0
+                        ), '%'
+                    ) AS response_rate,
+                    CONCAT(
+                        FLOOR(AVG(TIMESTAMPDIFF(MINUTE, created_at, updated_at)) / 60), 'h ',
+                        MOD(FLOOR(AVG(TIMESTAMPDIFF(MINUTE, created_at, updated_at))), 60), 'm'
+                    ) AS avg_reply_time
+                `,
+            where: `trainer_id = ${user_id}`
+        });
+        const { success, result, error } = await dbQuery(`${sql}${matrix}`);
 
-//         if (role === 'gym') {
-//             condition += ` AND jp.gym_id = ${sanitize(userId)}`;
-//         }
+        if (!success) {
+            return ctx.status(500).json({
+                recent: [],
+                metrics: {
+                    average_score: 0,
+                    positive_count: 0,
+                    neutral_count: 0,
+                    negative_count: 0,
+                    response_rate: '0%',
+                    avg_reply_time: '0h 0m'
+                },
+                success: false,
+                message: "Failed to fetch dashboard metrics", error
+            });
+        }
+        return ctx.json({
+            success: true,
+            recent: result?.[0],
+            metrics: result?.[1]?.[0] || {
+                average_score: 0,
+                positive_count: 0,
+                neutral_count: 0,
+                negative_count: 0,
+                response_rate: '0%',
+                avg_reply_time: '0h 0m'
+            }
+        });
+    } catch {
+        return ctx.status(500).json({ success: false, message: "Something went wrong", });
+    }
+});
 
-//         const joinsArr = [
-//             `LEFT JOIN ${TABLES.GYMS.gyms} as g ON jp.gym_id = g.gym_id`,
-//             `LEFT JOIN ${TABLES.TRAINERS.job_applications} as jt ON jt.job_id = jp.job_id`,
-//         ];
+trainersList.get("/feedback/:trainer_id",
+    paginationHandler({
+        getDataSource: async (ctx, { page, limit, offset }) => {
+            const { rating, sort } = ctx?.req.query;
+            const user_id = sanitize(ctx.req.params?.trainer_id)
+            let condition = `trainer_id = ${user_id}`
+            if (rating) {
+                condition += ` AND rating BETWEEN ${rating} AND 5`
+            }
+            let sortObj: any = {
+                feedback_id: -1
+            };
 
-//         let sql = find(`${TABLES.GYMS.job_posts} as jp`, {
-//             joins: joinsArr.join(' '),
-//             groupBy: `jp.job_id`,
-//             columns: `jp.*,
-//             g.gym_name as gym_name,
-//             g.lat as gym_lat,
-//             g.lng as gym_lng,
-//             g.district as gym_district,
-//             g.about as gym_about,
-//             g.state as gym_state,
-//             g.address as gym_address,
-//             g.logo_url as gym_logo,
-//             g.country as gym_country,
-//             CASE WHEN jt.id IS NOT NULL AND jt.trainer_id = ${sanitize(userId)} THEN 'applied' ELSE 'not_applied' END as application_status,
-//             COUNT(jt.id) as total_applications
-//             `,
-//             where: condition
-//         });
-//         console.log(sql);
-//         return ctx.json(await dbQuery<any>(sql));
+            if (sort === 'highest' || sort === 'lowest') {
+                sortObj = {
+                    rating: sort === 'highest' ? -1 : 1
+                }
+            }
 
-//     } catch (err) {
-//         return ctx.json({ success: false, message: "Internal server error" });
-//     }
-// });
+            let sql = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
+                sort: sortObj,
+                limitSkip: {
+                    limit: limit,
+                    skip: offset
+                },
+                where: condition,
+            })
+            let count = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
+                columns: 'count(*) as count',
+                where: condition,
+            })
+            const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
+            if (!success) {
+                return {
+                    data: [],
+                    total: 0
+                }
+            }
+            return {
+                data: result?.[0],
+                total: result?.[1]?.[0]?.count
+            }
+        },
+    })
+);
+
 export default trainersList;
