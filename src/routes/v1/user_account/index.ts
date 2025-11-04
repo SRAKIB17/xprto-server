@@ -18,6 +18,7 @@ import notifications from "./notifications.js";
 import support_tickets from "./support-ticket.js";
 import trainers from "./trainers/index.js";
 import my_wallet from "./wallet.js";
+import trainerClientModule from "./client-trainer/index.js";
 
 const user_account = new Router();
 user_account.use(AuthorizationBasicAuthUser());
@@ -26,6 +27,7 @@ user_account.use(trainers);
 user_account.use(clients);
 user_account.use(my_documents);
 user_account.use(abuse_reports);
+user_account.use(trainerClientModule);
 user_account.use(my_wallet);
 user_account.use(membershipJoinGTC);
 user_account.use(support_tickets);
