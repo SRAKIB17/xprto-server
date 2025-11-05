@@ -18,9 +18,28 @@ import { dbQuery, TABLES } from "../models";
  * 14. xprto (pvc) kyc verfied status
  * 15. assign client
  * 16. new booking for client 
+ * --- 'pending',
+            'accepted',
+            'confirmed',
+            'rejected',
+            'cancelled',
+            'rescheduled',
+            'completed' egulor protitar ekta kore notitification generate hobe
  * 17. subscription 
  * 18. session
  */
+
+const clientStatusNotes: Record<
+    "pending" | "accepted" | "rejected" | "cancelled" | "completed",
+    string
+> = {
+    pending: "Your booking request is pending. We will notify you once the trainer responds.",
+    accepted: "Good news! Your booking has been accepted. You can now proceed as scheduled.",
+    rejected: "Unfortunately, your booking request was rejected by the trainer.",
+    cancelled: "Your booking has been cancelled.",
+    completed: "Your session is marked as completed. Payment has been released securely to the trainer."
+};
+
 export type NotificationType =
     'alert' | 'offer' | 'update' | 'announcement' | 'reminder' | 'payment_due' | 'class_schedule' | 'feedback' | 'achievement' | 'system_event';
 

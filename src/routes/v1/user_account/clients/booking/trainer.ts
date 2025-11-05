@@ -175,8 +175,7 @@ trainerBooking.get("/:trainer_id/unavailability/:service_id", async (ctx) => {
         return ctx.status(400).json({ success: false, message: "Trainer ID required" });
     }
 
-    // let where = `trainer_id = ${sanitize(trainer_id)} AND status IN ('accepted','confirmed') AND service_id = ${sanitize(service_id)} AND requested_end >= NOW()`;
-    let where = `trainer_id = ${sanitize(trainer_id)} AND service_id = ${sanitize(service_id)} AND requested_end >= NOW()`;
+    let where = `trainer_id = ${sanitize(trainer_id)} AND status IN ('accepted','confirmed') AND service_id = ${sanitize(service_id)} AND requested_end >= NOW()`;
 
     let sql = find(TABLES.TRAINERS.BOOKING_REQUESTS, {
         columns: `

@@ -200,7 +200,7 @@ KYC.post("/kyc", async (ctx) => {
 });
 
 KYC.post("/assured", async (ctx) => {
-    const { user_id, email } = ctx.auth?.user_info || {};
+    const { user_id } = ctx.auth?.user_info || {};
     const { role } = ctx.auth || {};
     const verified_for = "assured";
     if (!user_id || !role) {

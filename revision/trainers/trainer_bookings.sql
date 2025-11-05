@@ -38,7 +38,7 @@ CREATE TABLE
             'cancelled',
             'rescheduled',
             'completed'
-        ) NOT NULL DEFAULT 'pending',
+        ) NOT NULL DEFAULT 'pending', --- when complleted then paid hobe...
         status_reason VARCHAR(255) NULL, -- short reason/reject note
         cancelled_by ENUM ('client', 'trainer', 'admin') NULL,
         -- payment
