@@ -7,6 +7,7 @@ import { performWalletTransaction } from "../../../../../utils/createWalletTrans
 import { copyFile } from "../../../../../utils/fileExists.js";
 import { generateTxnID } from "../../../../../utils/generateTxnID.js";
 import { AppNotificationToast } from "../../../../websocket/notification.js";
+import { appsDataAmountEtc } from "../../../apps.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const KYC = new Router({
@@ -42,7 +43,7 @@ KYC.get("/:verified_for", async (ctx) => {
         AppNotificationToast(ctx, {
             message: "Failed to create kyc",
             title: "Create KYC",
-            type: "error"
+            type: "error" as any,
         })
         return ctx.status(500).json({ message: "Failed to create kyc" });
     }
@@ -73,6 +74,37 @@ KYC.post("/kyc", async (ctx) => {
         selfie,
         pay_amount,
     } = await ctx.req.json();
+    // ---- Check if KYC exists ----
+    const { result: existingKYC } = await dbQuery<any>(
+        find(TABLES.TRAINERS.kyc_verification, {
+            where: `trainer_id = ${sanitize(user_id)} AND verified_for = 'kyc'`,
+            limitSkip: { limit: 1 },
+        })
+    );
+    let paidDone = !!existingKYC[0]?.paid_first_attempt;
+    if (!existingKYC[0]?.paid_first_attempt) {
+        let { success } = await performWalletTransaction({
+            role: role,
+            user_id: user_id,
+        }, {
+            amount: pay_amount,
+            type: 'payment',
+            payment_method: "wallet",
+            external_txn_id: txn_id,
+            idempotency_key: generateUUID(),
+            note: "Payment KYC verification",
+            reference_type: "kyc_payment"
+        })
+        paidDone = success;
+    }
+    if (!paidDone) {
+        if (!paidDone) {
+            return ctx.json({
+                success: false,
+                message: "KYC payment failed. Please try again.",
+            });
+        }
+    }
 
     let documents = [];
     if (Array.isArray(document_file)) {
@@ -100,27 +132,7 @@ KYC.post("/kyc", async (ctx) => {
         return ctx.status(400).json({ message: "Please upload again your selfie!" });
     }
 
-    // ---- Check if KYC exists ----
-    const { result: existingKYC } = await dbQuery<any>(
-        find(TABLES.TRAINERS.kyc_verification, {
-            where: `trainer_id = ${sanitize(user_id)} AND verified_for = 'kyc'`,
-            limitSkip: { limit: 1 },
-        })
-    );
-    if (!existingKYC[0]?.paid_first_attempt) {
-        await performWalletTransaction({
-            role: role,
-            user_id: user_id,
-        }, {
-            amount: pay_amount,
-            type: 'payment',
-            payment_method: "wallet",
-            external_txn_id: txn_id,
-            idempotency_key: generateUUID(),
-            note: "Payment KYC verification",
-            reference_type: "kyc_payment"
-        })
-    }
+
     // ---- Update old KYC ----
     const { success } = await dbQuery(
         update(TABLES.TRAINERS.kyc_verification, {
@@ -198,6 +210,24 @@ KYC.post("/assured", async (ctx) => {
         certificates,
         pvc
     } = await ctx.req.json()
+    let amount = appsDataAmountEtc?.assured_amount?.amount;
+
+    let txn_id = generateTxnID("ASSRD");
+    let { success: paymentSuccess, error } = await performWalletTransaction({
+        role: role,
+        user_id: user_id,
+    }, {
+        amount: amount,
+        type: 'hold',
+        payment_method: "wallet",
+        external_txn_id: txn_id,
+        idempotency_key: generateUUID(),
+        note: "Security XPRTO assured verification",
+        reference_type: "assured_hold"
+    });
+    if (!paymentSuccess) {
+        return ctx.json({ success: false, massage: error ?? "Payment Failed. Please try again or contact support system!" })
+    }
 
     let documents = [];
     if (await copyFile(pvc, DirectoryServe.verifications.ASSURED(pvc), true)) {
