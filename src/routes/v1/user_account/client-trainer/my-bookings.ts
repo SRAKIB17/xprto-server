@@ -1,81 +1,14 @@
-import { find, mysql_date, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
+import { find, insert, mysql_date, sanitize, update } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../../models";
+import { performWalletTransaction } from "../../../../utils/createWalletTransaction";
 
 
 
 // import user_account_document_flag from "./flag-document.js";
 const trainerBookingRequest = new Router({
     basePath: '/my-bookings'
-});
-trainerBookingRequest.get('/dashboard', async (ctx) => {
-    try {
-        const { user_id } = ctx.auth?.user_info || {};
-
-        if (!user_id) {
-            return ctx.status(401).json({ success: false, message: "Unauthorized" });
-        }
-        let sql = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
-            sort: {
-                feedback_id: -1
-            },
-            limitSkip: {
-                limit: 2,
-            },
-            where: `trainer_id = ${user_id}`
-        });
-
-        let matrix = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
-            columns: `
-                    ROUND(AVG(rating), 2) AS average_score,
-                    SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) AS positive_count,
-                    SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) AS neutral_count,
-                    SUM(CASE WHEN rating <= 2 THEN 1 ELSE 0 END) AS negative_count,
-                    CONCAT(
-                        ROUND(
-                            SUM(CASE WHEN reply IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*) * 100, 0
-                        ), '%'
-                    ) AS response_rate,
-                    CONCAT(
-                        FLOOR(AVG(TIMESTAMPDIFF(MINUTE, created_at, updated_at)) / 60), 'h ',
-                        MOD(FLOOR(AVG(TIMESTAMPDIFF(MINUTE, created_at, updated_at))), 60), 'm'
-                    ) AS avg_reply_time
-                `,
-            where: `trainer_id = ${user_id}`
-        });
-        const { success, result, error } = await dbQuery(`${sql}${matrix}`);
-
-        if (!success) {
-            return ctx.status(500).json({
-                recent: [],
-                metrics: {
-                    average_score: 0,
-                    positive_count: 0,
-                    neutral_count: 0,
-                    negative_count: 0,
-                    response_rate: '0%',
-                    avg_reply_time: '0h 0m'
-                },
-                success: false,
-                message: "Failed to fetch dashboard metrics", error
-            });
-        }
-        return ctx.json({
-            success: true,
-            recent: result?.[0],
-            metrics: result?.[1]?.[0] || {
-                average_score: 0,
-                positive_count: 0,
-                neutral_count: 0,
-                negative_count: 0,
-                response_rate: '0%',
-                avg_reply_time: '0h 0m'
-            }
-        });
-    } catch {
-        return ctx.status(500).json({ success: false, message: "Something went wrong", });
-    }
 });
 
 trainerBookingRequest.get("/",
@@ -108,12 +41,16 @@ trainerBookingRequest.get("/",
 
             let sql = find(`${TABLES.TRAINERS.BOOKING_REQUESTS} as br`, {
                 sort: sortObj,
-                joins: role === 'trainer' ?
-                    `LEFT JOIN ${TABLES.CLIENTS.clients} as c ON c.client_id = br.client_id`
-                    : `LEFT JOIN ${TABLES.TRAINERS.trainers} as t ON t.trainer_id = br.trainer_id`,
+                joins: `
+                LEFT JOIN ${TABLES.TRAINERS.services} as sv ON sv.service_id = br.service_id
+                ${role === 'trainer' ?
+                        `LEFT JOIN ${TABLES.CLIENTS.clients} as c ON c.client_id = br.client_id`
+                        : `LEFT JOIN ${TABLES.TRAINERS.trainers} as t ON t.trainer_id = br.trainer_id`
+                    }
+                `,
                 columns: role === 'trainer' ?
-                    `br.*, c.fullname,c.avatar,c.bio,c.gender,c.health_goal` :
-                    `br.*, t.fullname,t.avatar,t.bio,t.gender,t.badge,t.verified,t.specialization`,
+                    `br.*,sv.package_name, sv.title, sv.images, c.fullname,c.avatar,c.bio,c.gender,c.health_goal` :
+                    `br.*,sv.package_name, sv.title, sv.images, t.fullname,t.avatar,t.bio,t.gender,t.badge,t.verified,t.specialization`,
                 limitSkip: {
                     limit: limit,
                     skip: offset
@@ -139,33 +76,145 @@ trainerBookingRequest.get("/",
         },
     })
 );
-trainerBookingRequest.put("/:id/reply", async (ctx) => {
+
+trainerBookingRequest.post("/change-status/:status", async (ctx) => {
     try {
-        const id = Number(ctx.req.params.id);
+        const status = (ctx.req.params.status || "").toLowerCase();
+        const allowedStatuses = ["pending", "accepted", "rejected", "cancelled", "completed", "rescheduled"];
+
+        if (!allowedStatuses.includes(status)) {
+            return ctx.status(400).json({ success: false, message: "Invalid status value" });
+        }
+
+        const { role } = ctx.auth || {};
+        const { user_id } = ctx.auth?.user_info || {};
+
+        const { booking, status_reason, note, meet_link } = await ctx.req.json<any>();
+        const id = booking?.booking_id;
+
+
         if (!id) {
-            return ctx.status(400).json({ success: false, message: "Invalid feedback id" });
+            return ctx.status(400).json({ success: false, message: "Booking ID missing" });
         }
 
-        const body = await ctx.req.json<{ reply: string }>();
-        if (!body?.reply) {
-            return ctx.status(400).json({ success: false, message: "Reply text is required" });
+        // ✅ Payload for update
+        const payload: any = {
+            meet_link: booking?.delivery_mode === "online" ? meet_link : undefined,
+            [role === "client" ? "client_note" : "trainer_note"]: note,
+            status_reason: status === "rejected" ? status_reason : undefined,
+            status
+        };
+
+
+        // ⚠️ Only client can cancel/reschedule
+        if (role === "client" && !['completed', "cancelled", "rescheduled"].includes(status)) {
+            return ctx.status(403).json({
+                success: false,
+                message: "Clients can only cancel or reschedule a booking"
+            });
         }
 
-        // ✅ Update query
-        const { success, result } = await dbQuery(
-            update(TABLES.FEEDBACK.CLIENT_TRAINER, {
-                values: { reply: body.reply, updated_at: mysql_datetime() },
-                where: `feedback_id = ${id}`,
+        // ⚠️ Trainer updating
+        if (role === "trainer" && ["cancelled", "rescheduled", "completed"].includes(status)) {
+            return ctx.status(403).json({
+                success: false,
+                message: "Only clients can cancel or reschedule or completed bookings"
+            });
+        }
+
+        if (status === "completed" || status === 'cancelled') {
+            // await releaseBookingPayment(id, user_id); // ⚡ your wallet handler here
+            let final_price = Number(booking?.final_price);
+            let idempotency_key = booking?.idempotency_key;
+            let txn_id = booking?.txn_id;
+            const ff = await performWalletTransaction(
+                { role, user_id },
+                {
+                    amount: final_price,
+                    type: "hold",
+                    payment_method: "wallet",
+                    external_txn_id: txn_id,
+                    idempotency_key,
+                }
+            );
+            console.log(ff, idempotency_key);
+            return ctx.status(500).json({ success: false, message: "Failed to update booking status" });
+        }
+        // ✅ Update DB
+        const { success } = await dbQuery(
+            update(TABLES.TRAINERS.BOOKING_REQUESTS, {
+                values: payload,
+                where: `booking_id = ${id} AND ${role === "client" ? "client_id" : "trainer_id"} = ${user_id}`,
             })
         );
 
         if (!success) {
-            return ctx.status(500).json({ success: false, message: "Failed to update feedback" });
+            return ctx.status(500).json({ success: false, message: "Failed to update booking status" });
         }
-        return ctx.json({ success: true, message: "Reply saved successfully", result });
+
+        // ✅ Extra: On completed → release payment
+
+
+        return ctx.json({
+            success: true,
+            message: `Booking status updated to ${status}`,
+        });
+
     } catch (err) {
-        return ctx.status(500).json({ success: false, message: "Something went wrong" });
+        console.error("Booking status error:", err);
+        return ctx.status(500).json({
+            success: false,
+            message: "Something went wrong",
+        });
     }
+});
+
+trainerBookingRequest.post("/messaging", async (ctx) => {
+    const { status, client_id, trainer_id, fullname } = await ctx.req.json();
+
+    const { role } = ctx.auth || {};
+    const { user_id, fullname: my_name } = ctx.auth?.user_info || {};
+
+    if (status !== "accepted") {
+        return ctx.status(400).json({ success: false, message: "Invalid booking status" });
+    }
+
+    // ✅ Step 2: Check existing room
+    const check = await dbQuery(find(`${TABLES.CHAT_ROOMS.chat_rooms} as cr`, {
+        joins: `
+          JOIN ${TABLES.CHAT_ROOMS.memberships} m1 ON cr.room_id = m1.room_id
+          JOIN ${TABLES.CHAT_ROOMS.memberships} m2 ON cr.room_id = m2.room_id
+        `,
+        where: `
+          m1.user_id=${client_id} AND m1.user_role='client' 
+          AND m2.user_id=${trainer_id} AND m2.user_role='trainer' 
+          AND cr.is_group=0
+        `
+    }));
+
+    if (check?.result?.length) {
+        return ctx.json({ success: true, room: check.result[0] });
+    }
+
+    // ✅ Step 3: Create room
+    const roomName = `${fullname ?? `${role === 'client' ? "TRAINER" : "CLIENT"}-${role === 'client' ? trainer_id : client_id}`} & ${my_name ?? `${role}-${user_id}`}`
+
+    const createRoom = await dbQuery<any>(insert(TABLES.CHAT_ROOMS.chat_rooms, { room_name: roomName }));
+
+    if (!createRoom?.success) {
+        return ctx.status(500).json({ success: false, message: "Failed to create room" });
+    }
+    const room_id = createRoom.result.insertId;
+    // ✅ Step 4: Add members
+    await dbQuery(insert(TABLES.CHAT_ROOMS.memberships, [
+        { room_id, user_id: client_id, user_role: "client" },
+        { room_id, user_id: trainer_id, user_role: "trainer" }
+    ]));
+
+    return ctx.json({
+        success: true,
+        room: { room_id, room_name: roomName }
+    });
 });
 
 

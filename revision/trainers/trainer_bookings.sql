@@ -11,7 +11,7 @@ CREATE TABLE
         price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
         currency CHAR(3) NOT NULL DEFAULT 'INR',
         discount_percent DECIMAL(5, 2) NOT NULL DEFAULT 0.00, -- percent value, e.g. 10.00
-        final_price DECIMAL(10, 2) AS (price - (price * discount_percent / 100)) STORED,
+        final_price DECIMAL(10, 2) AS (price - ((price * discount_percent) / 100)) STORED,
         per_unit ENUM ('session', 'hour', 'day', 'week', 'month') DEFAULT 'session',
         -- requested times (what client asked for)
         requested_start DATE NULL,
