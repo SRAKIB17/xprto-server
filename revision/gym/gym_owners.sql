@@ -89,29 +89,6 @@ CREATE INDEX idx_gym_owners_city ON gym_owners (city);
 
 CREATE INDEX idx_gym_owners_plan ON gym_owners (subscription_plan);
 
-CREATE TABLE
-    IF NOT EXISTS gyms (
-        id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-        owner_id BIGINT UNSIGNED NOT NULL,
-        name VARCHAR(150) NOT NULL,
-        legal_name VARCHAR(200) NULL,
-        email VARCHAR(150) NULL,
-        phone VARCHAR(30) NULL,
-        website VARCHAR(200) NULL,
-        description TEXT NULL,
-        logo_url VARCHAR(255) NULL,
-        verification_status ENUM (
-            'non_verified',
-            'verified',
-            'fully_verified',
-            'suspicious'
-        ) NOT NULL DEFAULT 'non_verified',
-        rating DECIMAL(3, 2) NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        CONSTRAINT fk_gyms_owner FOREIGN KEY (owner_id) REFERENCES users (id)
-    ) ENGINE = InnoDB;
-
 -- উদাহরণ ডেটা ইনসার্ট
 INSERT INTO
     gym_owners (
