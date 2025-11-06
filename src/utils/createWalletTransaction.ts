@@ -5,6 +5,7 @@ import { generateTxnID } from './generateTxnID.js';
 export type WalletTxnType =
     | 'topup'
     | 'hold'
+    | "hold-transfer"
     | 'release_hold'
     | 'payment'
     | 'payout'
@@ -90,8 +91,9 @@ export async function performWalletTransaction(user: { role: string, user_id: nu
         let available = Number(wallet.available_balance);
         let held = Number(wallet.held_balance);
 
+        let type = opts?.type;
         // Update balances based on transaction type
-        switch (opts.type) {
+        switch (type) {
             case 'topup':
                 available += opts.amount;
                 break;
@@ -99,6 +101,10 @@ export async function performWalletTransaction(user: { role: string, user_id: nu
                 if (available < opts.amount) throw new Error('Insufficient balance for hold');
                 available -= opts.amount;
                 held += opts.amount;
+                break;
+            case 'hold-transfer':
+                if (available < opts.amount) throw new Error('Insufficient balance for hold');
+                held -= opts.amount
                 break;
             case 'release_hold':
                 if (held < opts.amount) throw new Error('Not enough held balance');
@@ -132,7 +138,7 @@ export async function performWalletTransaction(user: { role: string, user_id: nu
 
 
         let txnAmount = opts.amount;
-        switch (opts.type) {
+        switch (type) {
             case 'topup':
             case 'refund':
             case 'adjustment':
@@ -140,6 +146,9 @@ export async function performWalletTransaction(user: { role: string, user_id: nu
             case 'release_hold':  // releasing adds back
                 txnAmount = Math.abs(opts.amount); // positive
                 break;
+            case 'hold-transfer':
+                txnAmount = -Math.abs(opts.amount);  // negative
+                break
             case 'hold':
             case 'payment':
             case 'payout':
@@ -159,7 +168,7 @@ export async function performWalletTransaction(user: { role: string, user_id: nu
             [
                 wallet?.wallet_id,
                 idempotency_key,
-                opts.type,
+                type === 'hold-transfer' ? 'transfer_out' : type,
                 txnAmount,
                 txnFee,
                 currency,

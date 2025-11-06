@@ -3,6 +3,7 @@ import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../../models";
 import { performWalletTransaction } from "../../../../utils/createWalletTransaction";
+import { generateTxnID } from "../../../../utils/generateTxnID";
 
 
 
@@ -127,7 +128,7 @@ trainerBookingRequest.post("/change-status/:status", async (ctx) => {
             let final_price = Number(booking?.final_price);
             let idempotency_key = booking?.idempotency_key;
             let txn_id = booking?.txn_id;
-            const ff = await performWalletTransaction(
+            const { amount } = await performWalletTransaction(
                 { role, user_id },
                 {
                     amount: final_price,
@@ -137,23 +138,61 @@ trainerBookingRequest.post("/change-status/:status", async (ctx) => {
                     idempotency_key,
                 }
             );
-            console.log(ff, idempotency_key);
-            return ctx.status(500).json({ success: false, message: "Failed to update booking status" });
+            let transferAmount = Math.abs(Number(amount));
+            if (status === 'completed') {
+                let { success: clientSuccess } = await performWalletTransaction(
+                    { role, user_id },
+                    {
+                        amount: transferAmount,
+                        type: "hold-transfer",
+                        note: "Completed session and transfer balance",
+                        payment_method: "wallet",
+                        reference_id: `idempotency-${idempotency_key}`,
+                        reference_type: "completed session",
+                        external_txn_id: generateTxnID("CMPLTD_SSSN"),
+                    }
+                );
+                if (!clientSuccess) {
+                    return ctx.json({
+                        success: false,
+                        message: "Releasing the payment failed. Please try again or contact support.",
+                    });
+                }
+                let { success } = await performWalletTransaction(
+                    { role: 'trainer', user_id: booking?.trainer_id },
+                    {
+                        amount: transferAmount,
+                        type: "transfer_in",
+                        note: "Completed session and transfer in balance",
+                        payment_method: "wallet",
+                        reference_id: `idempotency-${idempotency_key}`,
+                        reference_type: "completed session",
+                        external_txn_id: generateTxnID("CMPLTD_SSSN"),
+                    }
+                );
+                if (!success) {
+                    return ctx.json({
+                        success: false,
+                        message: "Payment release to the trainer failed. The session is marked as completed, but the trainer did not receive the balance. Please try again or contact support.",
+                    });
+                }
+            }
+            else if (status === 'cancelled') {
+
+            }
         }
         // ✅ Update DB
-        const { success } = await dbQuery(
+        const { success, error } = await dbQuery(
             update(TABLES.TRAINERS.BOOKING_REQUESTS, {
                 values: payload,
                 where: `booking_id = ${id} AND ${role === "client" ? "client_id" : "trainer_id"} = ${user_id}`,
             })
         );
-
         if (!success) {
             return ctx.status(500).json({ success: false, message: "Failed to update booking status" });
         }
 
         // ✅ Extra: On completed → release payment
-
 
         return ctx.json({
             success: true,
