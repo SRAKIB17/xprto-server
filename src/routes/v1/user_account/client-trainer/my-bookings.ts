@@ -77,6 +77,34 @@ trainerBookingRequest.get("/",
         },
     })
 );
+trainerBookingRequest.get("/:booking_id", async (ctx) => {
+    const { role } = ctx.auth || {};
+
+    const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
+    let condition = role === 'client' ? `br.client_id = "${user_id}"` : `br.trainer_id = "${user_id}"`
+
+    let sql = find(`${TABLES.TRAINERS.BOOKING_REQUESTS} as br`, {
+        joins: `
+                LEFT JOIN ${TABLES.TRAINERS.services} as sv ON sv.service_id = br.service_id
+                ${role === 'trainer' ?
+                `LEFT JOIN ${TABLES.CLIENTS.clients} as c ON c.client_id = br.client_id`
+                : `LEFT JOIN ${TABLES.TRAINERS.trainers} as t ON t.trainer_id = br.trainer_id`
+            }
+                `,
+        columns: role === 'trainer' ?
+            `br.*,sv.package_name, sv.title, sv.images, c.fullname,c.avatar,c.bio,c.gender,c.health_goal` :
+            `br.*,sv.package_name, sv.title, sv.images, t.fullname,t.avatar,t.bio,t.gender,t.badge,t.verified,t.specialization`,
+        where: `${condition} AND booking_id = ${sanitize(ctx.req.params.booking_id)}`,
+    });
+
+    const { success, result, error } = await dbQuery<any[]>(`${sql}`);
+
+    return ctx.json({
+        data: result?.[0],
+        success: true,
+    })
+},
+);
 
 trainerBookingRequest.post("/change-status/:status", async (ctx) => {
     try {

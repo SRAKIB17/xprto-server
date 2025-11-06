@@ -9,7 +9,7 @@ trainersList.get("/", paginationHandler({
         const { role } = ctx.auth || {};
         const { search, verify, mode, status } = ctx?.req.query;
         const { user_id, username, hashed, salt, } = ctx.auth?.user_info || {};
-        let condition = "t.is_online = 1";
+        let condition = "t.is_online = 1 AND xprto = 1";
 
         // if ((role === 'gym' || role === 'admin') && !status) {
         //     condition = "jp.status IN ('draft', 'published', 'closed', 'archived')"
