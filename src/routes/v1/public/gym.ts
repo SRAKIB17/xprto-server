@@ -9,8 +9,10 @@ gymList.get("/", paginationHandler({
         const { role } = ctx.auth || {};
         const { search, verify, mode, status } = ctx?.req.query;
         const { user_id, username, hashed, salt, } = ctx.auth?.user_info || {};
-        let condition = "t.status = 'active' AND xprto = 1";
-
+        let condition = "g.status = 'active' AND (g.verification_status = 'verified' OR g.verification_status = 'fully_verified')";
+        if (role === 'admin') {
+            condition = ""
+        }
         // if ((role === 'gym' || role === 'admin') && !status) {
         //     condition = "jp.status IN ('draft', 'published', 'closed', 'archived')"
         // }
