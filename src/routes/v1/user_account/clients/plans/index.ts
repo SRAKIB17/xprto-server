@@ -9,5 +9,4 @@ const clientPlans = new Router({
 clientPlans.use(nutritionPlans)
 
 
-
 export default clientPlans;

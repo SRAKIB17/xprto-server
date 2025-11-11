@@ -183,7 +183,7 @@ clientFeedback.delete("/trainers/post/:trainer_id", async (ctx) => {
 
     try {
         const body = await ctx.req.json();
-        const { quality, punctuality, hygiene, workout_feel, misbehave_reported, rating, comments, video_url } = body;
+        const { quality, punctuality, hygiene, workout_feel, misbehave_reported, rating, comments, video_url, misbehave_details, } = body;
         if (!rating || rating < 1 || rating > 5) {
             return ctx.status(404).json({ success: false, message: "Rating must be between 1 and 5" });
         }

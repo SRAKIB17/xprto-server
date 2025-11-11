@@ -1,118 +1,28 @@
 CREATE TABLE
     IF NOT EXISTS workout_plans (
-        booking_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-        booking_code VARCHAR(40) NOT NULL UNIQUE, -- like BK-20251030-XXXX
-        client_id BIGINT UNSIGNED NOT NULL, -- references users.user_id
-        trainer_id BIGINT UNSIGNED NOT NULL, -- references trainers.trainer_id
-        service_id BIGINT UNSIGNED NULL, -- referenced service (optional)
-        price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-        currency CHAR(3) NOT NULL DEFAULT 'INR',
-        discount_percent DECIMAL(5, 2) NOT NULL DEFAULT 0.00, -- percent value, e.g. 10.00
-        final_price DECIMAL(10, 2) AS (price - ((price * discount_percent) / 100)) STORED,
-        per_unit ENUM ('session', 'hour', 'day', 'week', 'month') DEFAULT 'session',
-        -- requested times (what client asked for)
-        requested_start DATE NULL,
-        requested_end DATE NULL,
-        -- scheduled times (what trainer accepted / admin scheduled)
-        scheduled_start DATE NULL,
-        scheduled_end DATE NULL,
-        time_from TIME NOT NULL, -- FIXED: was DATE
-        duration_minutes INT UNSIGNED DEFAULT 60,
-        -- meeting / delivery details
-        delivery_mode ENUM ('online', 'doorstep', 'hybrid') NOT NULL DEFAULT 'online',
-        location TEXT NULL, -- user provided address (if applicable)
-        meet_link VARCHAR(1000) NULL, -- zoom/meet link or similar
+        plan_id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+        client_id BIGINT UNSIGNED DEFAULT NULL, -- references users.user_id
+        session_id BIGINT UNSIGNED DEFAULT NULL,
+        added_by BIGINT UNSIGNED DEFAULT NULL, -- references trainers.trainer_id
+        title VARCHAR(255) DEFAULT NULL,
+        start DATE NULL,
+        end DATE NULL,
+        attachment JSON NULL, -- ARRAY OF PATH
+        tags JSON NULL, -- ARRAY OF TAGS
         -- notes
         client_note TEXT NULL, -- note from client while requesting
         trainer_note TEXT NULL, -- trainer can add private/public notes
-        admin_note TEXT NULL, -- optional admin note
-        -- status & flow
-        status ENUM (
-            'pending',
-            'accepted',
-            'confirmed',
-            'rejected',
-            'cancelled',
-            'rescheduled',
-            'completed'
-        ) NOT NULL DEFAULT 'pending', --- when complleted then paid hobe...
-        status_reason VARCHAR(255) NULL, -- short reason/reject note
-        cancelled_by ENUM ('client', 'trainer', 'admin') NULL,
-        -- payment
-        payment_status ENUM (
-            'unpaid',
-            'initiated',
-            'paid',
-            'refunded',
-            'failed'
-        ) DEFAULT 'unpaid',
-        payment_txn_id VARCHAR(100) NULL,
-        idempotency_key VARCHAR(191) DEFAULT NULL, -- ensure idempotent ops,
-        wallet_used BOOLEAN DEFAULT TRUE,
-        -- meta
-        created_by BIGINT UNSIGNED NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        responded_at DATETIME NULL, -- when trainer accepted/rejected
-        responded_by BIGINT UNSIGNED NULL, -- trainer/admin id who responded
-        PRIMARY KEY (booking_id),
-        INDEX (trainer_id, status, created_at),
+        INDEX (added_by, created_at),
+        INDEX(title),
         INDEX (client_id, created_at),
-        INDEX (service_id),
-        INDEX (booking_code),
         FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE CASCADE ON UPDATE CASCADE,
-        FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE CASCADE ON UPDATE CASCADE
+        FOREIGN KEY (session_id) REFERENCES gym_sessions (session_id) ON DELETE CASCADE ON UPDATE CASCADE,
+        FOREIGN KEY (added_by) REFERENCES trainers (trainer_id) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
--- ------------------------------------------------------------
--- Schema: workout_plans (MySQL 8+, InnoDB, utf8mb4)
--- ------------------------------------------------------------
 
-CREATE DATABASE IF NOT EXISTS fitness_app CHARACTER SET = 'utf8mb4' COLLATE = 'utf8mb4_unicode_ci';
-USE fitness_app;
-
--- Users table (clients and trainers)
-CREATE TABLE users (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(255) UNIQUE,
-  full_name VARCHAR(200),
-  role ENUM('client','trainer','admin') NOT NULL DEFAULT 'client',
-  phone VARCHAR(32),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
--- Classes table (optional grouping)
-CREATE TABLE classes (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(150) NOT NULL,
-  description TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
--- Workout plans master table
-CREATE TABLE workout_plans (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  trainer_id BIGINT NOT NULL, -- creator / owner
-  title VARCHAR(250) NOT NULL,
-  description MEDIUMTEXT,
-  sessions_per_week TINYINT UNSIGNED DEFAULT 3,
-  start_date DATE,
-  duration_weeks SMALLINT UNSIGNED DEFAULT 8, -- e.g. 8-week Strength & Hypertrophy
-  recurrence JSON DEFAULT NULL,  -- store recurrence rules as JSON (e.g. {"type":"weekly","interval":1,"days":[1,3,5]})
-  schedule JSON DEFAULT NULL,    -- schedule details (e.g. [{"day":1,"time":"18:00","session_title":"Upper"}])
-  visibility ENUM('draft','published') DEFAULT 'draft',
-  is_deleted TINYINT(1) DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (trainer_id) REFERENCES users(id) ON DELETE RESTRICT
-) ENGINE=InnoDB;
-
--- Tags / Focus table (many-to-many)
-CREATE TABLE tags (
-  id SMALLINT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(80) UNIQUE NOT NULL
-) ENGINE=InnoDB;
-
+--- !_-----------------------------------------------------
 CREATE TABLE workout_plan_tags (
   workout_plan_id BIGINT NOT NULL,
   tag_id SMALLINT NOT NULL,

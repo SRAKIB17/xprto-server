@@ -1,4 +1,5 @@
 import { Router } from "tezx";
+import gymList from "./gym.js";
 import trainersList from "./trainers.js";
 
 const publicApi = new Router({
@@ -6,6 +7,8 @@ const publicApi = new Router({
 });
 
 publicApi.use('/trainers', trainersList)
+publicApi.use('/gyms', gymList)
+
 // publicData.addRouter('/help-center', helpCenter)
 // publicData.addRouter('/about-us', aboutUs);
 // publicData.addRouter('/contact-us', contactUs);
