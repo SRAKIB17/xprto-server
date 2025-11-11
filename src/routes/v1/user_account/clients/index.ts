@@ -17,5 +17,4 @@ clients.use(clientFeedback);
 clients.use(clientPlans);
 clients.use(clientsBookingTrainerGym);
 
-
 export default clients;

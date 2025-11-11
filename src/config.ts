@@ -34,6 +34,9 @@ export const DirectoryServe = {
         video: (pathname: string) => path.join(path.resolve(), `/uploads/trainer-services/video/${filename(pathname)}`),
         attachments: (pathname: string) => path.join(path.resolve(), `/uploads/trainer-services/attachments/${filename(pathname)}`)
     },
+    feedback: {
+        trainer: (pathname: string) => path.join(path.resolve(), `/uploads/feedback/trainer/video/${filename(pathname)}`)
+    },
     chat_messages: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "chats", filename(pathname)),
     thumbnail: {
         chat: (pathname: string) => path.join(path.resolve(), "uploads", "thumbnail", "chats", filename(pathname))
