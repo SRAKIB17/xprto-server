@@ -27,7 +27,6 @@ gymList.get("/", paginationHandler({
         //     condition += ` AND jp.status = ${sanitize(status)}`;
         // }
 
-
         if (search) {
             // condition += ` AND MATCH(title, description, subtitle) AGAINST (${sanitize(search)} IN NATURAL LANGUAGE MODE)`;
         }
@@ -36,40 +35,33 @@ gymList.get("/", paginationHandler({
             registered_at: 1 // old first
         } as SortType<any>
 
-        let sql = find(`${TABLES.TRAINERS.trainers} as t`, {
+        let sql = find(`${TABLES.GYMS.gyms} as g`, {
             sort: sort,
             joins: `
-    LEFT JOIN ${TABLES.TRAINERS.RED_FLAGS} as rf ON t.trainer_id = rf.trainer_id AND rf.status = 'active'
-    LEFT JOIN ${TABLES.FEEDBACK.CLIENT_TRAINER} as fb ON fb.trainer_id = t.trainer_id
-    LEFT JOIN ${TABLES.TRAINERS.services} as ms ON ms.trainer_id = t.trainer_id AND ms.status = 'active'
+    LEFT JOIN ${TABLES.FEEDBACK.GYM_TRAINER_CLIENT} as fb ON fb.gym_id = g.gym_id
+    LEFT JOIN ${TABLES.GYMS.PLANS} as mp ON mp.gym_id = g.gym_id AND mp.visibility = 'public'
   `,
             columns: `
-    t.*,
-    COUNT(DISTINCT rf.red_flag_id) AS active_red_flags_count,
+    g.*,
     ROUND(AVG(fb.rating), 2) AS rating,
     COUNT(DISTINCT fb.feedback_id) AS reviews,
-    MIN(ms.price) AS min_price,
-    TIMESTAMPDIFF(YEAR, t.dob, CURDATE()) as age,
-    MAX(ms.price) AS max_price,
-    COUNT(DISTINCT ms.service_id) AS total_services,
-    GROUP_CONCAT(DISTINCT ms.delivery_mode) AS delivery_modes
+    MIN(mp.price) AS membership_min_price,
+    MAX(mp.price) AS membership_max_price,
+    COUNT(DISTINCT mp.plan_id) AS total_plan
   `,
             limitSkip: {
                 limit: limit,
                 skip: offset
             },
             where: condition,
-            groupBy: 't.trainer_id'
+            groupBy: 'g.gym_id'
         });
-
-
-        let count = find(`${TABLES.TRAINERS.trainers} as t`, {
+        let count = find(`${TABLES.GYMS.gyms} as g`, {
             columns: 'count(*) as count',
             // joins: `LEFT JOIN ${TABLES.GYMS.gyms} as g ON jp.gym_id = g.gym_id`,
             where: condition,
         })
         const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
-
         if (!success) {
             return {
                 data: [],
@@ -84,20 +76,45 @@ gymList.get("/", paginationHandler({
 })
 );
 
-gymList.get('/feedback/dashboard/:trainer_id', async (ctx) => {
+gymList.get("/:gym_id", async (ctx) => {
+    let condition = `g.status = 'active' AND (g.verification_status = 'verified' OR g.verification_status = 'fully_verified') AND g.gym_id = ${sanitize(ctx?.params?.gym_id)}`;
+
+    let sql = find(`${TABLES.GYMS.gyms} as g`, {
+        joins: `
+    LEFT JOIN ${TABLES.FEEDBACK.GYM_TRAINER_CLIENT} as fb ON fb.gym_id = g.gym_id
+    LEFT JOIN ${TABLES.GYMS.PLANS} as mp ON mp.gym_id = g.gym_id AND mp.visibility = 'public'
+  `,
+        columns: `
+    g.*,
+    ROUND(AVG(fb.rating), 2) AS rating,
+    COUNT(DISTINCT fb.feedback_id) AS reviews,
+    MIN(mp.price) AS membership_min_price,
+    MAX(mp.price) AS membership_max_price,
+    COUNT(DISTINCT mp.plan_id) AS total_plan
+  `,
+        where: condition,
+        groupBy: 'g.gym_id'
+    });
+
+    let { success, result } = await dbQuery(sql);
+    console.log(sql)
+    return ctx.json({ success: success, trainer: result?.[0] })
+})
+
+gymList.get('/feedback/dashboard/:gym_id', async (ctx) => {
     try {
-        const user_id = sanitize(ctx.req.params?.trainer_id)
-        let sql = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
+        const user_id = sanitize(ctx.req.params?.gym_id)
+        let sql = find(TABLES.FEEDBACK.GYM_TRAINER_CLIENT, {
             sort: {
                 feedback_id: -1
             },
             limitSkip: {
                 limit: 3,
             },
-            where: `trainer_id = ${user_id}`
+            where: `gym_id = ${user_id}`
         });
 
-        let matrix = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
+        let matrix = find(TABLES.FEEDBACK.GYM_TRAINER_CLIENT, {
             columns: `
                     ROUND(AVG(rating), 2) AS average_score,
                     SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) AS positive_count,
@@ -113,7 +130,7 @@ gymList.get('/feedback/dashboard/:trainer_id', async (ctx) => {
                         MOD(FLOOR(AVG(TIMESTAMPDIFF(MINUTE, created_at, updated_at))), 60), 'm'
                     ) AS avg_reply_time
                 `,
-            where: `trainer_id = ${user_id}`
+            where: `gym_id = ${user_id}`
         });
         const { success, result, error } = await dbQuery(`${sql}${matrix}`);
 
@@ -149,12 +166,12 @@ gymList.get('/feedback/dashboard/:trainer_id', async (ctx) => {
     }
 });
 
-gymList.get("/feedback/:trainer_id",
+gymList.get("/feedback/:gym_id",
     paginationHandler({
         getDataSource: async (ctx, { page, limit, offset }) => {
             const { rating, sort } = ctx?.req.query;
-            const user_id = sanitize(ctx.req.params?.trainer_id)
-            let condition = `trainer_id = ${user_id}`
+            const user_id = sanitize(ctx.req.params?.gym_id)
+            let condition = `gym_id = ${user_id}`
             if (rating) {
                 condition += ` AND rating BETWEEN ${rating} AND 5`
             }
@@ -168,7 +185,7 @@ gymList.get("/feedback/:trainer_id",
                 }
             }
 
-            let sql = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
+            let sql = find(TABLES.FEEDBACK.GYM_TRAINER_CLIENT, {
                 sort: sortObj,
                 limitSkip: {
                     limit: limit,
@@ -176,7 +193,7 @@ gymList.get("/feedback/:trainer_id",
                 },
                 where: condition,
             })
-            let count = find(TABLES.FEEDBACK.CLIENT_TRAINER, {
+            let count = find(TABLES.FEEDBACK.GYM_TRAINER_CLIENT, {
                 columns: 'count(*) as count',
                 where: condition,
             })

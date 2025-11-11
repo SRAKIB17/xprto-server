@@ -108,86 +108,45 @@ CREATE INDEX idx_gym_owners_city ON gym_owners (city);
 
 CREATE INDEX idx_gym_owners_plan ON gym_owners (subscription_plan);
 
--- উদাহরণ ডেটা ইনসার্ট
-INSERT INTO
-    gym_owners (
-        fullname,
-        email,
-        mobile_number,
-        gender,
-        dob,
-        gym_name,
-        address,
-        city,
-        state,
-        subscription_plan,
-        subscription_start,
-        subscription_end,
-        auto_renew,
-        payment_method,
-        last_payment_date,
-        next_payment_due,
-        status,
-        notes
-    )
-VALUES
-    (
-        'Rakibul Islam',
-        'owner@fitlife.com',
-        '+8801712345678',
-        'male',
-        '1990-05-15',
-        'FitLife Gym',
-        'Dhanmondi, Dhaka',
-        'Dhaka',
-        'Dhaka',
-        'premium',
-        '2025-01-01',
-        '2025-12-31',
-        TRUE,
-        'upi',
-        '2025-07-01',
-        '2025-08-01',
-        'active',
-        'Includes VIP locker & personal trainer'
-    );
+```
+-- 1. Client feedback - overall great gym
+INSERT INTO gym_feedbacks (gym_id, client_id, rating, comment, feedback_type)
+VALUES (1, 1, 5, 'Excellent facilities and clean environment!', 'client');
 
--- উদাহরণ কুয়েরি
--- 1) সক্রিয় জিম মালিকদের তালিকা
-SELECT
-    *
-FROM
-    gym_owners
-WHERE
-    status = 'active'
-ORDER BY
-    subscription_end ASC;
+-- 2. Trainer feedback - good management
+INSERT INTO gym_feedbacks (gym_id, trainer_id, rating, comment, feedback_type)
+VALUES (1, 1, 4, 'Management is supportive and the equipment is well-maintained.', 'trainer');
 
--- 2) সাবস্ক্রিপশন এক্সপায়ারড মালিক
-SELECT
-    *
-FROM
-    gym_owners
-WHERE
-    subscription_end < CURDATE ()
-    AND status = 'active';
+-- 3. Client feedback - suggested improvement
+INSERT INTO gym_feedbacks (gym_id, client_id, rating, comment, feedback_type)
+VALUES (1, 1, 3, 'Good gym but needs more cardio machines during rush hours.', 'client');
 
--- 3) শহর অনুযায়ী জিম মালিকের তালিকা
-SELECT
-    *
-FROM
-    gym_owners
-WHERE
-    city = 'Dhaka'
-ORDER BY
-    fullname ASC;
+-- 4. Client feedback - with video
+INSERT INTO gym_feedbacks (gym_id, client_id, rating, comment, video_url, feedback_type)
+VALUES (1, 1, 5, 'Sharing my progress video after 6 weeks!', '/uploads/feedbacks/client1_progress.mp4', 'client');
 
--- 4) 2FA সক্রিয় মালিকদের তালিকা
-SELECT
-    fullname,
-    email,
-    gym_name
-FROM
-    gym_owners
-WHERE
-    two_factor_enabled = TRUE;
+-- 5. Trainer feedback - mentioning hygiene
+INSERT INTO gym_feedbacks (gym_id, trainer_id, rating, comment, feedback_type)
+VALUES (1, 1, 4, 'Clean and well-ventilated, clients are happy with hygiene.', 'trainer');
+
+-- 6. Client feedback - with gym reply
+INSERT INTO gym_feedbacks (gym_id, client_id, rating, comment, reply, feedback_type)
+VALUES (1, 1, 2, 'AC not working properly in evening sessions.', 'We have scheduled AC maintenance tomorrow. Thanks for reporting!', 'client');
+
+-- 7. Trainer feedback - low rating (equipment issue)
+INSERT INTO gym_feedbacks (gym_id, trainer_id, rating, comment, feedback_type)
+VALUES (1, 1, 2, 'Some dumbbells are loose and need replacement.', 'trainer');
+
+-- 8. Client feedback - praising trainer
+INSERT INTO gym_feedbacks (gym_id, client_id, trainer_id, rating, comment, feedback_type)
+VALUES (1, 1, 1, 5, 'Trainer helped me achieve my goals faster, very motivating!', 'client');
+
+-- 9. Client feedback - general note
+INSERT INTO gym_feedbacks (gym_id, client_id, rating, comment, feedback_type)
+VALUES (1, 1, 4, 'Music playlist could be more energetic but overall great vibe.', 'client');
+
+-- 10. Trainer feedback - with reply
+INSERT INTO gym_feedbacks (gym_id, trainer_id, rating, comment, reply, feedback_type)
+VALUES (1, 1, 5, 'Love working here. The staff and clients make it feel like home.',
+        'Thank you for your dedication to our clients!', 'trainer');
+```

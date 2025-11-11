@@ -30,6 +30,7 @@ export const TABLES = {
         BOOKING_REQUESTS: concat("booking_requests")
     },
     GYMS: {
+        PLANS: concat("membership_plans"),
         SESSIONS: concat('gym_sessions'),
         job_posts: concat("job_posts"),
         gyms: concat("gyms"),
