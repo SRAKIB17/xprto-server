@@ -99,6 +99,15 @@ gymList.get("/:gym_id", async (ctx) => {
     let { success, result } = await dbQuery(sql);
     console.log(sql)
     return ctx.json({ success: success, trainer: result?.[0] })
+});
+
+gymList.get("/:gym_id/membership", async (ctx) => {
+    let condition = `visibility = "public"`;
+    let sql = find(`${TABLES.GYMS.PLANS} as p`, {
+        where: condition,
+    });
+    let { success, result } = await dbQuery(sql);
+    return ctx.json({ success: success, trainer: result })
 })
 
 gymList.get('/feedback/dashboard/:gym_id', async (ctx) => {

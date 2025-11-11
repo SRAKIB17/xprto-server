@@ -35,6 +35,7 @@ CREATE TABLE
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 ```
+
 -- 1️⃣ Basic Monthly Plan
 INSERT INTO membership_plans (
     gym_id, slug, title, description, billing_cycle, price, 
