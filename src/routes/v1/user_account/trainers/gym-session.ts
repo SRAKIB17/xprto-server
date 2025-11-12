@@ -1,5 +1,4 @@
-
-import { find, sanitize } from "@tezx/sqlx/mysql";
+import { find } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { dbQuery, TABLES } from "../../../../models/index.js";
 

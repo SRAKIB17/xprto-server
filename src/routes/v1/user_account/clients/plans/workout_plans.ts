@@ -1,9 +1,9 @@
 import { destroy, find, insert, mysql_date, sanitize, update } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
+import { DirectoryServe, filename } from "../../../../../config";
 import { dbQuery, TABLES } from "../../../../../models";
 import { copyFile } from "../../../../../utils/fileExists";
-import { DirectoryServe, filename } from "../../../../../config";
 
 const workoutPlans = new Router({
     basePath: '/workout-plans'
@@ -20,10 +20,10 @@ workoutPlans.get("/",
             const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
             let condition = role === 'client' ? `wr.client_id = "${user_id}"` : `wr.added_by = "${user_id}"`
 
-            if (role === 'trainer') {
-                if (!client_id) {
-                    return ctx.json({ success: false, message: "Client id is  required(client_id)." })
-                }
+            if (role === 'trainer' && client_id) {
+                // if (!client_id) {
+                //     return ctx.json({ success: false, message: "Client id is  required(client_id)." })
+                // }
                 condition += ` AND wr.client_id = ${sanitize(client_id)}`
             }
             if (date) {
@@ -75,6 +75,42 @@ workoutPlans.get("/",
             }
         },
     })
+);
+
+workoutPlans.get("/:plan_id", async (ctx) => {
+    const { role } = ctx.auth || {};
+    const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
+    let condition = role === 'client' ? `wr.client_id = "${user_id}"` : `wr.added_by = "${user_id}"`
+    condition += `AND wr.plan_id = ${sanitize(ctx.req.params?.plan_id)}`;
+    let sql = find(`${TABLES.PLANS.WORKOUT_PLANS.PLANS} as wr`, {
+        joins: `
+                ${role === 'trainer' ?
+                `LEFT JOIN ${TABLES.CLIENTS.clients} as c ON c.client_id = wr.client_id`
+                : `LEFT JOIN ${TABLES.TRAINERS.trainers} as t ON t.trainer_id = wr.added_by`
+            }
+                `,
+        columns: role === 'trainer' ?
+            `wr.*, c.fullname, c.avatar,c.bio,c.gender,c.health_goal` :
+            `wr.*, t.fullname, t.avatar,t.bio,t.gender,t.badge,t.verified,t.specialization`,
+        where: condition,
+    });
+
+    const exerciseSql = find(`${TABLES.PLANS.WORKOUT_PLANS.EXERCISE} as ex`, {
+        joins: `
+        LEFT JOIN ${TABLES.PLANS.WORKOUT_PLANS.PLANS} as wr ON wr.plan_id = ex.plan_id
+        `,
+        where: condition
+    })
+    const { success, result, error } = await dbQuery<any[]>(`${sql}${exerciseSql}`);
+
+    return ctx.json({
+        success: success,
+        result: {
+            plan: result?.[0]?.[0],
+            exercise: result?.[1]
+        }
+    })
+}
 );
 
 workoutPlans.post("/", async (ctx) => {
