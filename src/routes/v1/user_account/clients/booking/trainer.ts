@@ -11,7 +11,7 @@ const trainerBooking = new Router({
 });
 
 trainerBooking.get("/:trainer_id", async (ctx) => {
-    let condition = `t.is_online = 1 AND t.trainer_id = ${sanitize(ctx?.params?.trainer_id)}`;
+    let condition = `t.is_online = 1 AND t.trainer_id = ${sanitize(ctx?.req?.params?.trainer_id)}`;
 
     let sql = find(`${TABLES.TRAINERS.trainers} as t`, {
         joins: `
@@ -169,7 +169,7 @@ trainerBooking.post("service", async (ctx) => {
 });
 
 trainerBooking.get("/:trainer_id/unavailability/:service_id", async (ctx) => {
-    const { trainer_id, service_id } = ctx.params;
+    const { trainer_id, service_id } = ctx.req?.params;
 
     if (!trainer_id || !service_id) {
         return ctx.status(400).json({ success: false, message: "Trainer ID required" });

@@ -77,7 +77,7 @@ gymList.get("/", paginationHandler({
 );
 
 gymList.get("/:gym_id", async (ctx) => {
-    let condition = `g.status = 'active' AND (g.verification_status = 'verified' OR g.verification_status = 'fully_verified') AND g.gym_id = ${sanitize(ctx?.params?.gym_id)}`;
+    let condition = `g.status = 'active' AND (g.verification_status = 'verified' OR g.verification_status = 'fully_verified') AND g.gym_id = ${sanitize(ctx?.req?.params?.gym_id)}`;
 
     let sql = find(`${TABLES.GYMS.gyms} as g`, {
         joins: `
