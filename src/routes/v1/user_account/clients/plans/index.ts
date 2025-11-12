@@ -1,5 +1,6 @@
 import { Router, TezXError } from "tezx";
 import nutritionPlans from "./nutrition_plans.js";
+import workoutPlans from "./workout_plans.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const clientPlans = new Router({
@@ -7,6 +8,6 @@ const clientPlans = new Router({
 });
 
 clientPlans.use(nutritionPlans)
-
+clientPlans.use(workoutPlans)
 
 export default clientPlans;

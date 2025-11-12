@@ -34,11 +34,11 @@ trainerBookingRequest.get("/",
                 "br.booking_id": -1
             };
 
-            if (sort === 'highest' || sort === 'lowest') {
-                sortObj = {
-                    rating: sort === 'highest' ? -1 : 1
-                }
-            }
+            // if (sort === 'highest' || sort === 'lowest') {
+            //     sortObj = {
+            //         rating: sort === 'highest' ? -1 : 1
+            //     }
+            // }
 
             let sql = find(`${TABLES.TRAINERS.BOOKING_REQUESTS} as br`, {
                 sort: sortObj,

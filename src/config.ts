@@ -37,6 +37,12 @@ export const DirectoryServe = {
     abuseReport: {
         evidence_url: (pathname: string) => path.join(path.resolve(), `/uploads/abuse-report/${filename(pathname)}`)
     },
+    PLANS: {
+        workout_plan: {
+            EXERCISE: (pathname: string) => path.join(path.resolve(), `/uploads/plan/workouts/exercises/${filename(pathname)}`),
+            Plans: (pathname: string) => path.join(path.resolve(), `/uploads/plan/workouts/plans/${filename(pathname)}`)
+        }
+    },
     feedback: {
         trainer: (pathname: string) => path.join(path.resolve(), `/uploads/feedback/trainer/video/${filename(pathname)}`)
     },

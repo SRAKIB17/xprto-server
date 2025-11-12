@@ -61,6 +61,10 @@ CREATE TABLE
         failed_login_attempts INT DEFAULT 0,
         avatar VARCHAR(255) DEFAULT NULL,
         logo_url VARCHAR(255) DEFAULT NULL,
+        -- gym trial
+        trial_price DECIMAL(10, 2) DEFAULT 300,
+        trial_days INT DEFAULT 3,
+        --
         invoice_prefix VARCHAR(20) DEFAULT 'GYM',
         --new
         tagline VARCHAR(500) DEFAULT NULL,

@@ -9,9 +9,7 @@ export const TABLES = {
         HEALTH_CONDITIONS: concat("client_health_conditions"),
         MUSCLES_RECORD: concat("client_muscles_record"),
         clients: concat("clients"),
-        WORKOUT_PLANS: {
-            PLANS: concat("workout_plans")
-        }
+
     },
     MEMBERSHIP_JOIN: {
         TRAINER_GYMS: concat("trainer_gyms")
@@ -36,7 +34,13 @@ export const TABLES = {
         gyms: concat("gyms"),
     },
     PLANS: {
-        NUTRITION: concat('nutrition_plans'),
+        WORKOUT_PLANS: {
+            EXERCISE: concat("workout_exercises"),
+            PLANS: concat("workout_plans")
+        },
+        NUTRITION: {
+            PLANS: concat('nutrition_plans'),
+        }
     },
     ADMIN: {
         admin: concat("admin_details"),
