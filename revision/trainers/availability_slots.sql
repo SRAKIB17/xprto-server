@@ -111,7 +111,4 @@ INSERT INTO gym_sessions
 (service_name, description, start_time, duration_minutes, recurrence, gym_id, capacity, is_active, created_by)
 VALUES 
 ('Evening Yoga', 'Relaxing evening yoga', '20:00:00', 60, 'Daily', 1, 12, TRUE, 1);
-
-
-
     ```

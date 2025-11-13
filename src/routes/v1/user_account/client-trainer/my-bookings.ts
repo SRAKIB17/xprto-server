@@ -5,8 +5,6 @@ import { dbQuery, TABLES } from "../../../../models";
 import { performWalletTransaction } from "../../../../utils/createWalletTransaction";
 import { generateTxnID } from "../../../../utils/generateTxnID";
 
-
-
 // import user_account_document_flag from "./flag-document.js";
 const trainerBookingRequest = new Router({
     basePath: '/my-bookings'
