@@ -40,6 +40,7 @@ export const TABLES = {
         },
         NUTRITION: {
             PLANS: concat('nutrition_plans'),
+            MEAL: concat("nutrition_plan_meals")
         }
     },
     ADMIN: {

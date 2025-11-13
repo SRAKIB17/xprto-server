@@ -41,6 +41,10 @@ export const DirectoryServe = {
         workout_plan: {
             EXERCISE: (pathname: string) => path.join(path.resolve(), `/uploads/plan/workouts/exercises/${filename(pathname)}`),
             Plans: (pathname: string) => path.join(path.resolve(), `/uploads/plan/workouts/plans/${filename(pathname)}`)
+        },
+        nutrition_plan: {
+            MEAL: (pathname: string) => path.join(path.resolve(), `/uploads/plan/nutrition/meal/${filename(pathname)}`),
+            Plans: (pathname: string) => path.join(path.resolve(), `/uploads/plan/nutrition/plans/${filename(pathname)}`)
         }
     },
     feedback: {

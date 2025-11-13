@@ -43,14 +43,15 @@ workoutPlans.get("/",
             let sql = find(`${TABLES.PLANS.WORKOUT_PLANS.PLANS} as wr`, {
                 sort: sortObj,
                 joins: `
+                LEFT JOIN ${TABLES.GYMS.SESSIONS} as s ON s.session_id = wr.session_id
                 ${role === 'trainer' ?
                         `LEFT JOIN ${TABLES.CLIENTS.clients} as c ON c.client_id = wr.client_id`
                         : `LEFT JOIN ${TABLES.TRAINERS.trainers} as t ON t.trainer_id = wr.added_by`
                     }
                 `,
                 columns: role === 'trainer' ?
-                    `wr.*, c.fullname, c.avatar,c.bio,c.gender,c.health_goal` :
-                    `wr.*, t.fullname, t.avatar,t.bio,t.gender,t.badge,t.verified,t.specialization`,
+                    `wr.*, s.service_name, c.fullname, c.avatar,c.bio,c.gender,c.health_goal` :
+                    `wr.*, s.service_name, t.fullname, t.avatar,t.bio,t.gender,t.badge,t.verified,t.specialization`,
                 limitSkip: {
                     limit: limit,
                     skip: offset
@@ -84,14 +85,15 @@ workoutPlans.get("/:plan_id", async (ctx) => {
     condition += `AND wr.plan_id = ${sanitize(ctx.req.params?.plan_id)}`;
     let sql = find(`${TABLES.PLANS.WORKOUT_PLANS.PLANS} as wr`, {
         joins: `
+                LEFT JOIN ${TABLES.GYMS.SESSIONS} as s ON s.session_id = wr.session_id
                 ${role === 'trainer' ?
                 `LEFT JOIN ${TABLES.CLIENTS.clients} as c ON c.client_id = wr.client_id`
                 : `LEFT JOIN ${TABLES.TRAINERS.trainers} as t ON t.trainer_id = wr.added_by`
             }
                 `,
         columns: role === 'trainer' ?
-            `wr.*, c.fullname, c.avatar,c.bio,c.gender,c.health_goal` :
-            `wr.*, t.fullname, t.avatar,t.bio,t.gender,t.badge,t.verified,t.specialization`,
+            `wr.*, s.service_name, c.fullname, c.avatar,c.bio,c.gender,c.health_goal` :
+            `wr.*, s.service_name, t.fullname, t.avatar,t.bio,t.gender,t.badge,t.verified,t.specialization`,
         where: condition,
     });
 
@@ -166,7 +168,6 @@ workoutPlans.post("/", async (ctx) => {
         );
 
         if (!success) {
-            console.error("DB Insert Error:", error);
             return ctx.status(500).json({ success: false, message: "Database error occurred." });
         }
         return ctx.json({
@@ -264,10 +265,10 @@ workoutPlans.delete("/delete/plans/:plan_id", async (ctx) => {
     const { user_info, role } = ctx.auth || {};
     const user_id = user_info?.user_id;
     if (!plan_id) {
-        return ctx.json({ success: false, message: "Feedback ID is required" });
+        return ctx.json({ success: false, message: "Plan ID is required" });
     }
     try {
-        // only allow deleting own feedback
+        // only allow deleting own 
         const condition = `plan_id = "${plan_id}" AND ${role === 'trainer' ? `added_by = ${user_id}` : `client_id = ${user_id}`}`;
 
         const sql = destroy(TABLES.PLANS.WORKOUT_PLANS.PLANS, {
