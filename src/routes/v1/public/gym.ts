@@ -100,7 +100,23 @@ gymList.get("/:gym_id", async (ctx) => {
     console.log(sql)
     return ctx.json({ success: success, trainer: result?.[0] })
 });
-
+gymList.get("/:gym_id/trainers", async (ctx) => {
+    return ctx.json(await dbQuery(find(`${TABLES.TRAINERS.trainers} as t`, {
+        joins: `
+        LEFT JOIN ${TABLES.MEMBERSHIP_JOIN.TRAINER_GYMS} as mtg ON mtg.trainer_id = t.trainer_id
+        `,
+        columns: `
+        t.avatar,
+        t.fullname,
+        t.bio,
+        t.verified,
+        t.badge,
+        t.specialization,
+        t.gender
+        `,
+        where: `mtg.gym_id = ${sanitize(ctx.req.params.gym_id)} AND t.status = 'active'`
+    })))
+})
 gymList.get("/:gym_id/membership", async (ctx) => {
     let condition = `visibility = "public"`;
     let sql = find(`${TABLES.GYMS.PLANS} as p`, {

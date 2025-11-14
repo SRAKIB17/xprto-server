@@ -23,6 +23,10 @@ export const CLIENT_REDIRECT_URL = {
     logout: (next?: string) => '/v1/auth/logout' + next ? `?next=${next}` : ""
 }
 
+export const adminWallet = {
+    admin_id: 1,
+    role: "admin"
+}
 
 import os from 'node:os';
 import path from 'node:path';
