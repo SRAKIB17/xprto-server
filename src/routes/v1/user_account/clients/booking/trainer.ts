@@ -195,7 +195,6 @@ trainerBooking.get("/:trainer_id/unavailability/:service_id", async (ctx) => {
         }
         return dates;
     }
-
     const { success, result } = await dbQuery(sql);
     const flatDates = (result || []).flatMap((row) => {
         const startDate = new Date(`${row.requested_start}`);

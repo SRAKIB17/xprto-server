@@ -63,7 +63,6 @@ CREATE TABLE
         logo_url VARCHAR(255) DEFAULT NULL,
         -- gym trial
         trial_price DECIMAL(10, 2) DEFAULT 300,
-        trial_days INT DEFAULT 3,
         --
         invoice_prefix VARCHAR(20) DEFAULT 'GYM',
         --new
@@ -112,7 +111,29 @@ CREATE INDEX idx_gym_owners_city ON gym_owners (city);
 
 CREATE INDEX idx_gym_owners_plan ON gym_owners (subscription_plan);
 
+CREATE TABLE
+    gym_unavailability (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        gym_id BIGINT UNSIGNED NOT NULL,
+        year INT NOT NULL,
+        month INT NOT NULL,
+        reason TEXT DEFAULT NULL,
+        day INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (gym_id, year, month, day),
+        FOREIGN KEY (gym_id) REFERENCES gyms (gym_id) ON DELETE CASCADE ON UPDATE CASCADE
+    );
+
 ```
+INSERT INTO gym_unavailability (gym_id, year, month, day, reason)
+VALUES
+(1, 2025, 5, 1, 'May Day'),
+(1, 2025, 5, 10, 'Floor Repair'),
+(1, 2025, 6, 20, 'AC Maintenance'),
+(1, 2025, 7, 4, 'Staff Training'),
+(1, 2025, 12, 25, 'Christmas');
+
+``` ```
 -- 1. Client feedback - overall great gym
 INSERT INTO gym_feedbacks (gym_id, client_id, rating, comment, feedback_type)
 VALUES (1, 1, 5, 'Excellent facilities and clean environment!', 'client');

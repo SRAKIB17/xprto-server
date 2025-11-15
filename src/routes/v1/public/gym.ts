@@ -97,9 +97,25 @@ gymList.get("/:gym_id", async (ctx) => {
     });
 
     let { success, result } = await dbQuery(sql);
-    console.log(sql)
-    return ctx.json({ success: success, trainer: result?.[0] })
+    return ctx.json({ success: success, gym: result?.[0] })
 });
+
+gymList.get("/:gym_id/unavailability", async (ctx) => {
+    const { gym_id } = ctx.req.params;
+    let { month, year } = ctx.req.query;
+    const m = month ? sanitize(month) : new Date().getMonth() + 1;
+    const y = year ? sanitize(year) : new Date().getFullYear();
+    const f = find(`${TABLES.GYMS.UNAVAILABILITY} as u`, {
+        where: `
+            u.gym_id = ${sanitize(gym_id)} 
+            AND u.month = ${m} 
+            AND u.year = ${y}
+        `
+    });
+    console.log(f)
+    return ctx.json(await dbQuery(f));
+});
+
 gymList.get("/:gym_id/trainers", async (ctx) => {
     return ctx.json(await dbQuery(find(`${TABLES.TRAINERS.trainers} as t`, {
         joins: `
@@ -117,6 +133,25 @@ gymList.get("/:gym_id/trainers", async (ctx) => {
         where: `mtg.gym_id = ${sanitize(ctx.req.params.gym_id)} AND t.status = 'active'`
     })))
 })
+
+gymList.get("/:gym_id/membership", async (ctx) => {
+    let condition = `visibility = "public"`;
+    let sql = find(`${TABLES.GYMS.PLANS} as p`, {
+        where: condition,
+    });
+    let { success, result } = await dbQuery(sql);
+    return ctx.json({ success: success, trainer: result })
+})
+
+gymList.get("/:gym_id/sessions", async (ctx) => {
+    let condition = `s.gym_id = ${sanitize(ctx.req?.params?.gym_id)}`;
+    let sql = find(`${TABLES.GYMS.SESSIONS} as s`, {
+        where: condition,
+    });
+    let { success, result } = await dbQuery(sql);
+    return ctx.json({ success: success, sessions: result })
+})
+
 gymList.get("/:gym_id/membership", async (ctx) => {
     let condition = `visibility = "public"`;
     let sql = find(`${TABLES.GYMS.PLANS} as p`, {

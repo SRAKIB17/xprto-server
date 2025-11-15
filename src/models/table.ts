@@ -32,6 +32,7 @@ export const TABLES = {
         SESSIONS: concat('gym_sessions'),
         job_posts: concat("job_posts"),
         gyms: concat("gyms"),
+        UNAVAILABILITY: concat("gym_unavailability")
     },
     PLANS: {
         WORKOUT_PLANS: {
