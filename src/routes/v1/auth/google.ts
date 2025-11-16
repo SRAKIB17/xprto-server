@@ -1,11 +1,11 @@
-import { sanitize } from "@dbnx/mysql";
 import { getGoogleOAuthURL, GoogleOauthClient, verifyGoogleToken } from "@tezx/google-oauth2";
 import { Router } from "tezx";
 import { generateID, setCookie } from "tezx/helper";
 import { BASE_URL, CLIENT_REDIRECT_URL, cookieDOMAIN } from "../../../config.js";
-import { db, table_schema } from "../../../models/index.js";
 import tokenEncodedCrypto from "../../../utils/crypto.js";
 import { encrypt } from "../../../utils/encrypted.js";
+import { find, sanitize } from "@tezx/sqlx/mysql";
+import { dbQuery, TABLES } from "../../../models/index.js";
 
 let google = new Router();
 
@@ -16,12 +16,14 @@ const client = GoogleOauthClient({
     redirectUri: `${BASE_URL}/v1/auth/google/callback`
 });
 // 2. Route to start Google login
-google.get('/google', [
-    getGoogleOAuthURL({
+google.get('/google/jump/*id', (ctx, next) => {
+    const id = ctx?.req.params.id
+    return getGoogleOAuthURL({
         authClient: client,
+        state: id,
         scopes: ['openid', 'email', 'profile', 'phone'],
-    })
-], (ctx) => {
+    })(ctx, next)
+}, (ctx) => {
     return ctx.redirect(ctx.google.oauth_url);
 });
 
@@ -70,12 +72,15 @@ google.get('/google/callback', verifyGoogleToken({
     Callbacks: (ctx) => {
         return {
             signIn: async (user) => {
-                let { result: find, success } = await db.findAll(table_schema.user_details, {
+                let state = decodeURIComponent(ctx.req.query?.state as string);
+                const [role, socket] = state?.split(":/");
+
+                let { result, success } = await dbQuery(find(role === 'client' ? TABLES.CLIENTS.clients : TABLES.TRAINERS.trainers, {
                     where: `email = ${sanitize(user.email)}`,
-                }).execute();
-                let findUser = find?.[0];
+                }));
+                let findUser = result?.[0];
                 if (success && findUser && findUser?.login_type !== 'google') {
-                    let { success: encSuccess, encrypted } = await encrypt(JSON.stringify({
+                    ctx.error = {
                         title: "Account already exists with email/password login",
                         type: "error",
                         reason: "auth/account-exists-email",
@@ -85,19 +90,18 @@ google.get('/google/callback', verifyGoogleToken({
                         next: {
                             type: "error",
                         }
-                    }), process.env.NEXT_PUBLIC_ENCRYPTED_PASSWORD as string);
-
-                    ctx.auth_url = CLIENT_REDIRECT_URL.auth(encrypted as string);
+                    }
                     return true;
                 }
-                else if (success && find.length > 0) {
+                else if (success && result && result?.length > 0) {
                     let tkn = await tokenEncodedCrypto({
                         account: user?.email,
                         hashed: user?.email,
-                        data: { user_id: find?.[0]?.user_id },
+                        data: { user_id: result?.[0]?.user_id, maxAge: 60 * 60 * 24 },
                         method: 'google',
-                        role: 'user',
+                        role: role || 'user',
                     });
+                    ctx.tkn = tkn;
                     setCookie(ctx, 's_id', tkn as string, {
                         httpOnly: true,
                         path: '/',
@@ -110,55 +114,51 @@ google.get('/google/callback', verifyGoogleToken({
                     return true;
                 }
                 else {
-                    let info: EncryptAuthType = {
-                        email: user?.email,
-                        login_type: 'google',
-                        profile_info: {
-                            email_verified: true,
-                            fullname: user.name,
-                            username: `${user.email?.split("@")?.[0]}${generateID()?.split('-')?.[0]}`,
-                            avatar_url: user.picture
-                        },
-                        available: true,
-                        next: {
-                            type: "account-create",
-                            component: 'choose-team'
-                        },
+                    let x = {
+                        iss: "https://accounts.google.com",
+                        azp: "1025940019103-kjpk2fhm7dj22n3nf8bggloha436u2ok.apps.googleusercontent.com",
+                        aud: "1025940019103-kjpk2fhm7dj22n3nf8bggloha436u2ok.apps.googleusercontent.com",
+                        sub: "102766167047374079848",
+                        email: "rakibul.islam.r609@gmail.com",
+                        email_verified: "true",
+                        at_hash: "Zj-Pxr7Hl0_fN54lrEEm7A",
+                        name: "MD RAKIBUL ISLAM RAKIB",
+                        picture: "https://lh3.googleusercontent.com/a/ACg8ocIvycEYKnSOJgnWsb7OEs5ThBpx_Kg6mIDqsC_r-1PuiHCobG8=s96-c",
+                        given_name: "MD RAKIBUL ISLAM",
+                        family_name: "RAKIB",
+                        iat: "1763324252",
+                        exp: "1763327852",
+                        alg: "RS256",
+                        kid: "4feb44f0f7a7e27c7c403379aff20af5c8cf52dc",
+                        typ: "JWT",
                     }
-
-                    let { success, encrypted } = await encrypt(JSON.stringify(info), process.env.NEXT_PUBLIC_ENCRYPTED_PASSWORD as string);
-                    ctx.auth_url = CLIENT_REDIRECT_URL.auth(encrypted as string);
-                    //     const { result, success: s } = await db.create(table_schema.user_details, {
-                    //         email: user.email,
-                    //         login_type: 'google',
-                    //         phone: null,
+                    console.log(user)
+                    // let info: EncryptAuthType = {
+                    //     email: user?.email,
+                    //     login_type: 'google',
+                    //     profile_info: {
                     //         email_verified: true,
                     //         fullname: user.name,
-                    //         hashed: null,
-                    //         salt: null,
                     //         username: `${user.email?.split("@")?.[0]}${generateID()?.split('-')?.[0]}`,
                     //         avatar_url: user.picture
-                    //     }, {
-                    //         onDuplicateUpdateFields: [
-                    //             "email",
-                    //             "login_type",
-                    //             "phone",
-                    //             "email_verified",
-                    //             "fullname",
-                    //             "hashed",
-                    //             "salt",
-                    //             "username",
-                    //             "avatar_url",
-                    //         ]
-                    //     }).execute();
-                    //     success = result?.affectedRows > 0 && s;
+                    //     },
+                    //     available: true,
+                    //     next: {
+                    //         type: "account-create",
+                    //         component: 'choose-team'
+                    //     },
+                    // }
+
+                    // let { success, encrypted } = await encrypt(JSON.stringify(info), process.env.NEXT_PUBLIC_ENCRYPTED_PASSWORD as string);
+                    // ctx.auth_url = CLIENT_REDIRECT_URL.auth(encrypted as string);
+
                     return success;
                 }
             },
         }
     }
 }), async (ctx) => {
-    return ctx.redirect(ctx.auth_url)
+    return ctx.json(ctx.login)
 });
 export { google };
 

@@ -9,7 +9,7 @@
 // import tokenEncodedCrypto, { wrappedCryptoToken } from "../../../utils/crypto.js";
 // import { decrypt, encrypt } from "../../../utils/encrypted.js";
 // import { AuthorizationBasicAuthUser } from "./basicAuth.js";
-// import { google } from "./google.js";
+import { google } from "./google.js";
 
 import { find, insert, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
@@ -773,5 +773,6 @@ auth.get('/logout', async (ctx) => {
     if (next === 'app') return ctx.json({ success: true })
     return ctx.redirect(next as string);
 })
-// auth.use(google)
+auth.use(google)
+
 export default auth;

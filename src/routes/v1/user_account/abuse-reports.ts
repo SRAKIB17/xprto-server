@@ -81,6 +81,8 @@ abuse_reports.post('/', async (ctx) => {
             reported_user_id,
             reported_role,
             report_type,
+            reporter_user_id: user_id,
+            reporter_role: (ctx?.auth ?? {})?.role,
             details,
             evidence_url: evidences?.length ? JSON.stringify(evidences) : undefined
         })
