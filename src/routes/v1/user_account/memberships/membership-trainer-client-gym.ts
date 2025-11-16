@@ -1,5 +1,5 @@
 import { Router } from "tezx";
-import membershipGymTrainer from "./gym-trainer.js";
+import membershipGymTrainer from "./gym.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const membershipJoinGTC = new Router({

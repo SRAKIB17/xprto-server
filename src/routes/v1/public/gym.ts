@@ -123,6 +123,7 @@ gymList.get("/:gym_id/trainers", async (ctx) => {
         LEFT JOIN ${TABLES.MEMBERSHIP_JOIN.TRAINER_GYMS} as mtg ON mtg.trainer_id = t.trainer_id
         `,
         columns: `
+        t.trainer_id,
         t.avatar,
         t.fullname,
         t.bio,
