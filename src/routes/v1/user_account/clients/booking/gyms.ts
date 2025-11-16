@@ -5,11 +5,63 @@ import { dbQuery, TABLES } from "../../../../../models/index.js";
 import { performWalletTransaction } from "../../../../../utils/createWalletTransaction.js";
 import { generateTxnID } from "../../../../../utils/generateTxnID.js";
 import { adminWallet } from "../../../../../config.js";
+import paginationHandler from "tezx/middleware/pagination.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const gymsBooking = new Router({
     basePath: '/gyms'
 });
+gymsBooking.get(
+    "/trial",
+    paginationHandler({
+        getDataSource: async (ctx, { page, limit, offset }) => {
+            const { role } = ctx.auth || {};
+            const { year, month, day } = ctx?.req.query;
+            const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
+            let condition = `tb.client_id = ${user_id}`
+            if (year) {
+                condition += ` AND tb.year = ${sanitize(year)}`
+            }
+            if (month) {
+                condition += ` AND tb.month = ${sanitize(month)}`
+            }
+            if (day) {
+                condition += ` AND tb.day = ${sanitize(day)}`
+            }
+            let sql = find(`${TABLES.CLIENTS.GYM_TRIAL_BOOKING} as tb`, {
+                sort: {
+                    booking_id: -1
+                },
+                joins: `LEFT JOIN ${TABLES.GYMS.SESSIONS} as s ON s.session_id = tb.session_id
+                LEFT JOIN ${TABLES.GYMS.gyms} as g ON g.gym_id = s.gym_id
+                `,
+                columns: `
+                tb.*, s.*, g.gym_name, g.phone, g.address, g.postal_code, g.country, g.district
+                `,
+                limitSkip: {
+                    limit: limit,
+                    skip: offset
+                },
+                where: condition,
+            })
+            let count = find(`${TABLES.CLIENTS.GYM_TRIAL_BOOKING} as tb`, {
+                columns: 'count(*) as count',
+                where: condition,
+            })
+            const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
+            if (!success) {
+                return {
+                    data: [],
+                    total: 0
+                }
+            }
+            return {
+                data: result?.[0],
+                total: result?.[1]?.[0]?.count
+            }
+        },
+    })
+);
 
 gymsBooking.post("/trial", async (ctx) => {
     const { user_id, email } = ctx.auth?.user_info || {};
@@ -72,7 +124,6 @@ gymsBooking.post("/trial", async (ctx) => {
     });
 
     const { success: dbSuccess, result, error } = await dbQuery(sql);
-    console.log(error)
     if (!dbSuccess) {
         return ctx.status(500).json({ success: false, message: "Failed to create booking" });
     }

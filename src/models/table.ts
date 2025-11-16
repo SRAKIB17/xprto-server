@@ -9,7 +9,8 @@ export const TABLES = {
         HEALTH_CONDITIONS: concat("client_health_conditions"),
         MUSCLES_RECORD: concat("client_muscles_record"),
         clients: concat("clients"),
-        GYM_TRIAL_BOOKING: concat("client_gym_trial_booking")
+        GYM_TRIAL_BOOKING: concat("client_gym_trial_booking"),
+        SESSION_ASSIGNMENT_CLIENTS: concat("session_assignment_clients")
     },
     MEMBERSHIP_JOIN: {
         TRAINER_GYMS: concat("trainer_gyms")

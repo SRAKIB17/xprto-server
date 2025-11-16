@@ -2,6 +2,7 @@ import { find, sanitize, SortType } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../models/index.js";
+import { AuthorizationBasicAuthUser, AuthorizationMiddlewarePublic } from "../auth/basicAuth.js";
 
 let gymList = new Router();
 gymList.get("/", paginationHandler({
@@ -142,15 +143,69 @@ gymList.get("/:gym_id/membership", async (ctx) => {
     let { success, result } = await dbQuery(sql);
     return ctx.json({ success: success, trainer: result })
 })
-
-gymList.get("/:gym_id/sessions", async (ctx) => {
+gymList.get("/:gym_id/sessions", AuthorizationMiddlewarePublic(), async (ctx) => {
+    const { role, user_info } = ctx.auth ?? {};
+    let { user_id } = user_info ?? {};
+    const isClient = role === "client" && user_id;
     let condition = `s.gym_id = ${sanitize(ctx.req?.params?.gym_id)}`;
+
     let sql = find(`${TABLES.GYMS.SESSIONS} as s`, {
+        joins: `
+            LEFT JOIN ${TABLES.CLIENTS.SESSION_ASSIGNMENT_CLIENTS} AS sac
+                ON sac.session_id = s.session_id AND sac.status = 'active'
+            ${isClient ? `
+            LEFT JOIN ${TABLES.CLIENTS.SESSION_ASSIGNMENT_CLIENTS} AS myassign
+                ON myassign.session_id = s.session_id AND myassign.client_id = ${sanitize(user_id)}
+            ` : ""}
+        `,
+
+        columns: `
+            s.*,
+
+            -- Total assigned users
+            COUNT(sac.assignment_id) AS assigned_count,
+
+            -- Is session full?
+            CASE
+                WHEN
+                    SUM(
+                        CASE
+                            WHEN sac.status = 'active'
+                                AND sac.valid_to >= CURRENT_DATE()
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) >= s.capacity
+                    THEN 1
+                    ELSE 0
+            END AS is_full,
+            -- Has the logged-in client completed session?
+            ${isClient ? `
+            CASE 
+                WHEN myassign.assignment_id IS NOT NULL 
+                     AND myassign.status = 'completed' THEN 1
+                ELSE 0
+            END AS has_completed,
+            ` : ""}
+
+            -- Is client assigned?
+            ${isClient ? `
+            CASE 
+                WHEN myassign.assignment_id IS NOT NULL THEN 1
+                ELSE 0
+            END AS is_assigned
+            ` : ""}
+        `,
+
         where: condition,
+        groupBy: "s.session_id",
+        sort: "s.start_time ASC"
     });
     let { success, result } = await dbQuery(sql);
-    return ctx.json({ success: success, sessions: result })
-})
+
+    return ctx.json({ success, sessions: result });
+});
+
 
 gymList.get("/:gym_id/membership", async (ctx) => {
     let condition = `visibility = "public"`;

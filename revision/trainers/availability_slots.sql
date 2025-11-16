@@ -27,7 +27,7 @@ VALUES
 (6, 1),
 (7, 1);
 
-```
+    ```
 CREATE TABLE
     gym_sessions (
         session_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
