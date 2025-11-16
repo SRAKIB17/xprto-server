@@ -33,10 +33,13 @@ myTrainers.get('/all', async (ctx) => {
         groupBy: 'tr.trainer_id',
         columns: `
              DISTINCT tr.trainer_id,
-              sv.package_name,
               ss.service_name,
               sv.title,
               sv.images,
+              ss.start_time,
+              sv.time_from,
+              sv.duration_minutes as service_duration,
+              ss.duration_minutes,
               tr.fullname,
               tr.avatar,
               tr.bio,
@@ -70,11 +73,12 @@ myTrainers.get('/', paginationHandler({
             return ctx.status(401).json({ success: false, message: "Unauthorized" });
         }
         const client_id = sanitize(user_id);
-        let condition = `br.client_id = ${client_id} OR ass.client_id = ${client_id}`
+        let condition = `(br.client_id = ${client_id} OR ass.client_id = ${client_id})`
 
         if (search) {
             condition += ` AND tr.fullname LIKE "%${search}%"`;
         }
+        console.log(condition)
 
         const sql = find(`${TABLES.TRAINERS.trainers} as tr`, {
             joins: `
@@ -120,7 +124,6 @@ myTrainers.get('/', paginationHandler({
         if (!success) {
             return { data: [], total: 0 };
         }
-
         return {
             data: result?.[0],              // unique trainers list
             total: result?.[1]?.[0]?.count  // total unique trainers

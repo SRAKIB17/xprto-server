@@ -239,8 +239,7 @@ trainerBookingRequest.post("/messaging", async (ctx) => {
 
     const { role } = ctx.auth || {};
     const { user_id, fullname: my_name } = ctx.auth?.user_info || {};
-
-    if (status !== "accepted") {
+    if (!['completed', 'accepted']?.includes(status)) {
         return ctx.status(400).json({ success: false, message: "Invalid booking status" });
     }
 
