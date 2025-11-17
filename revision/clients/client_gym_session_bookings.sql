@@ -20,3 +20,15 @@ CREATE TABLE
         INDEX (valid_from),
         INDEX (valid_to)
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+```
+INSERT INTO session_assignment_clients 
+(client_id, session_id, valid_from, valid_to, status, idempotent_key, assigned_by, note)
+VALUES
+(1, 1, CURRENT_DATE(), CURRENT_DATE() + INTERVAL 30 DAY, 'active', UUID(), NULL, NULL),
+(1, 2, CURRENT_DATE(), CURRENT_DATE() + INTERVAL 30 DAY, 'active', UUID(), NULL, NULL),
+(1, 3, CURRENT_DATE(), CURRENT_DATE() + INTERVAL 30 DAY, 'active', UUID(), NULL, NULL),
+(1, 4, CURRENT_DATE(), CURRENT_DATE() + INTERVAL 30 DAY, 'active', UUID(), NULL, NULL),
+(1, 5, CURRENT_DATE(), CURRENT_DATE() + INTERVAL 30 DAY, 'active', UUID(), NULL, NULL);
+
+    ```
