@@ -162,7 +162,6 @@ gymList.get("/:gym_id/sessions", AuthorizationMiddlewarePublic(), async (ctx) =>
 
         columns: `
             s.*,
-
             -- Total assigned users
             COUNT(sac.assignment_id) AS assigned_count,
 

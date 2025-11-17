@@ -21,12 +21,32 @@ gymSessions.get("/:trainer_id?", async (ctx) => {
 
     const sql = find(`${TABLES.GYMS.SESSIONS} gs`, {
         joins: `
-      LEFT JOIN ${TABLES.TRAINERS.WEEKLY_SLOTS.WEEKLY_SLOTS} ws
-        ON ws.session_id = gs.session_id
-        AND (ws.trainer_id = ${trainer_id} OR ws.replacement_trainer_id = ${trainer_id})
+      LEFT JOIN ${TABLES.TRAINERS.WEEKLY_SLOTS.WEEKLY_SLOTS} ws ON ws.session_id = gs.session_id AND (ws.trainer_id = ${trainer_id} OR ws.replacement_trainer_id = ${trainer_id})
+      LEFT JOIN ${TABLES.CLIENTS.SESSION_ASSIGNMENT_CLIENTS} as sac ON sac.session_id = gs.session_id AND sac.status = 'active'
     `,
         columns: `
-      gs.*,
+       gs.*,
+        SUM(
+            CASE
+                WHEN sac.status = 'active'
+                    AND sac.valid_to >= CURRENT_DATE()
+                THEN 1
+                ELSE 0
+            END
+        ) as total_client,
+       CASE
+        WHEN
+            SUM(
+                CASE
+                    WHEN sac.status = 'active'
+                        AND sac.valid_to >= CURRENT_DATE()
+                    THEN 1
+                    ELSE 0
+                END
+            ) >= gs.capacity
+            THEN 1
+            ELSE 0
+      END AS is_full,
       ws.trainer_id,
       ws.replacement_trainer_id,
       CASE 
@@ -34,6 +54,7 @@ gymSessions.get("/:trainer_id?", async (ctx) => {
         ELSE 0
       END AS has_replacement_trainer
     `,
+        groupBy: "gs.session_id",
         where: role === 'gym' ? `gs.gym_id = ${user_id}` : "",
     });
 

@@ -8,4 +8,3 @@ const membershipJoinGTC = new Router({
 membershipJoinGTC.use(membershipGymTrainer)
 
 export default membershipJoinGTC;
-
