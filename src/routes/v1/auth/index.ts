@@ -540,7 +540,6 @@ auth.post('/send-verification-email', [
     }
 );
 
-
 auth.put('/password-reset-update', async (ctx) => {
     const { tkn, email, confirmPassword, newPassword, name } = await ctx.req.json();
 
@@ -590,7 +589,6 @@ auth.put('/password-reset-update', async (ctx) => {
         return ctx.json({ success: false, message: "Failed to update your password. Please try again." });
     }
 });
-
 
 // !done
 auth.get('/logout', async (ctx) => {
