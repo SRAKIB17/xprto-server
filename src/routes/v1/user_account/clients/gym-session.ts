@@ -27,7 +27,8 @@ gymSessions.get("/:client_id?", async (ctx) => {
       LEFT JOIN ${TABLES.TRAINERS.WEEKLY_SLOTS.WEEKLY_SLOTS} ws ON ws.session_id = gs.session_id
       LEFT JOIN ${TABLES.TRAINERS.trainers} t ON t.trainer_id = ws.trainer_id
       LEFT JOIN ${TABLES.TRAINERS.trainers} rt ON ws.replacement_trainer_id = rt.trainer_id
-      RIGHT JOIN ${TABLES.CLIENTS.SESSION_ASSIGNMENT_CLIENTS} as sac ON sac.session_id = gs.session_id AND sac.status ${type === 'history' ? "!=" : "="} 'active' AND sac.client_id = ${sanitize(client_id)}
+      RIGHT JOIN ${TABLES.CLIENTS.SESSION_ASSIGNMENT_CLIENTS} as sac ON sac.session_id = gs.session_id AND (${type === 'history' ?
+                "sac.status != 'active' OR sac.valid_to < CURRENT_DATE()" : "sac.status = 'active' AND sac.valid_to >= CURRENT_DATE()"}) AND sac.client_id = ${sanitize(client_id)}
     `,
         columns: `
        gs.*,
