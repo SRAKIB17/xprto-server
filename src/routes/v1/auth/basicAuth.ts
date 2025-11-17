@@ -21,6 +21,7 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
     if (success && decrypted) {
         try {
             let data = JSON.parse(decrypted);
+            console.log(data)
             let account = data?.account;
             let session = data?.session;
             let method = data?.method;

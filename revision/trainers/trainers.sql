@@ -18,7 +18,7 @@ CREATE TABLE
         fullname VARCHAR(100) NOT NULL,
         age INT DEFAULT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
-        phone VARCHAR(20) UNIQUE NOT NULL,
+        phone VARCHAR(20) UNIQUE DEFAULT NULL,
         gender ENUM ('male', 'female', 'other') DEFAULT 'other',
         dob DATE DEFAULT NULL,
         bio TEXT DEFAULT NULL,

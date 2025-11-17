@@ -25,6 +25,18 @@ export function AppNotificationToast(ctx: Context, message: {
     }))
 }
 
+export function AppNotificationSendMessage(ctx: Context, data: {
+    socket_id?: string,
+    data: Record<string, any>
+}) {
+    let socket_id = ctx.req.header("socket-id") ?? data?.socket_id;
+    if (!socket_id) return;
+
+    return clients.get(socket_id)?.send(JSON.stringify({
+        type: 'message',
+        data: data?.data
+    }))
+}
 export function AppNotificationRefetch(ctx: Context, loading: {
     socket_id?: string,
     loading: {

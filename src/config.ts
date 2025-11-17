@@ -4,7 +4,7 @@ export const BASE_URL = 'http://localhost:8080';
 export const CDN_URL = "http://localhost:8082";
 export const cookieDOMAIN = "localhost";
 
-export const support_email = "support@papernxt.com";
+export const support_email = "support@xprto.com";
 export const API_VERSION = 'v1';
 export const API_BASE_URL = `${BASE_URL}/${API_VERSION}`;
 export const API_BASE_URL_V1 = `${BASE_URL}/v1`;

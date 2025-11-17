@@ -1,13 +1,146 @@
 import { getGoogleOAuthURL, GoogleOauthClient, verifyGoogleToken } from "@tezx/google-oauth2";
+import { find, insert, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
-import { generateID, setCookie } from "tezx/helper";
+import { setCookie } from "tezx/helper";
 import { BASE_URL, CLIENT_REDIRECT_URL, cookieDOMAIN } from "../../../config.js";
-import tokenEncodedCrypto from "../../../utils/crypto.js";
-import { encrypt } from "../../../utils/encrypted.js";
-import { find, sanitize } from "@tezx/sqlx/mysql";
 import { dbQuery, TABLES } from "../../../models/index.js";
+import tokenEncodedCrypto from "../../../utils/crypto.js";
+import { AppNotificationSendMessage } from "../../websocket/notification.js";
 
 let google = new Router();
+const ERROR_UI = (err: any) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Authentication Error</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f8f9fd;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+}
+.card {
+    background: white;
+    padding: 32px;
+    max-width: 420px;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    text-align: center;
+    animation: slideDown .5s ease;
+}
+@keyframes slideDown {
+    from { transform: translateY(-12px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.icon {
+    font-size: 60px;
+    color: #e63946;
+    margin-bottom: 16px;
+}
+.btn {
+    padding: 12px 20px;
+    display: inline-block;
+    background: #e63946;
+    color: white;
+    text-decoration: none;
+    border-radius: 10px;
+    margin-top: 18px;
+    font-weight: bold;
+}
+p {
+    color: #555;
+    font-size: 15px;
+}
+.title {
+    font-size: 22px;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+<div class="card">
+    <div class="icon">🚫</div>
+    <div class="title">${err.title || "Authentication Error"}</div>
+    <p>${err.reason || "Something went wrong during Google authentication."}</p>
+
+    ${err.redirect
+        ? `<a class="btn" href="${err.redirect}">${err.redirect_title || "Go Back"}</a>`
+        : ""
+    }
+</div>
+</body>
+</html>
+`;
+const SUCCESS_UI = (token: string) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Login Successful</title>
+
+<script>
+setTimeout(() => {
+    window.close();
+}, 1800);
+</script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #eef7ff;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.card {
+    background: white;
+    padding: 32px;
+    max-width: 420px;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    text-align: center;
+    animation: fadeIn .5s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+.icon {
+    font-size: 60px;
+    color: #1b9c85;
+    margin-bottom: 16px;
+}
+p {
+    color: #444;
+    margin-top: 6px;
+    font-size: 15px;
+}
+.title {
+    font-size: 22px;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+<div class="card">
+    <div class="icon">✅</div>
+    <div class="title">Login Successful</div>
+    <p>Your Google account has been authenticated.</p>
+    <p>You can close this window.</p>
+</div>
+</body>
+</html>
+`;
 
 // 1. Initialize OAuth2 client
 const client = GoogleOauthClient({
@@ -97,11 +230,20 @@ google.get('/google/callback', verifyGoogleToken({
                     let tkn = await tokenEncodedCrypto({
                         account: user?.email,
                         hashed: user?.email,
-                        data: { user_id: result?.[0]?.user_id, maxAge: 60 * 60 * 24 },
+                        data: { user_id: result?.[0]?.client_id ?? result?.[0]?.trainer_id, maxAge: 60 * 60 * 24 },
                         method: 'google',
                         role: role || 'user',
                     });
                     ctx.tkn = tkn;
+                    AppNotificationSendMessage(ctx, {
+                        socket_id: socket,
+                        data: {
+                            role: role,
+                            token: tkn,
+                            user: result?.[0],
+                            type: "google",
+                        }
+                    })
                     setCookie(ctx, 's_id', tkn as string, {
                         httpOnly: true,
                         path: '/',
@@ -114,51 +256,47 @@ google.get('/google/callback', verifyGoogleToken({
                     return true;
                 }
                 else {
-                    let x = {
-                        iss: "https://accounts.google.com",
-                        azp: "1025940019103-kjpk2fhm7dj22n3nf8bggloha436u2ok.apps.googleusercontent.com",
-                        aud: "1025940019103-kjpk2fhm7dj22n3nf8bggloha436u2ok.apps.googleusercontent.com",
-                        sub: "102766167047374079848",
-                        email: "rakibul.islam.r609@gmail.com",
-                        email_verified: "true",
-                        at_hash: "Zj-Pxr7Hl0_fN54lrEEm7A",
-                        name: "MD RAKIBUL ISLAM RAKIB",
-                        picture: "https://lh3.googleusercontent.com/a/ACg8ocIvycEYKnSOJgnWsb7OEs5ThBpx_Kg6mIDqsC_r-1PuiHCobG8=s96-c",
-                        given_name: "MD RAKIBUL ISLAM",
-                        family_name: "RAKIB",
-                        iat: "1763324252",
-                        exp: "1763327852",
-                        alg: "RS256",
-                        kid: "4feb44f0f7a7e27c7c403379aff20af5c8cf52dc",
-                        typ: "JWT",
+
+                    let payload = {
+                        email: user?.email,
+                        login_type: "google",
+                        fullname: user?.name,
+                        avatar: user?.picture,
+                        email_verified: 1
                     }
-                    console.log(user)
-                    // let info: EncryptAuthType = {
-                    //     email: user?.email,
-                    //     login_type: 'google',
-                    //     profile_info: {
-                    //         email_verified: true,
-                    //         fullname: user.name,
-                    //         username: `${user.email?.split("@")?.[0]}${generateID()?.split('-')?.[0]}`,
-                    //         avatar_url: user.picture
-                    //     },
-                    //     available: true,
-                    //     next: {
-                    //         type: "account-create",
-                    //         component: 'choose-team'
-                    //     },
-                    // }
-
-                    // let { success, encrypted } = await encrypt(JSON.stringify(info), process.env.NEXT_PUBLIC_ENCRYPTED_PASSWORD as string);
-                    // ctx.auth_url = CLIENT_REDIRECT_URL.auth(encrypted as string);
-
+                    const sql = insert(role === 'client' ? TABLES.CLIENTS.clients : TABLES.TRAINERS.trainers, payload)
+                    const { result, } = await dbQuery<any>(sql);
+                    let tkn = await tokenEncodedCrypto({
+                        account: user?.email,
+                        hashed: user?.email,
+                        data: { user_id: result?.insertId, maxAge: 60 * 60 * 24 },
+                        method: 'google',
+                        role: role || 'user',
+                    });
+                    ctx.tkn = tkn;
+                    AppNotificationSendMessage(ctx, {
+                        socket_id: socket,
+                        data: {
+                            token: tkn,
+                            user: payload,
+                            role: role,
+                            type: "google",
+                        }
+                    })
                     return success;
                 }
             },
         }
     }
 }), async (ctx) => {
-    return ctx.json(ctx.login)
+    const error = ctx.error;
+    const token = ctx.tkn;
+    if (error) {
+        return ctx.html(ERROR_UI(error));
+    } else {
+        return ctx.html(SUCCESS_UI(token));
+    }
 });
+
 export { google };
 

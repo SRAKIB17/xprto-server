@@ -17,7 +17,7 @@ CREATE TABLE
         fullname VARCHAR(100) NOT NULL,
         avatar VARCHAR(255) DEFAULT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
-        phone VARCHAR(20) UNIQUE NOT NULL,
+        phone VARCHAR(20) UNIQUE DEFAULT NULL,
         is_pro BOOLEAN DEFAULT FALSE,
         dob DATE DEFAULT NULL,
         age INT DEFAULT NULL,

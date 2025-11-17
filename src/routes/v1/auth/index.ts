@@ -1,16 +1,4 @@
-// import { sanitize } from "@dbnx/mysql";
-// import { Router } from "tezx";
-// import { getConnInfo } from "tezx/bun";
-// import { deleteCookie, setCookie } from "tezx/helper";
-// import { rateLimiter } from "tezx/middleware/rate-limiter";
-// import { CLIENT_REDIRECT_URL, CLIENT_URL, cookieDOMAIN, FORGET_PASSWORD_EXP, support_email } from "../../../config.js";
-// import { sendEmail } from "../../../email/mailer.js";
-// import { db, table_schema } from "../../../models/index.js";
-// import tokenEncodedCrypto, { wrappedCryptoToken } from "../../../utils/crypto.js";
-// import { decrypt, encrypt } from "../../../utils/encrypted.js";
-// import { AuthorizationBasicAuthUser } from "./basicAuth.js";
 import { google } from "./google.js";
-
 import { find, insert, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { getConnInfo } from "tezx/bun";
@@ -25,6 +13,7 @@ import { copyFile } from "../../../utils/fileExists.js";
 import { AuthorizationBasicAuthUser } from "./basicAuth.js";
 const auth = new Router();
 
+// ! all done ✅
 auth.post('/join-gym', async (ctx) => {
     try {
         const body = await ctx.req.json();
@@ -130,163 +119,7 @@ auth.post('/join-gym', async (ctx) => {
     }
 });
 
-// auth.post('/email-availability', async (ctx) => {
-//     const body = await ctx.req.json();
-//     let { result } = await db.findAll(table_schema.user_details, {
-//         where: `email = ${sanitize(body.email)}`,
-//     }).execute();
-//     if (result?.length > 0) {
-//         let { login_type } = result?.[0];
-//         if (login_type == 'google') {
-//             return ctx.json({ success: false, message: "Email already in use. Please log in with Google." });
-//         }
-//         return ctx.json({ success: true, available: false });
-//     }
-//     let otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-//     let success = await sendEmail({
-//         to: body?.email,
-//         templateName: 'register-otp',
-//         subject: "PaperNxt OTP for Registration (Valid for 20 Minutes)",
-//         templateData: {
-//             otp: otp,
-//         }
-//     });
-
-//     if (success) {
-//         const payload = JSON.stringify({
-//             email: body?.email,
-//             otp,
-//             exp: Date.now() + FORGET_PASSWORD_EXP // 5 minutes from now
-//         });
-
-//         let tkn = encrypt(payload, process.env.OTP_ENCRYPTION_KEY!).encrypted;
-//         return ctx.json({
-//             success: true,
-//             available: true,
-//             otp_tkn: tkn,
-//         });
-//     }
-//     else {
-//         return ctx.json({
-//             success: false,
-//             message: "Failed to send OTP. Please try again later.",
-//         });
-//     }
-// });
-
-// auth.post('/resend-otp', [getConnInfo(), rateLimiter({
-//     maxRequests: 1,
-//     windowMs: 60 * 1000,
-//     onError: (ctx, retryAfter) => {
-//         ctx.setStatus = 429;
-//         return ctx.json({
-//             success: false,
-//             message: `Try again in ${retryAfter} seconds.`,
-//         });
-//     }
-// })], async (ctx) => {
-//     const body = await ctx.req.json();
-//     let { email } = body
-//     let otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-//     let success = await sendEmail({
-//         to: email,
-//         templateName: 'register-otp',
-//         subject: "PaperNxt OTP for Registration (Valid for 20 Minutes)",
-//         templateData: {
-//             otp: otp,
-//         }
-//     });
-//     if (success) {
-//         const payload = JSON.stringify({
-//             email,
-//             otp,
-//             exp: Date.now() + FORGET_PASSWORD_EXP // 5 minutes from now
-//         });
-
-//         let tkn = encrypt(payload, process.env.OTP_ENCRYPTION_KEY!).encrypted;
-//         return ctx.json({
-//             success: true,
-//             otp_tkn: tkn,
-//         });
-//     }
-//     else {
-//         return ctx.json({
-//             success: false,
-//             message: "Failed to send OTP. Please try again later.",
-//         });
-//     }
-// })
-
-// auth.post('/verify-otp', async (ctx) => {
-//     const body = await ctx.req.json();
-//     let { email, otp, otp_tkn } = body;
-//     let { success, decrypted } = decrypt(otp_tkn, process.env.OTP_ENCRYPTION_KEY!);
-//     const { exp, otp: decrypted_otp } = JSON.parse(decrypted || '{}');
-//     if (!email || !exp) {
-//         return ctx.json({ success: false, type: "Invalid", message: "Invalid or tampered token!" });
-//     }
-
-//     if (Date.now() > exp) {
-//         return ctx.json({
-//             type: "Link Expired",
-//             success: false, message: "Sorry, this password reset link has expired.\n Please request a new one to continue."
-//         });
-//     }
-//     if (!success || decrypted_otp !== otp) {
-//         return ctx.json({ success: false, message: 'Invalid OTP token' });
-//     }
-//     return ctx.json({
-//         success: true,
-//         message: 'OTP verified successfully',
-//         email: email,
-//         otp: otp,
-//         token: encrypt(email, process.env.OTP_ENCRYPTION_KEY!).encrypted,
-//     });
-// })
-
-// auth.get('/check-username/:username', async (ctx) => {
-//     let username = ctx.req.params.username;
-//     let { result } = await db.findOne(table_schema.user_details, {
-//         where: `username = ${sanitize(username)}`,
-//     }).execute();
-//     if (result.length > 0) {
-//         return ctx.json({ available: false });
-//     }
-//     return ctx.json({
-//         available: true,
-//         message: 'Username is available',
-//     });
-// })
-
-// export type EncryptAuthType = {
-//     password: string,
-//     account_type: string,
-//     email: string,
-//     is_verified?: boolean,
-//     otp?: string
-//     login_type: 'google' | 'email',
-//     profile_info: {
-//         fullname: string;
-//         username: string;
-//         college?: string;
-//         department?: string;
-//         instagram?: string;
-//         twitter?: string;
-//         github?: string;
-//         company?: string;
-//         email_verified?: boolean,
-//         job_role?: string;
-//         avatar_url?: string,
-//         linkedin?: string;
-//         discord?: string;
-//     }
-//     otp_tkn?: string,
-//     available: boolean,
-// }
-
-
+// ! all done ✅
 auth.post('/register', async (ctx) => {
     try {
         const body = await ctx.req.json();
@@ -400,6 +233,7 @@ auth.post('/register', async (ctx) => {
     }
 });
 
+// !done ✅
 auth.post('/login', async (ctx) => {
     try {
         const body = await ctx.req.json();
@@ -478,7 +312,6 @@ auth.post('/login', async (ctx) => {
     }
 });
 
-
 auth.post('/refresh', AuthorizationBasicAuthUser(), async (ctx) => {
     return ctx.json(ctx.auth || {})
 })
@@ -486,6 +319,7 @@ auth.post('/refresh', AuthorizationBasicAuthUser(), async (ctx) => {
 
 let passwordReset = new Map();
 
+// !done ✅
 auth.post('/password-reset', [getConnInfo(), async (ctx, next) => {
     let { email, role } = await ctx.req.json();
     const { success, result: user } = await dbQuery(find(role === 'trainer' ? TABLES.TRAINERS.trainers : TABLES.CLIENTS.clients, {
@@ -605,7 +439,7 @@ auth.post('/password-reset-verify', async (ctx) => {
 
 
 let emailVerifiedStorage = new Map();
-
+// !done
 auth.post('/send-verification-email', [
     getConnInfo(),
     async (ctx, next) => {
@@ -758,6 +592,7 @@ auth.put('/password-reset-update', async (ctx) => {
 });
 
 
+// !done
 auth.get('/logout', async (ctx) => {
     const next = ctx.req.query?.next;
     deleteCookie(ctx, 's_id', {

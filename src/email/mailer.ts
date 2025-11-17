@@ -5,7 +5,7 @@ import { SITE_TITLE } from "../config";
 // email
 /**
  * 1. reset-password
- * 
+ * 2. join-as-gym
  * 
  */
 type EmailData = {
