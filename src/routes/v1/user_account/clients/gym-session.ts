@@ -20,18 +20,27 @@ gymSessions.get("/:client_id?", async (ctx) => {
     if (!client_id) {
         return ctx.json({ success: false, message: "Client Id is required!" });
     }
-
-    const sql = find(`${TABLES.GYMS.SESSIONS} gs`, {
+    let condition = `((${type === 'history' ? "sac.status != 'active' OR sac.valid_to < CURRENT_DATE()" : "sac.status = 'active' AND sac.valid_to >= CURRENT_DATE()"}) AND sac.client_id = ${sanitize(client_id)})`
+    if (role === 'gym') {
+        condition += ` AND gs.gym_id = ${user_id}`
+    }
+    const sql = find(`${TABLES.CLIENTS.SESSION_ASSIGNMENT_CLIENTS} sac`, {
+        sort: `sac.assignment_id ASC`,
         joins: `
+      LEFT JOIN ${TABLES.GYMS.SESSIONS} as gs ON sac.session_id = gs.session_id 
       LEFT JOIN ${TABLES.GYMS.gyms} g ON g.gym_id = gs.gym_id
       LEFT JOIN ${TABLES.TRAINERS.WEEKLY_SLOTS.WEEKLY_SLOTS} ws ON ws.session_id = gs.session_id
       LEFT JOIN ${TABLES.TRAINERS.trainers} t ON t.trainer_id = ws.trainer_id
       LEFT JOIN ${TABLES.TRAINERS.trainers} rt ON ws.replacement_trainer_id = rt.trainer_id
-      RIGHT JOIN ${TABLES.CLIENTS.SESSION_ASSIGNMENT_CLIENTS} as sac ON sac.session_id = gs.session_id AND (${type === 'history' ?
-                "sac.status != 'active' OR sac.valid_to < CURRENT_DATE()" : "sac.status = 'active' AND sac.valid_to >= CURRENT_DATE()"}) AND sac.client_id = ${sanitize(client_id)}
     `,
         columns: `
        gs.*,
+       g.gym_name as gym_name,
+       g.avatar as gym_avatar,
+       g.logo_url as gym_logo_url,
+       g.lat as gym_lat,
+       g.lng as gym_long,
+       MAX(sac.assignment_id) as assignment_id,
         SUM(
             CASE
                 WHEN sac.status = 'active'
@@ -64,12 +73,11 @@ gymSessions.get("/:client_id?", async (ctx) => {
       t.trainer_id as trainer_id,
       rt.fullname as replacement_trainer_fullname,
       rt.avatar as replacement_trainer_avatar,
-      rt.trainer_id as replacement_trainer_id
+      rt.trainer_id as replacement_trainer_id,
     `,
         groupBy: "gs.session_id",
-        where: role === 'gym' ? `gs.gym_id = ${user_id}` : "",
+        where: condition
     });
-    console.log(sql)
 
     const result = await dbQuery<any[]>(sql);
     return ctx.json(result);

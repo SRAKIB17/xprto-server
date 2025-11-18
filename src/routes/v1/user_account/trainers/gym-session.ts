@@ -51,6 +51,11 @@ gymSessions.get("/:trainer_id?", async (ctx) => {
       ws.trainer_id,
       ws.replacement_trainer_id,
       g.gym_name,
+      g.gym_name as gym_name,
+      g.avatar as gym_avatar,
+      g.logo_url as gym_logo_url,
+      g.lat as gym_lat,
+      g.lng as gym_long,
       CASE 
         WHEN ws.replacement_trainer_id IS NOT NULL THEN 1
         ELSE 0
