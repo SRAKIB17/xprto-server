@@ -32,14 +32,22 @@ gymSessions.get("/:client_id?", async (ctx) => {
       LEFT JOIN ${TABLES.TRAINERS.WEEKLY_SLOTS.WEEKLY_SLOTS} ws ON ws.session_id = gs.session_id
       LEFT JOIN ${TABLES.TRAINERS.trainers} t ON t.trainer_id = ws.trainer_id
       LEFT JOIN ${TABLES.TRAINERS.trainers} rt ON ws.replacement_trainer_id = rt.trainer_id
+      LEFT JOIN ${TABLES.TRAINERS.SESSION_RUNS} sr ON sr.session_id = gs.session_id
     `,
         columns: `
        gs.*,
+       sr.run_id,
+       sr.started_at as run_started_at,
+       sr.ended_at as run_ended_at,
+       sr.status as run_status,
+       sr.run_date,
+       sr.lat as run_lat,
+       sr.lng as run_lng,
        g.gym_name as gym_name,
        g.avatar as gym_avatar,
        g.logo_url as gym_logo_url,
        g.lat as gym_lat,
-       g.lng as gym_long,
+       g.lng as gym_lng,
        MAX(sac.assignment_id) as assignment_id,
         SUM(
             CASE
@@ -63,7 +71,6 @@ gymSessions.get("/:client_id?", async (ctx) => {
             ELSE 0
       END AS is_full,
       sac.*,
-      ws.replacement_trainer_id,
       CASE 
         WHEN ws.replacement_trainer_id IS NOT NULL THEN 1
         ELSE 0
@@ -73,7 +80,7 @@ gymSessions.get("/:client_id?", async (ctx) => {
       t.trainer_id as trainer_id,
       rt.fullname as replacement_trainer_fullname,
       rt.avatar as replacement_trainer_avatar,
-      rt.trainer_id as replacement_trainer_id,
+      rt.trainer_id as replacement_trainer_id
     `,
         groupBy: "gs.session_id",
         where: condition

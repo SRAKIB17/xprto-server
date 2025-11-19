@@ -16,6 +16,7 @@ export const TABLES = {
         TRAINER_GYMS: concat("trainer_gyms")
     },
     TRAINERS: {
+        SESSION_RUNS: concat("session_runs"),
         RED_FLAGS: concat("trainer_red_flags"),
         LEAVE_REQUESTS: concat("trainer_leaves"),
         job_applications: concat("trainer_job_applications"),
@@ -65,6 +66,9 @@ export const TABLES = {
     FEEDBACK: {
         GYM_TRAINER_CLIENT: concat("gym_feedbacks"),
         CLIENT_TRAINER: concat("client_trainer_feedback")
+    },
+    ATTENDANCE: {
+        SESSION_ATTENDANCES: concat("session_attendances")
     },
     CHAT_ROOMS: {
         chat_rooms: concat('chat_rooms'),
