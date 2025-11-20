@@ -110,7 +110,7 @@ CREATE TABLE
         checkout_at DATETIME DEFAULT NULL,
         remark TEXT DEFAULT NULL,
         marked_by BIGINT UNSIGNED NULL, -- who marked the attendance (trainer/admin)
-        marked_role ENUM ("trainer", "gym") DEFAULT NULL,
+        marked_role ENUM ("trainer", "gym", 'client') DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (run_id) REFERENCES session_runs (run_id) ON DELETE CASCADE,

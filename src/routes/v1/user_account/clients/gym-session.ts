@@ -1,4 +1,4 @@
-import { find, sanitize } from "@tezx/sqlx/mysql";
+import { find, insert, mysql_date, mysql_datetime, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { dbQuery, TABLES } from "../../../../models/index.js";
 
@@ -11,7 +11,7 @@ gymSessions.get("/:client_id?", async (ctx) => {
     const { user_id } = ctx.auth?.user_info || {};
     let client_id = role === 'client_id' ? user_id : role !== 'client_id' ? ctx.req.params.client_id : null;
 
-    const { type } = ctx.req.query
+    const { type, date } = ctx.req.query;
 
     if (role === 'trainer') {
         return ctx.json({ success: false, message: "unauthorized" });
@@ -32,7 +32,7 @@ gymSessions.get("/:client_id?", async (ctx) => {
       LEFT JOIN ${TABLES.TRAINERS.WEEKLY_SLOTS.WEEKLY_SLOTS} ws ON ws.session_id = gs.session_id
       LEFT JOIN ${TABLES.TRAINERS.trainers} t ON t.trainer_id = ws.trainer_id
       LEFT JOIN ${TABLES.TRAINERS.trainers} rt ON ws.replacement_trainer_id = rt.trainer_id
-      LEFT JOIN ${TABLES.TRAINERS.SESSION_RUNS} sr ON sr.session_id = gs.session_id
+      LEFT JOIN ${TABLES.TRAINERS.SESSION_RUNS} sr ON sr.session_id = gs.session_id AND DATE(sr.run_date) = ${date ? sanitize(mysql_date(date as string)) : 'CURRENT_DATE()'}
     `,
         columns: `
        gs.*,
@@ -89,5 +89,72 @@ gymSessions.get("/:client_id?", async (ctx) => {
     const result = await dbQuery<any[]>(sql);
     return ctx.json(result);
 });
+
+gymSessions.post("/mark-attendance/:session_id/:run_id", async (ctx) => {
+    const { role } = ctx.auth || {};
+    const { user_id } = ctx.auth?.user_info || {};
+    const session_id = ctx.req.params.session_id;
+    const run_id = ctx.req.params.run_id;
+
+    // Only client can mark attendance
+    if (role !== "client") {
+        return ctx.json({ success: false, message: "unauthorized" });
+    }
+
+    if (!session_id || !run_id) {
+        return ctx.json({ success: false, message: "Session Id and run Id is required!" });
+    }
+
+    const body = await ctx.req.json();
+
+    const {
+        client_id,
+        checkin_at,
+        lat,
+        lng,
+    } = body;
+    let findSql = find(TABLES.ATTENDANCE.SESSION_ATTENDANCES, {
+        where: `session_id = ${sanitize(session_id)} AND run_id = ${sanitize(run_id)} AND
+        client_id = ${sanitize(user_id)} AND marked_role = 'client' AND
+        DATE(checkin_at) = ${sanitize(mysql_date(checkin_at))}`,
+    });
+    const findRes = await dbQuery<any>(findSql);
+    if (findRes.success && findRes.result && findRes.result.length > 0) {
+        return ctx.json({
+            success: false,
+            message: "Attendance already marked for this session run today!",
+        });
+    }
+    // // The client who is marking attendance
+    const cid = client_id || user_id;
+
+    const attendanceSql = insert(TABLES.ATTENDANCE.SESSION_ATTENDANCES, {
+        run_id,
+        session_id,
+        client_id: cid,
+        checkin_at: mysql_datetime(checkin_at),
+        marked_by: cid,
+        marked_role: "client",
+    });
+
+    const insertRes = await dbQuery(attendanceSql);
+
+    if (!insertRes.success) {
+        return ctx.json({
+            success: false,
+            message: "Failed to mark attendance",
+            error: insertRes.error,
+        });
+    }
+
+    // --------------------------------------------
+    // FINAL SUCCESS RESPONSE
+    // --------------------------------------------
+    return ctx.json({
+        success: true,
+        message: "Attendance marked successfully!",
+    });
+});
+
 
 export default gymSessions;

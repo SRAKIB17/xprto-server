@@ -18,10 +18,10 @@ import { decrypt } from "../../../utils/encrypted";
 export async function AuthorizationControllerUser({ credentials = {}, ctx }: { ctx: Context, credentials?: any }) {
     let s_id = credentials?.token || getCookie(ctx, 's_id') || ctx.req.header("s_id");
     let { decrypted, success } = decrypt(s_id, process.env.CRYPTO_KEY!);
+
     if (success && decrypted) {
         try {
             let data = JSON.parse(decrypted);
-            console.log(data)
             let account = data?.account;
             let session = data?.session;
             let method = data?.method;
@@ -44,7 +44,7 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
                 limitSkip: {
                     limit: 1
                 }
-            })
+            });
             const { success, result, error, } = await dbQuery<any>(`${updateSql}${sql}`);
             // 'COUNT(DISTINCT CASE WHEN user_follows.follower_id = user_details.user_id THEN user_follows.following_id END) AS total_following',
             //                         `COUNT(DISTINCT CASE WHEN doc_uploaded_files.visibility = 'PUBLIC' THEN documents.doc_id END) AS total_papers`, // Count total papers by user
@@ -55,7 +55,7 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
             //         THEN DATE_ADD(user_details.delete_requested_at, INTERVAL 14 DAY)
             //     ELSE NULL
             // END AS scheduled_deletion_date
-            if (result?.[1]?.[0]?.length === 0) {
+            if (result?.[1]?.length === 0) {
                 return false;
             }
 
@@ -129,6 +129,7 @@ export function AuthorizationBasicAuthUser() {
             return AuthorizationControllerUser({ credentials: { token: token }, ctx })
         },
         onUnauthorized(ctx, error) {
+            console.log(error)
             throw TezXError.unauthorized();
         },
     })

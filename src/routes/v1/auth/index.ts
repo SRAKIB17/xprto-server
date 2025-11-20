@@ -300,7 +300,7 @@ auth.post('/login', async (ctx) => {
             success: true,
             message: 'User logged in successfully',
             s_id: tkn,
-            user_info: user,
+            user_info: { ...user, user_id: client_id ?? trainer_id ?? gym_id },
         });
     } catch (err: any) {
         console.error("Login Error:", err);

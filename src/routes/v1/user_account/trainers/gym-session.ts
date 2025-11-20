@@ -8,7 +8,7 @@ const gymSessions = new Router({
 
 gymSessions.get("/:trainer_id?", async (ctx) => {
     const { role } = ctx.auth || {};
-    const { user_id } = ctx.auth?.user_info || {};
+    const { user_id, } = ctx.auth?.user_info || {};
     let trainer_id = role === 'trainer' ? user_id : role !== 'trainer' ? ctx.req.params.trainer_id : null;
 
     if (role === 'client') {
@@ -18,13 +18,14 @@ gymSessions.get("/:trainer_id?", async (ctx) => {
     if (!trainer_id) {
         return ctx.json({ success: false, message: "Trainer Id is required!" });
     }
+    const { date } = ctx.req.query;
 
     const sql = find(`${TABLES.GYMS.SESSIONS} gs`, {
         joins: `
       LEFT JOIN ${TABLES.TRAINERS.WEEKLY_SLOTS.WEEKLY_SLOTS} ws ON ws.session_id = gs.session_id AND (ws.trainer_id = ${trainer_id} OR ws.replacement_trainer_id = ${trainer_id})
       LEFT JOIN ${TABLES.CLIENTS.SESSION_ASSIGNMENT_CLIENTS} as sac ON sac.session_id = gs.session_id AND sac.status = 'active'
       LEFT JOIN ${TABLES.GYMS.gyms} as g ON g.gym_id = gs.gym_id
-      LEFT JOIN ${TABLES.TRAINERS.SESSION_RUNS} sr ON sr.session_id = gs.session_id
+      LEFT JOIN ${TABLES.TRAINERS.SESSION_RUNS} sr ON sr.session_id = gs.session_id AND DATE(sr.run_date) = ${date ? sanitize(mysql_date(date as string)) : 'CURRENT_DATE()'}
     `,
         columns: `
        gs.*,
