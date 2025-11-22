@@ -19,10 +19,14 @@ gymSessions.get("/:trainer_id?", async (ctx) => {
         return ctx.json({ success: false, message: "Trainer Id is required!" });
     }
     const { date } = ctx.req.query;
-
+    let condition = `(ws.trainer_id = ${sanitize(trainer_id)} OR ws.replacement_trainer_id = ${sanitize(trainer_id)})`;
+    if (role === 'gym') {
+        condition += ` AND gs.gym_id = ${user_id}`
+    }
     const sql = find(`${TABLES.GYMS.SESSIONS} gs`, {
         joins: `
-      LEFT JOIN ${TABLES.TRAINERS.WEEKLY_SLOTS.WEEKLY_SLOTS} ws ON ws.session_id = gs.session_id AND (ws.trainer_id = ${trainer_id} OR ws.replacement_trainer_id = ${trainer_id})
+      LEFT JOIN ${TABLES.TRAINERS.WEEKLY_SLOTS.WEEKLY_SLOTS} ws ON ws.session_id = gs.session_id 
+      LEFT JOIN ${TABLES.TRAINERS.trainers} rt ON ws.replacement_trainer_id = rt.trainer_id
       LEFT JOIN ${TABLES.CLIENTS.SESSION_ASSIGNMENT_CLIENTS} as sac ON sac.session_id = gs.session_id AND sac.status = 'active'
       LEFT JOIN ${TABLES.GYMS.gyms} as g ON g.gym_id = gs.gym_id
       LEFT JOIN ${TABLES.TRAINERS.SESSION_RUNS} sr ON sr.session_id = gs.session_id AND DATE(sr.run_date) = ${date ? sanitize(mysql_date(date as string)) : 'CURRENT_DATE()'}
@@ -64,15 +68,17 @@ gymSessions.get("/:trainer_id?", async (ctx) => {
       g.logo_url as gym_logo_url,
       g.lat as gym_lat,
       g.lng as gym_lng,
+      rt.fullname as replacement_trainer_fullname,
+      rt.avatar as replacement_trainer_avatar,
+      rt.trainer_id as replacement_trainer_id,
       CASE 
         WHEN ws.replacement_trainer_id IS NOT NULL THEN 1
         ELSE 0
       END AS has_replacement_trainer
     `,
-        groupBy: "gs.session_id",
-        where: role === 'gym' ? `gs.gym_id = ${user_id}` : "",
+        groupBy: "ws.slot_id",
+        where: condition
     });
-
     const result = await dbQuery<any[]>(sql);
     return ctx.json(result);
 });
