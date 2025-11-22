@@ -100,7 +100,7 @@ client_health_conditions.get("/", paginationHandler({
         }
         let condition = `client_id = ${client_id}`;
         if (role === 'trainer') {
-            condition += `AND added_by = ${user_id}`
+            condition += ` AND added_by = ${user_id}`
         }
 
         let sql = find(`${TABLES.CLIENTS.HEALTH_CONDITIONS} as hc`, {
@@ -120,7 +120,7 @@ client_health_conditions.get("/", paginationHandler({
                 skip: offset
             },
             where: condition,
-        })
+        });
         let count = find(`${TABLES.CLIENTS.HEALTH_CONDITIONS} as hc`, {
             columns: 'count(*) as count',
             where: condition,

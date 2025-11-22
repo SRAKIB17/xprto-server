@@ -80,7 +80,7 @@ client_skeletal_muscles.get("/:type", paginationHandler({
         }
         let condition = `client_id = ${client_id} AND cm.type=${sanitize(ctx.req.params?.type)}`;
         if (role === 'trainer') {
-            condition += `AND added_by = ${user_id}`
+            condition += ` AND added_by = ${user_id}`
         }
 
         let sql = find(`${TABLES.CLIENTS.MUSCLES_RECORD} as cm`, {
