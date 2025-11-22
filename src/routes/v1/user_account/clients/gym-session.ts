@@ -82,7 +82,7 @@ gymSessions.get("/:client_id?", async (ctx) => {
       rt.avatar as replacement_trainer_avatar,
       rt.trainer_id as replacement_trainer_id
     `,
-        groupBy: "gs.session_id",
+        groupBy: "ws.slot_id",
         where: condition
     });
 
