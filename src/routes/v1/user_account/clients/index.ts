@@ -1,4 +1,4 @@
-import { Router, TezXError } from "tezx";
+import { Router } from "tezx";
 import clientsBookingTrainerGym from "./booking/index.js";
 import clientFeedback from "./feedback.js";
 import myTrainers from "./my-trainers.js";
@@ -9,12 +9,7 @@ import gymSessions from "./gym-session.js";
 const clients = new Router({
     basePath: "/clients"
 });
-// clients.use((ctx, next) => {
-//     if (ctx.auth?.role === 'client') {
-//         return next();
-//     }
-//     throw new TezXError("unauthorized");
-// })
+
 clients.use(clientFeedback);
 clients.use(clientPlans);
 clients.use(clientsBookingTrainerGym);

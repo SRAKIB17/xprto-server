@@ -1,15 +1,7 @@
-// import { mysql_datetime } from "@dbnx/mysql";
-// import { Context, NextCallback } from "tezx";
-// import { deleteCookie, getCookie } from "tezx/helper";
-// import { basicAuth } from "tezx/middleware/basic-auth";
-// import { cookieDOMAIN } from "../../../config.js";
-// import { db, table_schema } from "../../../models/index.js";
-// import { wrappedCryptoToken } from "../../../utils/crypto.js";
-// import { decrypt } from "../../../utils/encrypted.js";
 
 import { find, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
-import { Context, NextCallback, TezXError } from "tezx";
-import { getCookie } from "tezx/helper";
+import { Context, NextCallback } from "tezx";
+import { getCookie } from "tezx/cookie";
 import { bearerAuth } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../models/index.js";
 import { wrappedCryptoToken } from "../../../utils/crypto.js";
@@ -129,8 +121,8 @@ export function AuthorizationBasicAuthUser() {
             return AuthorizationControllerUser({ credentials: { token: token }, ctx })
         },
         onUnauthorized(ctx, error) {
-            console.log(error)
-            throw TezXError.unauthorized();
+            // console.log(error)
+            throw new Error("unauthorized");
         },
     })
 }

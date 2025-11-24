@@ -1,6 +1,6 @@
 import { insert, sanitize, update } from "@tezx/sqlx/mysql";
 import { Callback, Router } from "tezx";
-import { upgradeWebSocket } from "tezx/bun";
+import { upgradeWebSocket } from "tezx/ws";
 import { DirectoryServe, filename } from "../../config.js";
 import { dbQuery, TABLES } from "../../models/index.js";
 import { copyFile } from "../../utils/fileExists.js";

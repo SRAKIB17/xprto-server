@@ -105,7 +105,7 @@ export async function sendNotification(payload: NotificationPayload, mode: 'all'
 
         return {
             success: true,
-            message: `✅ Notification sent successfully to ${recipientType}#${recipientId}`,
+            message: `✅ Notification sent successfully to ${'recipientType'}#${'recipientId'}`,
         };
     } catch (error: any) {
         return { success: false, message: error.message };

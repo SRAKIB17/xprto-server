@@ -1,7 +1,7 @@
 import { getGoogleOAuthURL, GoogleOauthClient, verifyGoogleToken } from "@tezx/google-oauth2";
 import { find, insert, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
-import { setCookie } from "tezx/helper";
+import { setCookie } from "tezx/cookie";
 import { BASE_URL, CLIENT_REDIRECT_URL, cookieDOMAIN } from "../../../config.js";
 import { dbQuery, TABLES } from "../../../models/index.js";
 import tokenEncodedCrypto from "../../../utils/crypto.js";

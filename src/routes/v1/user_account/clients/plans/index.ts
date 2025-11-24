@@ -1,4 +1,4 @@
-import { Router, TezXError } from "tezx";
+import { Router } from "tezx";
 import nutritionPlans from "./nutrition_plans.js";
 import workoutPlans from "./workout_plans.js";
 

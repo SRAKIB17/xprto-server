@@ -1,5 +1,5 @@
 import { find, sanitize } from "@tezx/sqlx/mysql";
-import { Router, TezXError } from "tezx";
+import { Router } from "tezx";
 import { dbQuery } from "../../../models/index.js";
 import { TABLES } from "../../../models/table.js";
 
@@ -106,7 +106,8 @@ earningDashboardGymTrainer.get("/revenue-chart/:wallet_id/:chart", async (ctx) =
             orderBy = `DATE(created_at)`;
 
         } else {
-            throw new TezXError("Invalid chart type", 400);
+            ctx.status(400)
+            throw new Error("Invalid chart type",);
         }
 
         const { success, result, error } = await dbQuery(find(TABLES.WALLETS.transactions, {
@@ -115,7 +116,10 @@ earningDashboardGymTrainer.get("/revenue-chart/:wallet_id/:chart", async (ctx) =
             groupBy: groupBy,
             where: condition
         }))
-        if (!success) throw new TezXError("Database query failed", 500);
+        if (!success) {
+            ctx.status(500)
+            throw new Error("Database query failed",);
+        }
         return ctx.json(result || []);
     }
     catch (error: any) {

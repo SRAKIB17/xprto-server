@@ -1,4 +1,4 @@
-import { Router, TezXError } from "tezx";
+import { Router } from "tezx";
 import trainerBookingRequest from "./my-bookings";
 
 // import user_account_document_flag from "./flag-document.js";
@@ -9,7 +9,7 @@ trainerClientModule.use((ctx, next) => {
     if (ctx.auth?.role === 'trainer' || ctx.auth?.role === 'client') {
         return next();
     }
-    throw new TezXError("unauthorized");
+    throw new Error("unauthorized");
 })
 trainerClientModule.use(trainerBookingRequest)
 

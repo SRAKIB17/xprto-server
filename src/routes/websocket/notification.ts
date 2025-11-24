@@ -1,5 +1,5 @@
 import { Callback, Context, Router } from "tezx";
-import { upgradeWebSocket } from "tezx/bun";
+import { upgradeWebSocket } from "tezx/ws";
 import { generateUUID } from "tezx/helper";
 import { NotificationPayload } from "../../utils/sendNotification";
 
@@ -16,7 +16,7 @@ export function AppNotificationToast(ctx: Context, message: {
     socket_id?: string,
     message?: string;
     duration?: number; // ms, 0 = persistent
-} & NotificationPayload) {
+}) {
     let socket_id = ctx.req.header("socket-id") ?? message?.socket_id;
     if (!socket_id) return;
     return clients.get(socket_id)?.send(JSON.stringify({
@@ -102,10 +102,6 @@ notifications.get(
             close(ws, { code, reason }) {
                 clients.delete(userId!);
                 console.log(`Closed: ${userId}`, code, reason);
-            },
-            error(ws, err) {
-                clients.delete(userId!);
-                console.error("Error:", userId, err);
             },
         };
     }) as unknown as Callback
