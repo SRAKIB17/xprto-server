@@ -1,7 +1,6 @@
 import { Router } from "tezx";
 import clientsBookingTrainerGym from "./booking/index.js";
 import clientFeedback from "./feedback.js";
-import myTrainers from "./my-trainers.js";
 import clientPlans from "./plans/index.js";
 import gymSessions from "./gym-session.js";
 
@@ -13,6 +12,5 @@ const clients = new Router({
 clients.use(clientFeedback);
 clients.use(clientPlans);
 clients.use(clientsBookingTrainerGym);
-clients.use(myTrainers);
 clients.use(gymSessions);
 export default clients;

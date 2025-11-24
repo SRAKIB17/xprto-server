@@ -204,7 +204,40 @@ trainerBookingRequest.post("/change-status/:status", async (ctx) => {
                 }
             }
             else if (status === 'cancelled') {
+                //                 function generateRefundMessage(
+                //                     diffHours: number,
+                //                     refundPercent: number,
+                //                     chargePercent: number
+                //                 ) {
+                //                     const hours = Math.floor(diffHours);
+                //                     const minutes = Math.floor((diffHours - hours) * 60);
 
+                //                     const timeText =
+                //                         diffHours > 0
+                //                             ? `${hours} hour ${minutes} min before schedule`
+                //                             : `Schedule time already passed`;
+
+                //                     return {
+                //                         hours_before: diffHours,
+                //                         refund_percent: refundPercent,
+                //                         charge_percent: chargePercent,
+                //                         message: `
+                // ⏰ Refund Summary  
+                // ----------------------------  
+                // ✔ Booking Time Left: **${timeText}**  
+                // 💰 Refund Amount: **${refundPercent}%**  
+                // ⚠️ Cancellation Charge: **${chargePercent}%**  
+
+                // ${refundPercent === 100
+                //                                 ? "✅ Full refund applicable (no charges)."
+                //                                 : refundPercent === 0
+                //                                     ? "❌ No refund available. 100% charge applicable."
+                //                                     : `ℹ️ As per policy, ${chargePercent}% cancellation fee will be deducted.`}
+                // `.trim()
+                //                     };
+                //                 }
+
+                return ctx.json({})
             }
         }
         // ✅ Update DB

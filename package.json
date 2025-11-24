@@ -23,7 +23,7 @@
   "homepage": "https://github.com/tezxjs/tezx-app-example",
   "dependencies": {
     "@googleapis/oauth2": "^4.0.0",
-    "@tezx/devtools": "^1.0.13",
+    "@tezx/devtools": "^4.0.1",
     "@tezx/google-oauth2": "^1.0.14",
     "@tezx/sqlx": "^1.0.1",
     "crypto-js": "^4.2.0",
@@ -31,7 +31,7 @@
     "nodemailer": "^7.0.6",
     "npm": "^11.6.1",
     "razorpay": "^2.9.6",
-    "tezx": "^4.0.1-beta",
+    "tezx": "^4.0.1",
     "typescript": "^5.8.2"
   },
   "devDependencies": {

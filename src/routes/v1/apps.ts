@@ -15,6 +15,12 @@ export let appsDataAmountEtc = {
             currency: "INR",
         }
     },
+    cancel_booking_rules: [
+        { hours_before: 2, refund_percent: 100, charge_percent: 0 },
+        { hours_before: 12, refund_percent: 75, charge_percent: 25 },
+        { hours_before: 4, refund_percent: 50, charge_percent: 50 },
+        { hours_before: 0, refund_percent: 0, charge_percent: 100 }
+    ],
     job_apply: {
         amount: 400,
     },
