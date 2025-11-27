@@ -69,6 +69,7 @@ CREATE TABLE
         tagline VARCHAR(500) DEFAULT NULL,
         description TEXT DEFAULT NULL,
         website VARCHAR(200) DEFAULT NULL,
+        services JSON DEFAULT NULL, -- like ['yoga','Strength','Rehab']
         operating_hours JSON DEFAULT NULL, -- Example: {"mon":"9.00AM-5.00PM","tue":"9.00AM-5.00PM"}
         social_media JSON DEFAULT NULL, -- Example: {"facebook":"url","instagram":"url"}
         facilities JSON DEFAULT NULL, -- Example: ["wifi","parking","cafe"]

@@ -81,20 +81,6 @@ xprtoJobFeed.get(
             /** BASE CONDITION */
             let condition = `jp.status = "published"`;
 
-            /** Text search */
-            if (search) {
-                const s = sanitize("%" + search + "%");
-                condition += `
-          AND (
-            jp.title LIKE ${s}
-            OR jp.subtitle LIKE ${s}
-            OR jp.description LIKE ${s}
-            OR jp.requirements LIKE ${s}
-            OR jp.responsibilities LIKE ${s}
-            OR jp.qualifications LIKE ${s}
-          )
-        `;
-            }
 
             /** Filters */
             if (job_type) condition += ` AND jp.job_type = ${sanitize(job_type)}`;
@@ -130,6 +116,20 @@ xprtoJobFeed.get(
               + SIN(RADIANS(${lat_})) * SIN(RADIANS(g.lat))
             )
           ) <= ${distance_km}
+        `;
+            }
+            /** Text search */
+            if (search) {
+                const s = JSON.stringify(`%${search}%`);
+                condition += `
+          AND (
+            jp.title LIKE ${s}
+            OR jp.subtitle LIKE ${s}
+            OR jp.description LIKE ${s}
+            OR jp.requirements LIKE ${s}
+            OR jp.responsibilities LIKE ${s}
+            OR jp.qualifications LIKE ${s}
+          )
         `;
             }
 

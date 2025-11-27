@@ -41,21 +41,6 @@ trainersList.get("/", paginationHandler({
         `;
         }
 
-        if (q.search) {
-            const s = sanitize(q.search);
-            condition += ` AND
-                (
-                    t.fullname LIKE ${s}
-                    OR t.email LIKE ${s}
-                    OR t.phone LIKE ${s}
-                    OR t.specialization LIKE ${s}
-                    OR t.certification LIKE ${s}
-                    OR t.district LIKE ${s}
-                    OR t.state LIKE ${s}
-                    OR t.country LIKE ${s}
-                )
-            `;
-        }
 
         let sort: SortType<any> = {};
 
@@ -122,7 +107,21 @@ trainersList.get("/", paginationHandler({
         if (q.max_services) {
             havingSQL += (havingSQL ? " AND " : "") + `COUNT(DISTINCT ms.service_id) <= ${sanitize(q.max_services)}`;
         }
-
+        if (q.search) {
+            const s = JSON.stringify(`%${q.search}%`);
+            condition += ` AND
+                (
+                    t.fullname LIKE ${s}
+                    OR t.email LIKE ${s}
+                    OR t.phone LIKE ${s}
+                    OR t.specialization LIKE ${s}
+                    OR t.certification LIKE ${s}
+                    OR t.district LIKE ${s}
+                    OR t.state LIKE ${s}
+                    OR t.country LIKE ${s}
+                )
+            `;
+        }
         // যদি কোন filter না থাকে, havingSQL হবে empty string
 
         // if ((role === 'gym' || role === 'admin') && !status) {
@@ -208,18 +207,23 @@ trainersList.get("/", paginationHandler({
             groupBy: 't.trainer_id'
         });
 
-        let count = find(`${TABLES.TRAINERS.trainers} as t`, {
-            columns: 'count(DISTINCT t.trainer_id) as count',
-            joins: `
-    LEFT JOIN ${TABLES.TRAINERS.RED_FLAGS} as rf ON t.trainer_id = rf.trainer_id AND rf.status = 'active'
-    LEFT JOIN ${TABLES.FEEDBACK.CLIENT_TRAINER} as fb ON fb.trainer_id = t.trainer_id
-    LEFT JOIN ${TABLES.TRAINERS.services} as ms ON ms.trainer_id = t.trainer_id AND ms.status = 'active'
-            `,
-            // joins: `LEFT JOIN ${TABLES.GYMS.gyms} as g ON jp.gym_id = g.gym_id`,
-            where: condition,
-        })
-        const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
+        let count = `
+  SELECT COUNT(*) as count FROM (
+    SELECT t.trainer_id
+    FROM ${TABLES.TRAINERS.trainers} as t
+    LEFT JOIN ${TABLES.TRAINERS.RED_FLAGS} as rf 
+        ON t.trainer_id = rf.trainer_id AND rf.status = 'active'
+    LEFT JOIN ${TABLES.FEEDBACK.CLIENT_TRAINER} as fb 
+        ON fb.trainer_id = t.trainer_id
+    LEFT JOIN ${TABLES.TRAINERS.services} as ms 
+        ON ms.trainer_id = t.trainer_id AND ms.status = 'active'
+    WHERE ${condition}
+    GROUP BY t.trainer_id
+    ${havingSQL ? `HAVING ${havingSQL}` : ""}
+  ) AS subquery
+`;
 
+        const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
         if (!success) {
             return {
                 data: [],
