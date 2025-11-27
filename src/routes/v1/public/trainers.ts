@@ -10,7 +10,6 @@ trainersList.get("/", paginationHandler({
         const { search, verify, mode, status } = ctx?.req.query;
         const { user_id, username, hashed, salt, } = ctx.auth?.user_info || {};
         let condition = "t.is_online = 1 AND xprto = 1";
-
         // if ((role === 'gym' || role === 'admin') && !status) {
         //     condition = "jp.status IN ('draft', 'published', 'closed', 'archived')"
         // }
@@ -24,7 +23,6 @@ trainersList.get("/", paginationHandler({
         // if (status) {
         //     condition += ` AND jp.status = ${sanitize(status)}`;
         // }
-
 
         if (search) {
             // condition += ` AND MATCH(title, description, subtitle) AGAINST (${sanitize(search)} IN NATURAL LANGUAGE MODE)`;
@@ -79,8 +77,7 @@ trainersList.get("/", paginationHandler({
             total: result?.[1]?.[0]?.count
         }
     },
-})
-);
+}));
 
 trainersList.get('/feedback/dashboard/:trainer_id', async (ctx) => {
     try {
