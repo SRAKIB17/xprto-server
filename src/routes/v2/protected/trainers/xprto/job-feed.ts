@@ -119,7 +119,6 @@ xprtoJobFeed.get(
             /** Geo Filters */
             const lat_ = ctx.req.query.lat_ ? Number(ctx.req.query.lat_) : null;
             const lng_ = ctx.req.query.lng_ ? Number(ctx.req.query.lng_) : null;
-
             // WHERE distance filter (must be raw formula, not alias)
             if (distance_km && lat_ && lng_) {
                 condition += `
@@ -277,7 +276,7 @@ xprtoJobFeed.get(
             });
 
             const { success, result } = await dbQuery(`${sql}${count}`);
-
+            console.log(sql)
             if (!success) {
                 return {
                     data: [],
