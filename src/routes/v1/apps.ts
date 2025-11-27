@@ -5,6 +5,10 @@ const appsData = new Router({
     basePath: '/apps-data'
 });
 export let appsDataAmountEtc = {
+    membership_plan_percent: {
+        amount: 100,
+        currency: "INR"
+    },
     withdraw: {
         trainer: {
             fee_percentage: 5,

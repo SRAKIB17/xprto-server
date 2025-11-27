@@ -6,10 +6,125 @@ import { dbQuery, TABLES } from "../../../models/index.js";
 let trainersList = new Router();
 trainersList.get("/", paginationHandler({
     getDataSource: async (ctx, { page, limit, offset }) => {
-        const { role } = ctx.auth || {};
-        const { search, verify, mode, status } = ctx?.req.query;
-        const { user_id, username, hashed, salt, } = ctx.auth?.user_info || {};
         let condition = "t.is_online = 1 AND xprto = 1";
+        const q = ctx.req.query;
+
+        if (q.gender) {
+            condition += ` AND t.gender = ${sanitize(q.gender)}`;
+        }
+        if (q.state) condition += ` AND t.state = ${sanitize(q.state)}`;
+        if (q.district) condition += ` AND t.district = ${sanitize(q.district)}`;
+
+        if (q.mode) {
+            condition += ` AND ms.delivery_mode = ${sanitize(q.mode)}`;
+        }
+        if (q.min_age) condition += ` AND TIMESTAMPDIFF(YEAR, t.dob, CURDATE()) >= ${sanitize(q.min_age)}`;
+        if (q.max_age) condition += ` AND TIMESTAMPDIFF(YEAR, t.dob, CURDATE()) <= ${sanitize(q.max_age)}`;
+
+        // Rating filtering
+        if (q.min_rating) condition += ` AND AVG(fb.rating) >= ${sanitize(q.min_rating)}`;
+
+        /** Geo Filters */
+        const lat_ = ctx.req.query.lat_ ? Number(ctx.req.query.lat_) : null;
+        const lng_ = ctx.req.query.lng_ ? Number(ctx.req.query.lng_) : null;
+        // WHERE distance filter (must be raw formula, not alias)
+        if (q?.distance_km && lat_ && lng_) {
+            condition += `
+          AND (
+            6371 * ACOS(
+              COS(RADIANS(${lat_}))
+              * COS(RADIANS(t.lat))
+              * COS(RADIANS(t.lng) - RADIANS(${lng_}))
+              + SIN(RADIANS(${lat_})) * SIN(RADIANS(t.lat))
+            )
+          ) <= ${q.distance_km}
+        `;
+        }
+
+        if (q.search) {
+            const s = sanitize(q.search);
+            condition += ` AND
+                (
+                    t.fullname LIKE ${s}
+                    OR t.email LIKE ${s}
+                    OR t.phone LIKE ${s}
+                    OR t.specialization LIKE ${s}
+                    OR t.certification LIKE ${s}
+                    OR t.district LIKE ${s}
+                    OR t.state LIKE ${s}
+                    OR t.country LIKE ${s}
+                )
+            `;
+        }
+
+        let sort: SortType<any> = {};
+
+        switch (q.sort) {
+            case "rating_desc":
+                sort = { rating: -1 };
+                break;
+            case "rating_asc":
+                sort = { rating: 1 };
+                break;
+            case "price_low":
+                sort = { min_price: 1 };
+                break;
+            case "price_high":
+                sort = { min_price: -1 };
+                break;
+            case "newest":
+                sort = { registered_at: -1 };
+                break;
+            case "oldest":
+                sort = { registered_at: 1 };
+                break;
+            case "experience_desc":
+                sort = { experience_years: -1 };
+                break;
+            case "experience_asc":
+                sort = { experience_years: 1 };
+                break;
+            default:
+                sort = { registered_at: 1 };
+        }
+
+        // ================== HAVING ==================
+        let havingSQL = "";
+
+        // Price filter
+        if (q.min_price) {
+            havingSQL += (havingSQL ? " AND " : "") + `MIN(ms.price) >= ${sanitize(q.min_price)}`;
+        }
+        if (q.max_price) {
+            havingSQL += (havingSQL ? " AND " : "") + `MAX(ms.price) <= ${sanitize(q.max_price)}`;
+        }
+
+        // Age filter
+        if (q.min_age) {
+            havingSQL += (havingSQL ? " AND " : "") + `TIMESTAMPDIFF(YEAR, t.dob, CURDATE()) >= ${sanitize(q.min_age)}`;
+        }
+        if (q.max_age) {
+            havingSQL += (havingSQL ? " AND " : "") + `TIMESTAMPDIFF(YEAR, t.dob, CURDATE()) <= ${sanitize(q.max_age)}`;
+        }
+
+        // Rating filter
+        if (q.min_rating) {
+            havingSQL += (havingSQL ? " AND " : "") + `ROUND(AVG(fb.rating),2) >= ${sanitize(q.min_rating)}`;
+        }
+        if (q.max_rating) {
+            havingSQL += (havingSQL ? " AND " : "") + `ROUND(AVG(fb.rating),2) <= ${sanitize(q.max_rating)}`;
+        }
+
+        // Total services filter (optional)
+        if (q.min_services) {
+            havingSQL += (havingSQL ? " AND " : "") + `COUNT(DISTINCT ms.service_id) >= ${sanitize(q.min_services)}`;
+        }
+        if (q.max_services) {
+            havingSQL += (havingSQL ? " AND " : "") + `COUNT(DISTINCT ms.service_id) <= ${sanitize(q.max_services)}`;
+        }
+
+        // যদি কোন filter না থাকে, havingSQL হবে empty string
+
         // if ((role === 'gym' || role === 'admin') && !status) {
         //     condition = "jp.status IN ('draft', 'published', 'closed', 'archived')"
         // }
@@ -24,14 +139,6 @@ trainersList.get("/", paginationHandler({
         //     condition += ` AND jp.status = ${sanitize(status)}`;
         // }
 
-        if (search) {
-            // condition += ` AND MATCH(title, description, subtitle) AGAINST (${sanitize(search)} IN NATURAL LANGUAGE MODE)`;
-        }
-
-        let sort = {
-            registered_at: 1 // old first
-        } as SortType<any>
-
         let sql = find(`${TABLES.TRAINERS.trainers} as t`, {
             sort: sort,
             joins: `
@@ -40,7 +147,49 @@ trainersList.get("/", paginationHandler({
     LEFT JOIN ${TABLES.TRAINERS.services} as ms ON ms.trainer_id = t.trainer_id AND ms.status = 'active'
   `,
             columns: `
-    t.*,
+        t.trainer_id,
+        t.login_type,
+        t.gym_id,
+        t.xprto,
+        t.postal_code,
+        t.is_online,
+        t.country,
+        t.state,
+        t.district,
+        t.address,
+        t.lat,
+        t.lng,
+        t.email_verified,
+        t.fullname,
+        t.age,
+        t.phone,
+        t.gender,
+        t.dob,
+        t.bio,
+        t.verified,
+        t.badge,
+        t.specialization,
+        t.certification,
+        t.avatar,
+        t.cover,
+        t.experience_years,
+        t.hire_date,
+        t.status,
+        t.registered_at,
+        t.last_visit,
+        t.updated_at,
+      ${lat_ && lng_
+                    ? `
+          (
+            6371 * ACOS(
+              COS(RADIANS(${lat_}))
+              * COS(RADIANS(t.lat))
+              * COS(RADIANS(t.lng) - RADIANS(${lng_}))
+              + SIN(RADIANS(${lat_})) * SIN(RADIANS(t.lat))
+            )
+          ) AS distance_km,
+          `
+                    : ""}
     COUNT(DISTINCT rf.red_flag_id) AS active_red_flags_count,
     ROUND(AVG(fb.rating), 2) AS rating,
     COUNT(DISTINCT fb.feedback_id) AS reviews,
@@ -54,13 +203,18 @@ trainersList.get("/", paginationHandler({
                 limit: limit,
                 skip: offset
             },
+            having: havingSQL ? havingSQL : undefined,
             where: condition,
             groupBy: 't.trainer_id'
         });
 
-
         let count = find(`${TABLES.TRAINERS.trainers} as t`, {
-            columns: 'count(*) as count',
+            columns: 'count(DISTINCT t.trainer_id) as count',
+            joins: `
+    LEFT JOIN ${TABLES.TRAINERS.RED_FLAGS} as rf ON t.trainer_id = rf.trainer_id AND rf.status = 'active'
+    LEFT JOIN ${TABLES.FEEDBACK.CLIENT_TRAINER} as fb ON fb.trainer_id = t.trainer_id
+    LEFT JOIN ${TABLES.TRAINERS.services} as ms ON ms.trainer_id = t.trainer_id AND ms.status = 'active'
+            `,
             // joins: `LEFT JOIN ${TABLES.GYMS.gyms} as g ON jp.gym_id = g.gym_id`,
             where: condition,
         })

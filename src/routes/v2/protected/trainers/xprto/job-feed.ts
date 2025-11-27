@@ -19,7 +19,7 @@ const xprtoJobFeed = new Router({
  * ?job_type=  'full_time', 'part_time',   'contract',  'freelance',  'internship',  'temporary'
  * ?gender_preference= ('any', 'male', 'female')
  * ?salary_type=    'per_session', 'per_month', 'commission', 'hourly'
- * ?experience_required = 1-3 years or other some
+ * ?experience_required = '1-3 years' or other some
  * ?category =category
  * ?priority=('low', 'medium', 'high') 
  * ?salary_min=
@@ -34,7 +34,7 @@ const xprtoJobFeed = new Router({
  */
 
 /**
- * sort:
+ * sort=:
 rating_desc
 rating_asc
 salary_high
