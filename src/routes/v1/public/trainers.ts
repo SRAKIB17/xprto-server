@@ -57,6 +57,9 @@ trainersList.get("/", paginationHandler({
             case "price_high":
                 sort = { min_price: -1 };
                 break;
+            case "distance_asc":
+                if (lat_ && lng_) sort = { distance_km: 1, "jp.created_at": -1 };
+                break;
             case "newest":
                 sort = { registered_at: -1 };
                 break;

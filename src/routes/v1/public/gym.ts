@@ -92,6 +92,10 @@ gymList.get("/", paginationHandler({
             case "total_clients_asc":
                 sort = { total_clients: 1 };
                 break;
+            case "nearest":
+            case "distance_asc":
+                if (lat_ && lng_) sort = { distance_km: 1, "jp.created_at": -1 };
+                break;
             case "reviews_desc":
                 sort = { reviews: -1 };
                 break;
