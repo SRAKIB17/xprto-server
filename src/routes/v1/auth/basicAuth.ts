@@ -22,8 +22,19 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
 
             // Fetch user from DB
             let table = TABLES.CLIENTS.clients;
-            if (role === 'trainer') table = TABLES.TRAINERS.trainers;
-            if (role === 'gym') table = TABLES.GYMS.gyms
+            let joins: string | undefined = undefined;
+            joins = `
+            LEFT JOIN ${TABLES.CLIENTS.CLIENT_GYM_MEMBERSHIPS} as cgm ON cgm.client_id = us.client_id
+            LEFT JOIN ${TABLES.GYMS.PLANS} as pl ON pl.plan_id = cgm.plan_id
+            `
+            if (role === 'trainer') {
+                table = TABLES.TRAINERS.trainers;
+                joins = undefined;
+            }
+            if (role === 'gym') {
+                joins = undefined;
+                table = TABLES.GYMS.gyms
+            }
 
             let updateSql = update(table, {
                 values: {
@@ -31,8 +42,20 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
                 },
                 where: `email = ${sanitize(account)}`,
             });
-            const sql = find(table, {
+            const sql = find(`${table} as us`, {
+                joins: joins,
                 where: `email = ${sanitize(account)}`,
+                columns: `
+                us.* ${joins ? `,
+        CASE
+            WHEN pl.is_pro_plan = 1
+             AND cgm.valid_to >= CURRENT_DATE()
+                THEN 1
+            ELSE 0
+        END AS is_pro
+                    `: ""}
+                `,
+                groupBy: joins ? 'us.client_id' : undefined,
                 limitSkip: {
                     limit: 1
                 }

@@ -177,6 +177,8 @@ gymSessions.get("/specific/clients/:session_id",
             let sql = find(`${TABLES.CLIENTS.SESSION_ASSIGNMENT_CLIENTS} as sac`, {
                 joins: `
                 LEFT JOIN ${TABLES.CLIENTS.clients} as c ON c.client_id = sac.client_id
+                LEFT JOIN ${TABLES.CLIENTS.CLIENT_GYM_MEMBERSHIPS} as cgm ON cgm.client_id = c.client_id
+                LEFT JOIN ${TABLES.GYMS.PLANS} as pl ON pl.plan_id = cgm.plan_id
                 `,
                 sort: {
                     "sac.assignment_id": -1
@@ -208,8 +210,15 @@ gymSessions.get("/specific/clients/:session_id",
                 c.health_goal,
                 c.emergency_contact,
                 c.medical_conditions,
-                c.registered_at
+                c.registered_at,
+        CASE
+            WHEN pl.is_pro_plan = 1
+             AND cgm.valid_to >= CURRENT_DATE()
+                THEN 1
+            ELSE 0
+        END AS is_pro
                 `,
+                groupBy: 'c.client_id',
                 limitSkip: {
                     limit: limit,
                     skip: offset

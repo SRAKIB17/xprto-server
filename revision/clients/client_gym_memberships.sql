@@ -26,3 +26,20 @@ CREATE TABLE
         INDEX (plan_id),
         INDEX (valid_from, valid_to)
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+```
+INSERT INTO client_gym_memberships 
+(client_id, gym_id, plan_id, valid_from, valid_to, status, txn_id, reference, idempotent_key)
+VALUES
+(1, 1, 1, '2025-01-01', '2025-12-31', 'active', 'TXN-1001', 'REF-1001', 'IDEMP-1001'),
+(1, 1, 2, '2025-01-01', '2025-12-31', 'active', 'TXN-1002', 'REF-1002', 'IDEMP-1002'),
+(1, 1, 3, '2025-01-01', '2025-12-31', 'active', 'TXN-1003', 'REF-1003', 'IDEMP-1003'),
+(1, 1, 4, '2025-01-01', '2025-12-31', 'active', 'TXN-1004', 'REF-1004', 'IDEMP-1004'),
+(1, 1, 5, '2025-01-01', '2025-12-31', 'active', 'TXN-1005', 'REF-1005', 'IDEMP-1005'),
+(1, 1, 6, '2025-01-01', '2025-12-31', 'active', 'TXN-1006', 'REF-1006', 'IDEMP-1006'),
+(1, 1, 7, '2025-01-01', '2025-12-31', 'active', 'TXN-1007', 'REF-1007', 'IDEMP-1007'),
+(1, 1, 8, '2025-01-01', '2025-12-31', 'active', 'TXN-1008', 'REF-1008', 'IDEMP-1008'),
+(1, 1, 9, '2025-01-01', '2025-12-31', 'active', 'TXN-1009', 'REF-1009', 'IDEMP-1009'),
+(1, 1, 10, '2025-01-01', '2025-12-31', 'active', 'TXN-1010', 'REF-1010', 'IDEMP-1010');
+
+    ```
