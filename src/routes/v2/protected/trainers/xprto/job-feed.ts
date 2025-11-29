@@ -8,6 +8,7 @@ import { TABLES } from "../../../../../models/table.js";
 import { performWalletTransaction } from "../../../../../utils/createWalletTransaction.js";
 import { copyFile } from "../../../../../utils/fileExists.js";
 import { generateTxnID } from "../../../../../utils/generateTxnID.js";
+import { sendNotification } from "../../../../../utils/sendNotification.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const xprtoJobFeed = new Router({
@@ -358,6 +359,7 @@ xprtoJobFeed.post('/:id/apply', async (ctx) => {
         const { cover_letter, attachment, notes, amount,
             expected_salary,
             expected_salary_unit,
+            gym_id
         } = await ctx.req.json();
         let finalAttachments: string[] = [];
 
@@ -396,6 +398,28 @@ xprtoJobFeed.post('/:id/apply', async (ctx) => {
         })
 
         if (success) {
+            if (gym_id) {
+                await sendNotification(
+                    {
+                        recipientId: gym_id,
+                        recipientType: 'gym',
+
+                        senderType: 'trainer', // or 'trainer' depending on your system
+                        senderId: userId,
+
+                        title: `New Job Application Received`,
+                        message: `${user_info?.full_time} has applied for your job (#${id}). Expected Salary: ${expected_salary ? `${expected_salary} ${expected_salary_unit}` : 'Not specified'}.`,
+                        type: 'alert',
+                        action_url: `/job-feed`,
+                        priority: 'high',
+                        metadata: {
+                            event: 'job_application',
+                        },
+                    },
+                    'all'
+                );
+            }
+
             const { success, error } = await dbQuery(sql);
             return ctx.json({ success: success, message: "Successfully applied to the job" });
         } else {

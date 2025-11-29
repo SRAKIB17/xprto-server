@@ -6,10 +6,12 @@ import { dbQuery, TABLES } from "../../../models/index.js";
 import { performWalletTransaction } from "../../../utils/createWalletTransaction.js";
 import { generateTxnID } from "../../../utils/generateTxnID.js";
 import { AppNotificationToast } from "../../websocket/notification.js";
+import { sendNotification } from "../../../utils/sendNotification.js";
 
 const my_wallet = new Router({
     basePath: "my-wallet"
 });
+
 //! docs done
 my_wallet.get("/", async (ctx) => {
     const { user_id, email } = ctx.auth?.user_info || {};
@@ -195,7 +197,7 @@ my_wallet.post('/withdraw', async (ctx) => {
             status: 'requested'
         }));
 
-        console.log(insertSuccess, error)
+
         if (!insertSuccess) {
             AppNotificationToast(ctx, {
                 title: "Withdraw Failed",
@@ -219,6 +221,28 @@ my_wallet.post('/withdraw', async (ctx) => {
                 reference_type: "withdraw",
                 reference_id: result.insertId
             }
+        );
+
+        await sendNotification(
+            {
+                recipientId: user_id,
+                recipientType: role,
+                senderType: 'system',
+                title: `Withdrawal Request Submitted`,
+                message: `Your withdrawal request of ₹${amount} has been received. Our team will process it shortly.`,
+                type: 'alert',
+                action_url: `/account/wallet/transactions`,
+                priority: 'high',
+                metadata: {
+                    amount,
+                    payoutId: result?.insertId,
+                    method: payout_method,
+                    txnId: txn_id,
+                    payoutType: payout_type,
+                    event: 'withdraw_request',
+                },
+            },
+            'all'
         );
         // ✅ Send success toast
         AppNotificationToast(ctx, {

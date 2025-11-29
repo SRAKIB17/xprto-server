@@ -4,6 +4,7 @@ import { generateUUID } from "tezx/helper";
 import { dbQuery, TABLES } from "../../../../../models/index.js";
 import { performWalletTransaction } from "../../../../../utils/createWalletTransaction.js";
 import { generateTxnID } from "../../../../../utils/generateTxnID.js";
+import { sendNotification } from "../../../../../utils/sendNotification.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const trainerBooking = new Router({
@@ -57,7 +58,8 @@ trainerBooking.get('/:trainer_id/services', async (ctx) => {
     });
 
     return ctx.json(await dbQuery<any[]>(`${sql}`))
-})
+});
+
 trainerBooking.post("service", async (ctx) => {
     const { user_id, email } = ctx.auth?.user_info || {};
     const { role } = ctx.auth || {};
@@ -158,6 +160,28 @@ trainerBooking.post("service", async (ctx) => {
     if (!dbSuccess) {
         return ctx.status(500).json({ success: false, message: "Failed to create booking" });
     }
+
+    await sendNotification(
+        {
+            recipientId: trainer_id,
+            recipientType: 'trainer',
+
+            senderType: 'client',
+            senderId: user_id,
+
+            title: `New Service Booking Received`,
+            message: `You have received a new booking for "${title}". Booking Code: ${booking_code}.`,
+            type: 'alert',
+            action_url: `/my-bookings`,
+            priority: 'high',
+            metadata: {
+                finalPrice,
+                event: 'trainer_booking_new',
+            },
+        },
+        'all'
+    );
+
 
     return ctx.json({
         success: true,

@@ -8,6 +8,7 @@ import { decrypt, encrypt } from "../../../../utils/encrypted.js";
 import { generateTxnID } from "../../../../utils/generateTxnID.js";
 import { AppNotificationRefetch, AppNotificationToast } from "../../../websocket/notification.js";
 import { AuthorizationMiddlewarePublic } from "../../auth/basicAuth.js";
+import { sendNotification } from "../../../../utils/sendNotification.js";
 
 
 const razorpay = new Router({
@@ -110,8 +111,10 @@ razorpay.post('/checkout', async (ctx) => {
       return ctx.json({ success: false, message: "Payment verification failed" });
     };
 
+
+
     // Perform wallet transaction
-    await performWalletTransaction({
+    let { balance_after, } = await performWalletTransaction({
       user_id: prefill?.user_id,
       role: prefill?.role,
     }, {
@@ -126,6 +129,26 @@ razorpay.post('/checkout', async (ctx) => {
       reference_type,
       ...order,
     });
+
+    await sendNotification(
+      {
+        recipientId: prefill?.user_id,
+        recipientType: prefill?.role,
+        senderType: 'system',
+        title: `Wallet Balance Updated`,
+        message: `Your wallet has been credited with INR${order?.amount}. New balance: ৳${balance_after}.`,
+        type: 'alert',
+        action_url: `/account/wallet`,
+        priority: 'high',
+        metadata: {
+          newBalance: balance_after,
+          method: "Razorpay",
+          transactionId: order?.external_txn_id,
+          event: 'wallet_add_fund',
+        },
+      },
+      'all'
+    )
 
     AppNotificationToast(ctx, {
       socket_id: prefill?.socket_id,

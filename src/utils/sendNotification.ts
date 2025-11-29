@@ -1,21 +1,21 @@
 import { insert } from "@tezx/sqlx/mysql";
-import { dbQuery, TABLES } from "../models";
+import { dbQuery, TABLES } from "../models/index.js";
 
 /** //! Notifications + Email
- * 1. wallet add fund
- * 2. withdraw
- * 3. support ticket reply
- * 4. create support ticket
- * 5. leave request status
- * 6. performance-ratings feedback
- * 7. booking request
+ *! 1. wallet add fund
+ *! 2. withdraw
+ *! 3. support ticket reply
+ *! 4. create support ticket
+ * 5. leave request status -> gym update korle
+ *! 6. performance-ratings feedback
+ *! 7. booking request
  * 8. booking request accept
  * 9. booking request cancel + reject
- * 10. job-apply for gym see
- * 11. application update
- * 12. approve my service (trainer)
- * 13. badge verified status
- * 14. xprto (pvc) kyc verfied status
+ *! 10. job-apply for gym see
+ * 11. application update -> for gym update korle
+ * 12. approve my service (trainer) -> admin theke ashbe
+ * 13. badge verified status -> from admin theke
+ * 14. xprto (pvc) kyc verfied status -> from admin theke
  * 15. assign client
  * 16. new booking for client 
  * --- 'pending',
@@ -40,8 +40,7 @@ const clientStatusNotes: Record<
     completed: "Your session is marked as completed. Payment has been released securely to the trainer."
 };
 
-export type NotificationType =
-    'alert' | 'offer' | 'update' | 'announcement' | 'reminder' | 'payment_due' | 'class_schedule' | 'feedback' | 'achievement' | 'system_event';
+export type NotificationType = 'alert' | 'offer' | 'update' | 'announcement' | 'reminder' | 'payment_due' | 'class_schedule' | 'feedback' | 'achievement' | 'system_event';
 
 export type DeliveryMethod = 'app' | 'email' | 'sms' | 'whatsapp';
 
@@ -54,8 +53,6 @@ export interface NotificationPayload {
     message: string;
     type?: NotificationType;
     action_url?: string,
-    link?: string;
-    thumbnail?: string;
     priority?: 'low' | 'medium' | 'high' | 'urgent';
     deliveryMethod?: DeliveryMethod[];
     metadata?: object;
@@ -73,8 +70,6 @@ export async function sendNotification(payload: NotificationPayload, mode: 'all'
             message: payload.message,
             type: payload.type || 'alert',
             action_url: payload.action_url!,
-            link: payload.link!,
-            thumbnail: payload.thumbnail!,
             priority: payload.priority || 'medium',
             // delivery_method: (payload.deliveryMethod || ['app']).join(','), // SET হিসেবে CSV
             metadata: JSON.stringify({
@@ -83,30 +78,27 @@ export async function sendNotification(payload: NotificationPayload, mode: 'all'
             }),
         });
 
-        await dbQuery(sql);
-        // 2️⃣ WebSocket or Push delivery
-        if (mode !== 'lite') {
-            // Example WebSocket push (pseudo-code)
-            // const ws = new WebSocket('wss://tezx.papernxt.com/websocket');
-            // ws.on('open', () => {
-            //     ws.send(JSON.stringify({
-            //         recipientType,
-            //         recipientId,
-            //         title,
-            //         message,
-            //         type,
-            //         action_url,
-            //         thumbnail,
-            //         priority
-            //     }));
-            //     ws.close();
-            // });
-        }
+        // console.log(await dbQuery(sql));
+        // // 2️⃣ WebSocket or Push delivery
+        // if (mode !== 'lite') {
+        //     // Example WebSocket push (pseudo-code)
+        //     // const ws = new WebSocket('wss://tezx.papernxt.com/websocket');
+        //     // ws.on('open', () => {
+        //     //     ws.send(JSON.stringify({
+        //     //         recipientType,
+        //     //         recipientId,
+        //     //         title,
+        //     //         message,
+        //     //         type,
+        //     //         action_url,
+        //     //         thumbnail,
+        //     //         priority
+        //     //     }));
+        //     //     ws.close();
+        //     // });
+        // }
 
-        return {
-            success: true,
-            message: `✅ Notification sent successfully to ${'recipientType'}#${'recipientId'}`,
-        };
+        return await dbQuery(sql)
     } catch (error: any) {
         return { success: false, message: error.message };
     }

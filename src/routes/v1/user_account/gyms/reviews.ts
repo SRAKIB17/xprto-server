@@ -3,12 +3,13 @@ import { Router } from "tezx";
 import { dbQuery, TABLES } from "../../../../models/index.js";
 import { DirectoryServe, filename } from "../../../../config.js";
 import { copyFile } from "../../../../utils/fileExists";
+import { sendNotification } from "../../../../utils/sendNotification.js";
 const gymReviews = new Router({
     basePath: 'reviews'
 });
 gymReviews.post("/:gym_id/add", async (ctx) => {
     const gym_id = Number(ctx.req.params?.gym_id);
-    const { user_info } = ctx.auth || {};
+    const { user_info, role } = ctx.auth || {};
     const user_id = user_info?.user_id;
 
     if (!gym_id) {
@@ -57,6 +58,24 @@ gymReviews.post("/:gym_id/add", async (ctx) => {
             console.error("DB error:", error);
             return ctx.json({ success: false, message: "Database error", error });
         }
+
+        await sendNotification(
+            {
+                recipientId: gym_id,
+                recipientType: 'gym',
+                senderType: role,
+                senderId: user_id,
+
+                title: `New Feedback Received`,
+                message: `A user has submitted feedback with a rating of ${rating}/5.`, // Message content
+                type: 'alert',
+                priority: 'high',
+                metadata: {
+                    event: 'feedback',
+                },
+            },
+            'all'
+        );
 
         return ctx.json({
             success: true,

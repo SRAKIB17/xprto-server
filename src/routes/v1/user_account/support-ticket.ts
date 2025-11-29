@@ -5,6 +5,7 @@ import { DirectoryServe, filename } from "../../../config.js";
 import { dbQuery, TABLES } from "../../../models/index.js";
 import { CtxAuth } from "../../../types.js";
 import { copyFile } from "../../../utils/fileExists.js";
+import { sendNotification } from "../../../utils/sendNotification.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const support_tickets = new Router({
@@ -80,6 +81,7 @@ support_tickets.get(
         },
     })
 );
+
 support_tickets.post('/', async (c) => {
     try {
         const body = await c.req.json();
@@ -181,6 +183,50 @@ support_tickets.post('/', async (c) => {
                 message: "Ticket created, but message could not be saved.",
             });
         }
+
+        await sendNotification(
+            {
+                recipientId: user_id,
+                recipientType: role,
+
+                senderType: 'system',
+
+                title: `Support Ticket Created`,
+                message: `Your support ticket (#${ticketId}) has been created under the category "${category}". Our team will get back to you shortly.`,
+                type: 'alert',
+                action_url: `/help-support`,
+                priority: 'medium',
+                metadata: {
+                    ticketId,
+                    subject,
+                    category,
+                    priority,
+                    event: 'support_ticket_created',
+                },
+            },
+            'all'
+        );
+        //  recipient
+        await sendNotification(
+            {
+                recipientId: gym_id ?? trainer_id,
+                recipientType: gym_id ? "gym" : trainer_id ? "trainer" : "admin",
+                senderType: 'system',
+                title: `New Support Ticket Assigned`,
+                message: `A new support ticket (#${ticketId}) has been assigned to you. Category: "${category}", Priority: ${priority}.`,
+                type: 'alert',
+                action_url: `/help-support`,
+                priority: 'high',
+                metadata: {
+                    ticketId,
+                    subject,
+                    category,
+                    priority,
+                    event: 'support_ticket_assigned',
+                },
+            },
+            'all'
+        );
 
         return c.json({
             success: true,
@@ -289,6 +335,62 @@ support_tickets.post('/:ticket_id/reply', async (ctx) => {
             return ctx.json({ success: false, message: error || "Failed to create message", data: [] });
         }
 
+        // let recipientId = null;
+        // let recipientType = null;
+
+        // const { success: ticketSuccess, result: ticketData } = await dbQuery<any>(
+        //     `SELECT client_id, admin_id, gym_id, trainer_id FROM ${TABLES.SUPPORT_TICKETS.SUPPORT_TICKETS} WHERE ticket_id=${ticket_id} LIMIT 1`
+        // );
+
+        // if (role === "client") {
+        //     const t = ticketData[0];
+        //     // Client replied → send to whoever is assigned
+        //     if (t.admin_id) {
+        //         recipientId = t.admin_id;
+        //         recipientType = "admin";
+        //     } else if (t.gym_id) {
+        //         recipientId = t.gym_id;
+        //         recipientType = "gym";
+        //     } else if (t.trainer_id) {
+        //         recipientId = t.trainer_id;
+        //         recipientType = "trainer";
+        //     }
+        // } else {
+        //     // Admin/gym/trainer → send notification to client
+        //     if (t.client_id) {
+        //         recipientId = t.client_id;
+        //         recipientType = "client";
+        //     }
+        // }
+
+        // await sendNotification(
+        //     {
+        //         recipientId:,
+        //         recipientType,
+
+        //         senderType: 'system',
+
+        //         title: `New Reply on Support Ticket`,
+        //         message: `You have received a new reply on ticket #${ticketId}.`,
+
+        //         type: 'support_ticket_reply',
+
+        //         action_url: `/support/tickets/${ticketId}`,
+        //         link: `/support/tickets/${ticketId}`,
+
+        //         thumbnail: 'https://cdn-icons-png.flaticon.com/512/6806/6806987.png',
+
+        //         priority: 'high',
+
+        //         metadata: {
+        //             ticketId,
+        //             repliedBy,
+        //             preview: message?.substring(0, 80),
+        //             event: 'support_ticket_reply',
+        //         },
+        //     },
+        //     'all'
+        // );
         return ctx.json({ success: true, status: status, data: result || [] });
     } catch (err) {
         console.error(err);

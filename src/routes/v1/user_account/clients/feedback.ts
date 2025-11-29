@@ -5,6 +5,7 @@ import { dbQuery } from "../../../../models/index.js";
 import { TABLES } from "../../../../models/table.js";
 import { copyFile } from "../../../../utils/fileExists.js";
 import { DirectoryServe, filename } from "../../../../config.js";
+import { sendNotification } from "../../../../utils/sendNotification.js";
 
 
 // import user_account_document_flag from "./flag-document.js";
@@ -228,6 +229,24 @@ clientFeedback.post("/trainers/post/:trainer_id", async (ctx) => {
             return ctx.json({ success: false, message: "Database error", error });
         }
 
+        await sendNotification(
+            {
+                recipientId: trainer_id,
+                recipientType: 'trainer',
+
+                senderType: 'client',
+                senderId: user_id,
+
+                title: `New Feedback Received`,
+                message: `A user has submitted feedback with a rating of ${rating}/5.`, // Message content
+                type: 'alert',
+                priority: 'high',
+                metadata: {
+                    event: 'trainer_feedback',
+                },
+            },
+            'all'
+        );
         return ctx.json({
             success: true,
             message: "Feedback submitted successfully",
