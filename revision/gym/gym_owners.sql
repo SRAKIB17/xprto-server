@@ -112,6 +112,7 @@ CREATE INDEX idx_gym_owners_city ON gym_owners (city);
 
 CREATE INDEX idx_gym_owners_plan ON gym_owners (subscription_plan);
 
+-- !not implement
 CREATE TABLE
     gym_unavailability (
         id INT AUTO_INCREMENT PRIMARY KEY,
