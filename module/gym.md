@@ -1,7 +1,5 @@
 # Gym owner-এর জন্য Modules & Submodules — বিস্তারিত লিস্ট (List-wise, বাংলা)
 
-নিচে একটি পূর্ণাঙ্গ ফিচার ম্যাপ দিলাম — প্রতিটি মডিউল ও তার সাবমডিউল-সহ সংক্ষিপ্ত বর্ণনা। এটা gym management SaaS / admin panel বা মোবাইল অ্যাপ উভয়ের জন্য প্রযোজ্য। আপনি চাইলে এগুলোকে MVP ও অ্যাডভান্সড রিলিজে ভাগ করে দিতে পারি।
-
 ---
 
 ## 1. Dashboard (অ্যাডমিন/Owner কন্ট্রোল প্যানেল)
@@ -29,10 +27,6 @@
 
 * **Plan CRUD** — তৈরি, সম্পাদনা, ডিলিট।
 * **Billing Cycles** — Daily/Weekly/Monthly/Yearly/Custom।
-* **Discounts & Coupons** — কুপন কোড, সীমা, একটিমিং/রিপিটেবল।
-* **Bundled Plans** — couple/family/group plans।
-* **Trial & Free Pass** — ম্যানেজ ট্রায়াল সময়, কন্ডিশন।
-* **Visibility** — public/private/branch-specific।
 
 ---
 
