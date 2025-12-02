@@ -25,7 +25,7 @@ clientMembership.get('/', async (ctx) => {
             gm.logo_url,
 
             CASE
-                WHEN cgm.valid_from >= CURRENT_DATE()
+                WHEN cgm.valid_to >= CURRENT_DATE()
                     THEN 1
                 ELSE 0
             END AS is_active,
