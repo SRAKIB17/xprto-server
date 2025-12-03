@@ -10,7 +10,6 @@ import { decrypt } from "../../../utils/encrypted";
 export async function AuthorizationControllerUser({ credentials = {}, ctx }: { ctx: Context, credentials?: any }) {
     let s_id = credentials?.token || getCookie(ctx, 's_id') || ctx.req.header("s_id");
     let { decrypted, success } = decrypt(s_id, process.env.CRYPTO_KEY!);
-
     if (success && decrypted) {
         try {
             let data = JSON.parse(decrypted);
@@ -35,7 +34,6 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
                 joins = undefined;
                 table = TABLES.GYMS.gyms
             }
-
             let updateSql = update(table, {
                 values: {
                     last_visit: mysql_datetime()
@@ -47,14 +45,14 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
                 where: `email = ${sanitize(account)}`,
                 columns: `
                 us.* ${joins ? `,
-        CASE
-            WHEN pl.is_pro_plan = 1
-             AND cgm.valid_to >= CURRENT_DATE()
-                THEN 1
-            ELSE 0
-        END AS is_pro
+                    CASE
+                    WHEN pl.is_pro_plan = 1
+                    AND cgm.valid_to >= CURRENT_DATE()
+                    THEN 1
+                    ELSE 0
+                    END AS is_pro
                     `: ""}
-                `,
+                    `,
                 groupBy: joins ? 'us.client_id' : undefined,
                 limitSkip: {
                     limit: 1

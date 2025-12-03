@@ -17,6 +17,7 @@ export type WalletTxnType =
 interface WalletTransactionOptions {
     type: WalletTxnType;
     amount: number;
+    gym_id?: number,
     fee?: number;
     holdChange?: number; // +ve = hold, -ve = release
     currency?: string;
@@ -163,8 +164,8 @@ export async function performWalletTransaction(user: { role: string, user_id: nu
         // 5️⃣ Insert transaction record
         const [txnResult] = await conn.query(
             `INSERT INTO ${TABLES.WALLETS.transactions} 
-            (wallet_id, idempotency_key, type, amount, fee, currency, balance_after, hold_change, payment_method, external_txn_id, reference_type, reference_id, metadata, initiated_by, initiated_role, note, payment_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (wallet_id, idempotency_key, type, amount, fee, currency, balance_after, hold_change, payment_method, external_txn_id, reference_type, reference_id, metadata, initiated_by, initiated_role, note, payment_id, gym_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 wallet?.wallet_id,
                 idempotency_key,
@@ -182,8 +183,8 @@ export async function performWalletTransaction(user: { role: string, user_id: nu
                 opts.initiated_by ?? null,
                 opts.initiated_role ?? 'system',
                 opts.note ?? null,
-                opts?.payment_id ?? null
-
+                opts?.payment_id ?? null,
+                opts?.gym_id ?? null,
             ]
         );
         await conn.commit();

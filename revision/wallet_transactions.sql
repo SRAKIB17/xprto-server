@@ -18,6 +18,7 @@ CREATE TABLE
     wallet_transactions (
         txn_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         wallet_id BIGINT UNSIGNED DEFAULT NULL,
+        gym_id BIGINT UNSIGNED DEFAULT NULL,
         idempotency_key VARCHAR(191) DEFAULT NULL, -- ensure idempotent ops
         type ENUM (
             'topup', -- add money from external source
@@ -53,6 +54,7 @@ CREATE TABLE
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         -- Constraints & Indexes
         FOREIGN KEY (wallet_id) REFERENCES wallets (wallet_id),
+        FOREIGN KEY (gym_id) REFERENCES gyms (gym_id),
         INDEX idx_idempotency (idempotency_key),
         INDEX idx_wallet (wallet_id),
         INDEX idx_reference (reference_type, reference_id),

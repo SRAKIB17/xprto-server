@@ -23,7 +23,7 @@
 
 ---
 
-## 3. Membership Plans & Pricing
+## 3. Membership Plans & Pricing -> ✅✅✅✅✅
 
 * **Plan CRUD** — তৈরি, সম্পাদনা, ডিলিট।
 * **Billing Cycles** — Daily/Weekly/Monthly/Yearly/Custom।
@@ -42,6 +42,16 @@
 ---
 
 ## 5. Trainers / Staff Management
+
+1. trainer list
+   1. each trainer report
+   2. remove from gym ✅✅✅✅✅
+   3. selery
+   4. review ✅✅✅✅✅
+   5. transsitoin information
+   6. document ✅✅✅✅✅
+   7. availbilit slot add replacement trainer
+2. leave request
 
 * **Staff Directory** — ট্রেনার, রিসেপশনিস্ট, ম্যানেজার।
 * **Availability & Shifts** — উইকলি শিফট, রোটেশন, রিপ্লেসমেন্ট ট্রেনার।
