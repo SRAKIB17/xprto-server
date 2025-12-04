@@ -80,6 +80,13 @@ export const ADMIN_API = {
             }
         })
     },
+    CLIENTS: {
+        SPECIFIC: (trainer_id: number) => ({
+            DOCUMENTS: {
+                GET: concat(`/v2/protected/admin/clients/${trainer_id}/documents`)
+            }
+        })
+    },
     // 4.12.2025
     CREATE_TRANSACTION: {
         HISTORY: {
