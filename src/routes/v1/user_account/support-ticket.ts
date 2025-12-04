@@ -23,6 +23,11 @@ support_tickets.get(
             if (role === 'trainer') condition = `support_tickets.trainer_id = ${user_id}`;
             if (role === 'client') condition = `support_tickets.client_id = ${user_id}`;
             if (role === 'gym') condition = `support_tickets.gym_id = ${user_id}`;
+            if (role === 'admin') condition = `
+            (support_tickets.trainer_id IS NULL AND support_tickets.client_id IS NULL) OR
+            (support_tickets.trainer_id IS NULL AND support_tickets.gym_id IS NULL) OR
+            (support_tickets.client_id IS NULL AND support_tickets.gym_id IS NULL)
+            `
             if (priority) {
                 condition += ` AND support_tickets.priority = ${sanitize(priority)}`;
             }

@@ -9,17 +9,17 @@ import { AuthorizationBasicAuthUser } from "../auth/basicAuth.js";
 import abuse_reports from "./abuse-reports.js";
 import chat_rooms from "./chat-rooms.js";
 import client_skeletal_muscles from "./client-muscles_record.js";
+import trainerClientModule from "./client-trainer/index.js";
 import client_health_conditions from "./client_health_conditions.js";
 import clients from "./clients/index.js";
 import earningDashboardGymTrainer from "./earning-dashboard.js";
+import gyms from "./gyms/index.js";
 import membershipJoinGTC from "./memberships/membership-trainer-client-gym.js";
 import my_documents from "./my-documents.js";
 import notifications from "./notifications.js";
 import support_tickets from "./support-ticket.js";
 import trainers from "./trainers/index.js";
 import my_wallet from "./wallet.js";
-import trainerClientModule from "./client-trainer/index.js";
-import gyms from "./gyms/index.js";
 
 const user_account = new Router();
 user_account.use(AuthorizationBasicAuthUser());
@@ -30,13 +30,15 @@ user_account.use(gyms);
 user_account.use(my_documents);
 user_account.use(abuse_reports);
 user_account.use(trainerClientModule);
-user_account.use(my_wallet);
 user_account.use(membershipJoinGTC);
-user_account.use(support_tickets);
 user_account.use(chat_rooms);
 user_account.use(earningDashboardGymTrainer);
 user_account.use(client_skeletal_muscles);
 user_account.use(client_health_conditions);
+
+// for all role
+user_account.use(support_tickets);
+user_account.use(my_wallet);
 // user_account.put('/avatar-upload', async (ctx) => {
 //     const formData = await useFormData(ctx);
 //     const avatar = formData.avatar;
