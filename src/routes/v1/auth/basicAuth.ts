@@ -19,6 +19,7 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
             let user_id = data?.data?.user_id;
             let role = data?.role;
 
+
             // Fetch user from DB
             let table = TABLES.CLIENTS.clients;
             let joins: string | undefined = undefined;
@@ -34,6 +35,14 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
                 joins = undefined;
                 table = TABLES.GYMS.gyms
             }
+            if (role === 'admin') {
+                joins = `
+                  LEFT JOIN ${TABLES.ADMIN.ROLE_PERMISSIONS} as r ON r.admin_id = us.admin_id
+                  LEFT JOIN ${TABLES.ADMIN.PERMISSIONS} as p ON p.permission_id = r.permission_id
+                `;
+                table = TABLES.ADMIN.admin;
+            }
+
             let updateSql = update(table, {
                 values: {
                     last_visit: mysql_datetime()
@@ -44,16 +53,33 @@ export async function AuthorizationControllerUser({ credentials = {}, ctx }: { c
                 joins: joins,
                 where: `email = ${sanitize(account)}`,
                 columns: `
-                us.* ${joins ? `,
+                us.* ${joins && role === 'client' ? `,
                     CASE
                     WHEN pl.is_pro_plan = 1
                     AND cgm.valid_to >= CURRENT_DATE()
                     THEN 1
                     ELSE 0
                     END AS is_pro
-                    `: ""}
+                    `:
+                        joins && role === 'admin' ?
+                            `,
+            JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'permission_id', p.permission_id,
+                    'permission_key', p.permission_key,
+                    'can_view', r.can_view,
+                    'can_create', r.can_create,
+                    'can_update', r.can_update,
+                    'can_delete', r.can_update
+                )
+            ) AS permissions
+                        `
+                            : ""
+                    }
                     `,
-                groupBy: joins ? 'us.client_id' : undefined,
+                groupBy: (joins && role === 'client') ? 'us.client_id' : (
+                    (joins && role === 'admin') ? 'us.admin_id' : undefined
+                ),
                 limitSkip: {
                     limit: 1
                 }

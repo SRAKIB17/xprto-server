@@ -49,6 +49,8 @@ export const TABLES = {
     },
     ADMIN: {
         admin: concat("admin_details"),
+        ROLE_PERMISSIONS: concat('role_permissions'),
+        PERMISSIONS: concat("admin_permissions")
     },
     ABUSE_REPORTS: {
         HISTORY: concat("abuse_reports")

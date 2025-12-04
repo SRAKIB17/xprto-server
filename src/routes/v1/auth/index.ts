@@ -242,7 +242,8 @@ auth.post('/login', async (ctx) => {
         // Fetch user from DB
         let table = TABLES.CLIENTS.clients;
         if (role === 'trainer') table = TABLES.TRAINERS.trainers;
-        if (role === 'gym') table = TABLES.GYMS.gyms
+        if (role === 'gym') table = TABLES.GYMS.gyms;
+        if (role === 'admin') table = TABLES.ADMIN.admin;
         const sql = find(table, {
             where: `email = ${sanitize(email)}`,
             limitSkip: {
@@ -312,10 +313,80 @@ auth.post('/login', async (ctx) => {
     }
 });
 
+auth.post('/login/admin', async (ctx) => {
+    try {
+        const body = await ctx.req.json();
+        let { email, password, keep = false } = body;
+
+        // Fetch user from DB
+        const sql = find(TABLES.ADMIN.admin, {
+            where: `email = ${sanitize(email)}`,
+            // joins: `
+            // LEFT JOIN ${TABLES.ADMIN.ROLE_PERMISSIONS} as r ON r.admin_id = admin.admin_id
+            // LEFT JOIN ${TABLES.ADMIN.PERMISSIONS} as p ON p.permission_id = r.permission_id
+            // `,
+            limitSkip: {
+                limit: 1
+            }
+        })
+        const { success, result } = await dbQuery(sql);
+        if (!result || result.length === 0) {
+            return ctx.json({ success: false, message: 'User not found' });
+        }
+
+        const user = result[0];
+        const { hashed, salt, admin_id } = user;
+
+        // Verify password
+        const { hash: hashedPassword } = await wrappedCryptoToken({
+            wrappedCryptoString: password,
+            salt,
+        });
+
+        if (hashed !== hashedPassword) {
+            return ctx.json({ success: false, message: 'Invalid password' });
+        }
+
+        // Generate session token
+        const tkn = await tokenEncodedCrypto({
+            account: email,
+            method: 'email',
+            hashed,
+            data: {
+                user_id: admin_id,
+                maxAge: keep ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days or 1 day
+            },
+            role: 'admin'
+        });
+        // Set cookie
+
+        setCookie(ctx, 's_id', tkn!, {
+            httpOnly: true,
+            secure: true,
+            path: '/',
+            domain: cookieDOMAIN,
+            sameSite: 'Lax',
+            maxAge: keep ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days or 1 day
+        });
+
+        return ctx.json({
+            success: true,
+            message: 'User logged in successfully',
+            s_id: tkn,
+            user_info: { ...user, user_id: admin_id },
+        });
+    } catch (err: any) {
+        return ctx.json({
+            success: false,
+            message: 'Internal server error',
+            error: err.message,
+        });
+    }
+});
+
 auth.post('/refresh', AuthorizationBasicAuthUser(), async (ctx) => {
     return ctx.json(ctx.auth || {})
 })
-
 
 let passwordReset = new Map();
 

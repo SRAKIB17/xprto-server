@@ -49,6 +49,14 @@ export const GYM_API = {
     },
     PUSH_NOTIFICATION: {
         POST: concat("/v2/protected/gym/notifications/push/send")
+    },
+    // 4.12.2025
+    CREATE_TRANSACTION: {
+        HISTORY: {
+            GET: (params: Record<string, string>) => concat(`/v2/protected/gym/create-transaction/history?` + QueryToString(params))
+        },
+        DELETE: (txn_id: number) => concat(`/v2/protected/gym/create-transaction/${txn_id}`),
+        POST: concat(`/v2/protected/gym/create-transaction`)
     }
 }
 export const ADMIN_API = {
@@ -71,6 +79,14 @@ export const ADMIN_API = {
                 GET: concat(`/v2/protected/admin/trainers/${trainer_id}/documents`)
             }
         })
+    },
+    // 4.12.2025
+    CREATE_TRANSACTION: {
+        HISTORY: {
+            GET: (params: Record<string, string>) => concat(`/v2/protected/admin/create-transaction/history?` + QueryToString(params))
+        },
+        DELETE: (txn_id: number) => concat(`/v2/protected/admin/create-transaction/${txn_id}`),
+        POST: concat(`/v2/protected/admin/create-transaction`)
     }
 }
 console.log(GYM_API)
