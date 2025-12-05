@@ -1,23 +1,8 @@
-// import { mysql_datetime, sanitize } from "@dbnx/mysql";
-// import fs, { existsSync, renameSync } from "node:fs";
-// import path from "node:path";
-// import sharp from "sharp";
-// import { Router } from "tezx";
-// import { useFormData } from "tezx/helper";
-// import { paginationHandler } from "tezx/middleware/pagination";
-// import { support_email } from "../../../config.js";
-// import { sendEmail } from "../../../email/mailer.js";
-// import { db, table_schema } from "../../../models/index.js";
-// import { wrappedCryptoToken } from "../../../utils/crypto.js";
-// import { AuthorizationMiddlewareUser } from "../auth/basicAuth.js";
-// import user_account_bookmark from "./bookmark.js";
-
 import { destroy, find, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../models/index.js";
 
-// import user_account_document_flag from "./flag-document.js";
 const notifications = new Router({
     basePath: '/notifications'
 });

@@ -12,11 +12,71 @@ export function QueryToString(params: Record<string, any>) {
 }
 
 
+/**
+ * combine korte hobe shob
+ * v1 -> change hobe pore
+ * V1 Same 
+ * wallet
+ */
+
 const concat = (path: string, API: string = BASE_API) => {
     return `${API}${path}`
 }
 
 export const GYM_API = {
+    //! v1
+    MESSAGE: {
+        LIST: {
+            GET: (params: Record<string, any>) => concat("/v1/account/chat-rooms?" + QueryToString(params)),
+        },
+        MESSAGES: {
+            GET: (room_id: number, page: number) => concat(`/v1/account/chat-rooms/${room_id}/chats?page=${page}`),
+        },
+        ROOM: {
+            ADD_MEMBER: {
+                POST: (room_id: number) => concat(`/v1/account/chat-rooms/${room_id}/add-member`)
+            },
+            DELETE_MEMBER: {
+                POST: (room_id: number) => concat(`/v1/account/chat-rooms/${room_id}/delete-member`)
+            },
+            DELETE: {
+                DELETE: (room_id: number) => concat(`/v1/account/chat-rooms/delete-room/${room_id}`)
+            },
+            CREATE: {
+                POST: concat(`/v1/account/chat-rooms/create-room`)
+            },
+            GET: (room_id: number) => concat(`/v1/account/chat-rooms/${room_id}`),
+        }
+    },
+    MY_WALLET: {
+        WALLET: {
+            PAYOUT_HISTORY: {
+                GET: (params: Record<string, any>) => concat(`/v1/account/my-wallet/payout-history?${QueryToString(params)}`),
+            },
+            WITHDRAW: {
+                POST: concat(`/v1/account/my-wallet/withdraw`),
+            },
+            ADD_FUND: {
+                POST: (type: "topup" | "hold" | "release_hold" | "payment" | "payout" | "refund" | "adjustment" | "transfer_in" | "transfer_out") => concat(`/v1/gateway/rzp/create/${type}`),
+            },
+            GET: concat(`/v1/account/my-wallet`),
+            HISTORY: {
+                GET: (params: Record<string, any>) => concat(`/v1/account/my-wallet/transition-history?${QueryToString(params)}`),
+            }
+        }
+    },
+    SUPPORT_TICKETS: {
+        GET: concat('/v1/account/support-tickets'),
+        GET_MESSAGES: (ticket_id: number) => concat(`/v1/account/support-tickets/${ticket_id}`),
+        REPLY: (ticket_id: number) => concat(`/v1/account/support-tickets/${ticket_id}/reply`),
+        CREATE: {
+            POST: concat('/v1/account/support-tickets')
+        },
+        CLOSE: {
+            PUT: (ticket_id: number) => concat(`/v1/account/support-tickets/${ticket_id}/status`)
+        },
+    },
+    // ! v2
     TRAINERS: {
         SPECIFIC: (trainer_id: number) => ({
             FEEDBACK: {
@@ -59,7 +119,55 @@ export const GYM_API = {
         POST: concat(`/v2/protected/gym/create-transaction`)
     }
 }
+
 export const ADMIN_API = {
+    //! v1
+    MESSAGE: {
+        LIST: {
+            GET: (params: Record<string, any>) => concat("/v1/account/chat-rooms?" + QueryToString(params)),
+        },
+        MESSAGES: {
+            GET: (room_id: number, page: number) => concat(`/v1/account/chat-rooms/${room_id}/chats?page=${page}`),
+        },
+        ROOM: {
+            ADD_MEMBER: {
+                POST: (room_id: number) => concat(`/v1/account/chat-rooms/${room_id}/add-member`)
+            },
+            DELETE_MEMBER: {
+                POST: (room_id: number) => concat(`/v1/account/chat-rooms/${room_id}/delete-member`)
+            },
+            DELETE: {
+                DELETE: (room_id: number) => concat(`/v1/account/chat-rooms/delete-room/${room_id}`)
+            },
+            CREATE: {
+                POST: concat(`/v1/account/chat-rooms/create-room`)
+            },
+            GET: (room_id: number) => concat(`/v1/account/chat-rooms/${room_id}`),
+        }
+    },
+    MY_WALLET: {
+        WALLET: {
+            ADD_FUND: {
+                POST: (type: "topup" | "hold" | "release_hold" | "payment" | "payout" | "refund" | "adjustment" | "transfer_in" | "transfer_out") => concat(`/v1/gateway/rzp/create/${type}`),
+            },
+            GET: concat(`/v1/account/my-wallet`),
+            HISTORY: {
+                GET: (params: Record<string, any>) => concat(`/v1/account/my-wallet/transition-history?${QueryToString(params)}`),
+            }
+        }
+    },
+    SUPPORT_TICKETS: {
+        GET: concat('/v1/account/support-tickets'),
+        GET_MESSAGES: (ticket_id: number) => concat(`/v1/account/support-tickets/${ticket_id}`),
+        REPLY: (ticket_id: number) => concat(`/v1/account/support-tickets/${ticket_id}/reply`),
+        CREATE: {
+            POST: concat('/v1/account/support-tickets')
+        },
+        CLOSE: {
+            PUT: (ticket_id: number) => concat(`/v1/account/support-tickets/${ticket_id}/status`)
+        },
+    },
+    // !v2
     PUSH_NOTIFICATION: {
         POST: concat("/v2/protected/admin/notifications/push/send")
     },
@@ -94,6 +202,13 @@ export const ADMIN_API = {
         },
         DELETE: (txn_id: number) => concat(`/v2/protected/admin/create-transaction/${txn_id}`),
         POST: concat(`/v2/protected/admin/create-transaction`)
+    },
+    // 5.12.2025
+    PAYOUT_HISTORY: {
+        UPDATE: {
+            PUT: (role: "trainer" | "client" | "gym", payout_id: number) => concat(`/v2/protected/admin/payout-history/${role}/update/${payout_id}`)
+        },
+        GET: (role: "trainer" | "client" | "gym") => concat(`/v2/protected/admin/payout-history/${role}`)
     }
 }
 console.log(GYM_API)

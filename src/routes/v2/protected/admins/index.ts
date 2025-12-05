@@ -5,6 +5,7 @@ import createTransaction from "./create-transaction.js";
 import gymAdmin from "./gyms/index.js";
 import pushNotification from "./push-notification.js";
 import trainerAdmin from "./trainers/index.js";
+import payoutHistory from "./payout-history.js";
 
 const adminV2 = new Router();
 adminV2.use(AuthorizationBasicAuthUser());
@@ -22,5 +23,6 @@ adminV2.use('/gyms', gymAdmin);
 adminV2.use('/trainers', trainerAdmin);
 adminV2.use('/clients', clientAdmin);
 adminV2.use(createTransaction);
+adminV2.use(payoutHistory)
 
 export default adminV2;

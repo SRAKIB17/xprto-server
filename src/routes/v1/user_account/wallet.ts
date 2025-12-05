@@ -270,6 +270,7 @@ my_wallet.post('/withdraw', async (ctx) => {
         });
     }
 });
+
 //! docs done
 my_wallet.get("/payout-history", paginationHandler({
     getDataSource: async (ctx, { page, limit, offset }) => {

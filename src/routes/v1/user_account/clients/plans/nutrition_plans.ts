@@ -83,7 +83,7 @@ nutritionPlans.get("/:plan_id", async (ctx) => {
     const { role } = ctx.auth || {};
     const { user_id, username, hashed, salt, email } = ctx.auth?.user_info || {};
     let condition = role === 'client' ? `np.client_id = "${user_id}"` : `np.added_by = "${user_id}"`
-    condition += `AND np.plan_id = ${sanitize(ctx.req.params?.plan_id)}`;
+    condition += ` AND np.plan_id = ${sanitize(ctx.req.params?.plan_id)}`;
     let sql = find(`${TABLES.PLANS.NUTRITION.PLANS} as np`, {
         joins: `
                 LEFT JOIN ${TABLES.GYMS.SESSIONS} as s ON s.session_id = np.session_id

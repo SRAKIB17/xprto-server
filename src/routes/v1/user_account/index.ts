@@ -23,7 +23,6 @@ import my_wallet from "./wallet.js";
 
 const user_account = new Router();
 user_account.use(AuthorizationBasicAuthUser());
-user_account.use(notifications);
 user_account.use(trainers);
 user_account.use(clients);
 user_account.use(gyms);
@@ -36,9 +35,11 @@ user_account.use(earningDashboardGymTrainer);
 user_account.use(client_skeletal_muscles);
 user_account.use(client_health_conditions);
 
-// for all role
+//! for all role
 user_account.use(support_tickets);
 user_account.use(my_wallet);
+user_account.use(notifications);
+
 // user_account.put('/avatar-upload', async (ctx) => {
 //     const formData = await useFormData(ctx);
 //     const avatar = formData.avatar;
