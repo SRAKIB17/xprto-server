@@ -25,7 +25,7 @@ import { dbQuery, TABLES } from "../models/index.js";
             'cancelled',
             'rescheduled',
             'completed' egulor protitar ekta kore notitification generate hobe
- * 17. subscription 
+ *! 17. subscription 
  * 18. session
  */
 

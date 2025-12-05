@@ -7,6 +7,8 @@ CREATE TABLE
         plan_id BIGINT UNSIGNED NOT NULL,
         valid_from DATE NOT NULL,
         valid_to DATE NOT NULL,
+        price DECIMAL(10, 2) NOT NULL COMMENT 'Base price per billing cycle',
+        discount_percent DECIMAL(5, 2) DEFAULT 0.00 COMMENT 'Optional discount percentage',
         status ENUM ('active', 'cancelled', 'completed') DEFAULT 'active',
         -- 💰 Payment / transaction info
         txn_id VARCHAR(191) NOT NULL,
@@ -21,6 +23,7 @@ CREATE TABLE
         FOREIGN KEY (gym_id) REFERENCES gyms (gym_id) ON DELETE CASCADE,
         FOREIGN KEY (plan_id) REFERENCES membership_plans (plan_id) ON DELETE CASCADE,
         -- Indexing for faster queries
+        UNIQUE (gym_id, plan_id, client_id),
         INDEX (client_id),
         INDEX (gym_id),
         INDEX (plan_id),

@@ -30,12 +30,12 @@ user_account.use(my_documents);
 user_account.use(abuse_reports);
 user_account.use(trainerClientModule);
 user_account.use(membershipJoinGTC);
-user_account.use(chat_rooms);
 user_account.use(earningDashboardGymTrainer);
 user_account.use(client_skeletal_muscles);
 user_account.use(client_health_conditions);
 
 //! for all role
+user_account.use(chat_rooms);
 user_account.use(support_tickets);
 user_account.use(my_wallet);
 user_account.use(notifications);

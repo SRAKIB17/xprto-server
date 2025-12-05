@@ -325,40 +325,13 @@ export const API_ACCOUNT = {
             }
         }
     },
-    DOCUMENTS: {
-        GET: concat("/v1/account/my-documents"),
-        PUT: (id: number) => concat(`/v1/account/my-documents/${id}`),
-        POST: concat("/v1/account/my-documents"),
-    },
+
     ABUSE_REPORT: {
         HISTORY: concat(`/v1/account/abuse-reports`),
         CREATE: {
             POST: concat(`/v1/account/abuse-reports`),
         }
     },
-    MESSAGE: {
-        LIST: {
-            GET: (params: Record<string, any>) => concat("/v1/account/chat-rooms?" + QueryToString(params)),
-        },
-        MESSAGES: {
-            GET: (room_id: number, page: number) => concat(`/v1/account/chat-rooms/${room_id}/chats?page=${page}`),
-        },
-        ROOM: {
-            ADD_MEMBER: {
-                POST: (room_id: number) => concat(`/v1/account/chat-rooms/${room_id}/add-member`)
-            },
-            DELETE_MEMBER: {
-                POST: (room_id: number) => concat(`/v1/account/chat-rooms/${room_id}/delete-member`)
-            },
-            DELETE: {
-                DELETE: (room_id: number) => concat(`/v1/account/chat-rooms/delete-room/${room_id}`)
-            },
-            CREATE: {
-                POST: concat(`/v1/account/chat-rooms/create-room`)
-            },
-            GET: (room_id: number) => concat(`/v1/account/chat-rooms/${room_id}`),
-        }
-    }
 };
 
 export const CLIENT_API = {
