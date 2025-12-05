@@ -44,13 +44,14 @@
 ## 5. Trainers / Staff Management
 
 1. trainer list
-   1. each trainer report
-   2. remove from gym ✅✅✅✅✅
-   3. selery
-   4. review ✅✅✅✅✅
-   5. transsitoin information
-   6. document ✅✅✅✅✅
-   7. availbilit slot add replacement trainer
+   1. add trainer
+   2. each trainer report
+   3. remove from gym ✅✅✅✅✅
+   4. selery
+   5. review ✅✅✅✅✅
+   6. transsitoin information
+   7. document ✅✅✅✅✅
+   8. availbilit slot add replacement trainer
 2. leave request
 
 * **Staff Directory** — ট্রেনার, রিসেপশনিস্ট, ম্যানেজার।

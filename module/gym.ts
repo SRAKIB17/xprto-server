@@ -112,6 +112,10 @@ export const GYM_API = {
         DELETE: (plan_id: number) => concat(`/v2/protected/gym/membership-plans/${plan_id}`),
     },
     PUSH_NOTIFICATION: {
+        HISTORY: {
+            GET: (params: Record<string, string>) => concat(`/v2/protected/gym/notifications/push/history?` + QueryToString(params))
+        },
+        DELETE: (notification_id: number) => concat(`/v2/protected/gym/notifications/push/${notification_id}`),
         POST: concat("/v2/protected/gym/notifications/push/send")
     },
     // 4.12.2025
@@ -177,6 +181,10 @@ export const ADMIN_API = {
     },
     // !v2
     PUSH_NOTIFICATION: {
+        HISTORY: {
+            GET: (params: Record<string, string>) => concat(`/v2/protected/admin/notifications/push/history?` + QueryToString(params))
+        },
+        DELETE: (notification_id: number) => concat(`/v2/protected/admin/notifications/push/${notification_id}`),
         POST: concat("/v2/protected/admin/notifications/push/send")
     },
     GYMS: {
