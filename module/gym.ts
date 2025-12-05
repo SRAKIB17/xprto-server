@@ -25,6 +25,10 @@ const concat = (path: string, API: string = BASE_API) => {
 
 export const GYM_API = {
     //! v1
+    NOTIFICATION: {
+        DELETE: (id: number) => concat(`/v1/account/notifications/delete/${id}`),
+        GET: (params: Record<string, any>) => concat('/v1/account/notifications?' + QueryToString(params)),
+    },
     MESSAGE: {
         LIST: {
             GET: (params: Record<string, any>) => concat("/v1/account/chat-rooms?" + QueryToString(params)),
@@ -122,6 +126,10 @@ export const GYM_API = {
 
 export const ADMIN_API = {
     //! v1
+    NOTIFICATION: {
+        DELETE: (id: number) => concat(`/v1/account/notifications/delete/${id}`),
+        GET: (params: Record<string, any>) => concat('/v1/account/notifications?' + QueryToString(params)),
+    },
     MESSAGE: {
         LIST: {
             GET: (params: Record<string, any>) => concat("/v1/account/chat-rooms?" + QueryToString(params)),
