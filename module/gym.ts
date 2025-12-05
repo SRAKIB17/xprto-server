@@ -209,6 +209,11 @@ export const ADMIN_API = {
             PUT: (role: "trainer" | "client" | "gym", payout_id: number) => concat(`/v2/protected/admin/payout-history/${role}/update/${payout_id}`)
         },
         GET: (role: "trainer" | "client" | "gym") => concat(`/v2/protected/admin/payout-history/${role}`)
+    },
+    ADMINS: {
+        LIST: {
+            GET: concat('/v2/protected/admin/admins-list')
+        }
     }
 }
 console.log(GYM_API)
