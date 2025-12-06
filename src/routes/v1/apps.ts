@@ -1,9 +1,9 @@
 import { Router } from "tezx";
 import { encrypt } from "../../utils/encrypted.js";
-
 const appsData = new Router({
     basePath: '/apps-data'
 });
+
 export let appsDataAmountEtc = {
     membership_plan_percent: {
         amount: 100,

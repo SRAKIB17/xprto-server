@@ -68,93 +68,92 @@ import { cors } from "tezx/middleware";
 //     allowUnsafeCharacters: false,
 // })
 export let ALlowCorsOrigin = [
-    // Production domains
-    "https://papernxt.com",
-    "https://www.papernxt.com",
-    "https://api.papernxt.com",
-    "https://ai.papernxt.com",
-    "https://cdn.papernxt.com",
+  // Production domains
+  "https://papernxt.com",
+  "https://www.papernxt.com",
+  "https://api.papernxt.com",
+  "https://ai.papernxt.com",
+  "https://cdn.papernxt.com",
 
-    // Beta, Dev, and Staging subdomains
-    "https://beta.papernxt.com",
-    "https://dev.papernxt.com",
-    "https://staging.papernxt.com",
+  // Beta, Dev, and Staging subdomains
+  "https://beta.papernxt.com",
+  "https://dev.papernxt.com",
+  "https://staging.papernxt.com",
 
-    // // Regex for dynamic subdomains like xxx.beta.papernxt.com
-    // /\.beta\.papernxt\.com$/,
-    // /\.dev\.papernxt\.com$/,
-    // /\.staging\.papernxt\.com$/,
+  // // Regex for dynamic subdomains like xxx.beta.papernxt.com
+  // /\.beta\.papernxt\.com$/,
+  // /\.dev\.papernxt\.com$/,
+  // /\.staging\.papernxt\.com$/,
 
-    // Localhost (dev machine)
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:8080",
-    "http://localhost:8081",
-    "http://localhost:8082",
+  // Localhost (dev machine)
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:8080",
+  "http://localhost:8081",
+  "http://localhost:8082",
 
-    // LAN IPs for local network testing
-    "http://192.168.0.197:3001"
+  // LAN IPs for local network testing
+  "http://192.168.0.197:3001"
 ];
 
 export const AllowSite = [
-    // Production domains
-    "https://papernxt.com",
-    "https://www.papernxt.com",
-    "https://api.papernxt.com",
-    "https://ai.papernxt.com",
-    "https://cdn.papernxt.com",
+  // Production domains
+  "https://papernxt.com",
+  "https://www.papernxt.com",
+  "https://api.papernxt.com",
+  "https://ai.papernxt.com",
+  "https://cdn.papernxt.com",
 
-    "https://papernxt.com/",
-    "https://www.papernxt.com/",
-    "https://api.papernxt.com/",
-    "https://ai.papernxt.com/",
-    "https://cdn.papernxt.com/",
-    // Beta, Dev, and Staging subdomains
-    "https://beta.papernxt.com",
-    "https://dev.papernxt.com",
-    "https://staging.papernxt.com",
+  "https://papernxt.com/",
+  "https://www.papernxt.com/",
+  "https://api.papernxt.com/",
+  "https://ai.papernxt.com/",
+  "https://cdn.papernxt.com/",
+  // Beta, Dev, and Staging subdomains
+  "https://beta.papernxt.com",
+  "https://dev.papernxt.com",
+  "https://staging.papernxt.com",
 
-    "https://beta.papernxt.com/",
-    "https://dev.papernxt.com/",
-    "https://staging.papernxt.com/",
-    // // Regex for dynamic subdomains like xxx.beta.papernxt.com
-    // /\.beta\.papernxt\.com$/,
-    // /\.dev\.papernxt\.com$/,
-    // /\.staging\.papernxt\.com$/,
+  "https://beta.papernxt.com/",
+  "https://dev.papernxt.com/",
+  "https://staging.papernxt.com/",
+  // // Regex for dynamic subdomains like xxx.beta.papernxt.com
+  // /\.beta\.papernxt\.com$/,
+  // /\.dev\.papernxt\.com$/,
+  // /\.staging\.papernxt\.com$/,
 
-    // Localhost (dev machine)
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:8080",
-    "http://localhost:8081",
-    "http://localhost:8082",
+  // Localhost (dev machine)
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:8080",
+  "http://localhost:8081",
+  "http://localhost:8082",
 
 
-    "http://localhost:3000/",
-    "http://localhost:3001/",
-    "http://localhost:8080/",
-    "http://localhost:8081/",
-    "http://localhost:8082/",
-    // LAN IPs for local network testing
-    "http://192.168.0.197:3001"
+  "http://localhost:3000/",
+  "http://localhost:3001/",
+  "http://localhost:8080/",
+  "http://localhost:8081/",
+  "http://localhost:8082/",
+  // LAN IPs for local network testing
+  "http://192.168.0.197:3001"
 ];
 
-
 export let corsPolicy = cors({
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "Install-Id", 's_id', 'x-auth', "socket-id"],
-    origin: ALlowCorsOrigin
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization", "Install-Id", 's_id', 'x-auth', "socket-id"],
+  origin: ALlowCorsOrigin
 })
 export function swaggerUI(
-    jsonPath: string = "docs.json",
-    swaggerVersion: string = "5.11.0",
-    meta?: {
-        title?: string;
-        metaDescription?: string;
-    }
+  jsonPath: string = "docs.json",
+  swaggerVersion: string = "5.11.0",
+  meta?: {
+    title?: string;
+    metaDescription?: string;
+  }
 ) {
-    return (ctx: any) => {
-        return ctx.html(`
+  return (ctx: any) => {
+    return ctx.html(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -183,7 +182,7 @@ export function swaggerUI(
 </body>
 </html>
 `);
-    };
+  };
 }
 // export let corsPolicy = cors({
 //     methods: ['GET', "POST", "DELETE", "PUT"],

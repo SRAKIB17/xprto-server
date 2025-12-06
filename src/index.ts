@@ -7,18 +7,15 @@ import { corsPolicy, swaggerUI } from "./middlewares/middlewares.js";
 import { v1 } from "./routes/v1/index.js";
 import { v2 } from "./routes/v2/index.js";
 import { websocket } from "./routes/websocket/index.js";
-const app = new TezX({
-  debugMode: true,
-});
+const app = new TezX();
 
 
+app.use(corsPolicy)
 app.use(async (_, next) => {
   // console.log(_.req.header())
   await next();
-  // console.log(_.headers)
+  console.log(_.headers)
 })
-app.use(corsPolicy)
-
 app.use([logger({ enabled: process.env.NODE_ENV === "development" })]);
 
 app.get("/", (ctx) => {
