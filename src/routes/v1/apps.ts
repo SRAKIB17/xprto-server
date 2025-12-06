@@ -11,11 +11,11 @@ export let appsDataAmountEtc = {
     },
     withdraw: {
         trainer: {
-            fee_percentage: 5,
+            fee_percentage: 10,
             currency: "INR",
         },
         client: {
-            fee_percentage: 5,
+            fee_percentage: 10,
             currency: "INR",
         }
     },
