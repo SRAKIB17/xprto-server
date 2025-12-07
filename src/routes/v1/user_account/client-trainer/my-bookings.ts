@@ -1,9 +1,11 @@
-import { find, insert, mysql_date, sanitize, update } from "@tezx/sqlx/mysql";
+import { find, insert, mysql_date, mysql_datetime, sanitize, update } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
-import { dbQuery, TABLES } from "../../../../models";
-import { performWalletTransaction } from "../../../../utils/createWalletTransaction";
-import { generateTxnID } from "../../../../utils/generateTxnID";
+import { dbQuery, TABLES } from "../../../../models/index.js";
+import { performWalletTransaction } from "../../../../utils/createWalletTransaction.js";
+import { generateTxnID } from "../../../../utils/generateTxnID.js";
+import { adminWallet } from "../../../../config.js";
+import { sendNotification } from "../../../../utils/sendNotification.js";
 
 // import user_account_document_flag from "./flag-document.js";
 const trainerBookingRequest = new Router({
@@ -116,7 +118,7 @@ trainerBookingRequest.post("/change-status/:status", async (ctx) => {
         const { role } = ctx.auth || {};
         const { user_id } = ctx.auth?.user_info || {};
 
-        const { booking, status_reason, note, meet_link } = await ctx.req.json<any>();
+        const { booking, status_reason, note, meet_link, total_days, calculate_refund } = await ctx.req.json<any>();
         const id = booking?.booking_id;
 
 
@@ -204,40 +206,74 @@ trainerBookingRequest.post("/change-status/:status", async (ctx) => {
                 }
             }
             else if (status === 'cancelled') {
-                //                 function generateRefundMessage(
-                //                     diffHours: number,
-                //                     refundPercent: number,
-                //                     chargePercent: number
-                //                 ) {
-                //                     const hours = Math.floor(diffHours);
-                //                     const minutes = Math.floor((diffHours - hours) * 60);
+                let { charge_amount, refund_amount } = calculate_refund;
+                let xprto = total_days === 1 ? (charge_amount * 10) / 100 : charge_amount / 2;
+                let trainer = total_days === 1 ? (charge_amount * 90) / 100 : charge_amount / 2;
 
-                //                     const timeText =
-                //                         diffHours > 0
-                //                             ? `${hours} hour ${minutes} min before schedule`
-                //                             : `Schedule time already passed`;
+                // 1) Refund unused balance to client
+                let { success: clientSuccess } = await performWalletTransaction(
+                    { role, user_id },
+                    {
+                        amount: refund_amount,
+                        type: "release_hold",
+                        note: "Session cancelled: Unused balance refunded to client",
+                        payment_method: "wallet",
+                        reference_id: `idempotency-${idempotency_key}`,
+                        reference_type: "client_cancel_refund",
+                        external_txn_id: generateTxnID("CNCL_REFUND"),
+                    }
+                );
+                // 2) Deduct charge for used days
+                let { success: ChargeHold } = await performWalletTransaction(
+                    { role, user_id },
+                    {
+                        amount: charge_amount,
+                        type: "hold-transfer",
+                        note: "Session cancelled: Charge deducted for used session days",
+                        payment_method: "wallet",
+                        reference_id: `idempotency-${idempotency_key}`,
+                        reference_type: "cancel_session_charge",
+                        external_txn_id: generateTxnID("CNCL_CHARGE"),
+                    }
+                );
+                if (!clientSuccess && !ChargeHold) {
+                    return ctx.json({
+                        success: false,
+                        message: "Releasing the payment failed. Please try again or contact support.",
+                    });
+                }
+                // send to trainer 
+                let { success } = await performWalletTransaction(
+                    { role: "trainer", user_id: booking?.trainer_id },
+                    {
+                        amount: trainer,
+                        type: "transfer_in",
+                        note: `Client cancelled: Trainer earned ${trainer} INR`,
+                        payment_method: "wallet",
+                        reference_id: `idempotency-${idempotency_key}`,
+                        reference_type: "trainer_cancel_payout",
+                        external_txn_id: generateTxnID("CLIENT_CANCEL"),
+                    }
+                );
 
-                //                     return {
-                //                         hours_before: diffHours,
-                //                         refund_percent: refundPercent,
-                //                         charge_percent: chargePercent,
-                //                         message: `
-                // ⏰ Refund Summary  
-                // ----------------------------  
-                // ✔ Booking Time Left: **${timeText}**  
-                // 💰 Refund Amount: **${refundPercent}%**  
-                // ⚠️ Cancellation Charge: **${chargePercent}%**  
-
-                // ${refundPercent === 100
-                //                                 ? "✅ Full refund applicable (no charges)."
-                //                                 : refundPercent === 0
-                //                                     ? "❌ No refund available. 100% charge applicable."
-                //                                     : `ℹ️ As per policy, ${chargePercent}% cancellation fee will be deducted.`}
-                // `.trim()
-                //                     };
-                //                 }
-
-                return ctx.json({})
+                await performWalletTransaction(
+                    { role: "admin", user_id: adminWallet.admin_id },
+                    {
+                        amount: xprto,
+                        type: "transfer_in",
+                        note: `Client cancelled: XPRTO commission ${xprto} INR`,
+                        payment_method: "wallet",
+                        reference_id: `idempotency-${idempotency_key}`,
+                        reference_type: "admin_cancel_commission",
+                        external_txn_id: generateTxnID("ADMIN_CANCEL"),
+                    }
+                );
+                if (!success) {
+                    return ctx.json({
+                        success: false,
+                        message: "Payment release to the trainer failed. The session is marked as completed, but the trainer did not receive the balance. Please try again or contact support.",
+                    });
+                }
             }
         }
         // ✅ Update DB
@@ -252,6 +288,63 @@ trainerBookingRequest.post("/change-status/:status", async (ctx) => {
         }
 
         // ✅ Extra: On completed → release payment
+        const notifyTarget =
+            role === "client" ? booking?.trainer_id : booking?.client_id;
+
+        const notifyTargetRole =
+            role === "client" ? "trainer" : "client";
+
+        const senderRole =
+            role === "client" ? "client" : "trainer";
+
+        const statusTitleMap: Record<string, string> = {
+            pending: "Pending Request Update",
+            accepted: "Booking Accepted",
+            rejected: "Booking Rejected",
+            cancelled: "Booking Cancelled",
+            completed: "Session Completed",
+            rescheduled: "Booking Rescheduled"
+        };
+
+        const statusMessageMap = {
+            pending: `${booking?.fullname} updated the booking request.`,
+            accepted: `Your booking with ${booking?.fullname} has been accepted.`,
+            rejected: `Your booking was rejected. Reason: ${status_reason || "N/A"}.`,
+            cancelled: `${booking?.fullname} has cancelled the booking.`,
+            completed: `The session has been successfully completed.`,
+            rescheduled: `${booking?.fullname} has rescheduled the booking.`,
+        };
+
+        // 🎯 Send Notification
+        await sendNotification(
+            {
+                recipientId: notifyTarget,
+                recipientType: notifyTargetRole,
+                senderId: user_id,
+                senderType: senderRole,
+                title: statusTitleMap[status],
+                message: statusMessageMap[status as keyof typeof statusMessageMap],
+
+                type: `alert`,
+                priority: "high",
+
+                metadata: {
+                    event: "trainer_booking_status_update",
+                    status,
+                    booking_id: booking?.booking_id,
+                    trainer_id: booking?.trainer_id,
+                    client_id: booking?.client_id,
+                    reason: status_reason || null,
+                    meet_link: meet_link || null,
+                    note,
+                    total_days,
+                    calculate_refund,
+                    updated_by: senderRole,
+                    updated_at: mysql_datetime(),
+                }
+            },
+            "all"
+        );
 
         return ctx.json({
             success: true,

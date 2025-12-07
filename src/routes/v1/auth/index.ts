@@ -1,13 +1,12 @@
 import { find, insert, sanitize } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { deleteCookie, setCookie } from "tezx/cookie";
-import { getConnInfo } from "tezx/middleware";
-import rateLimiter from "tezx/middleware/rate-limiter";
+import { rateLimiter } from "tezx/middleware";
 import { CLIENT_REDIRECT_URL, cookieDOMAIN, DirectoryServe, filename, FORGET_PASSWORD_EXP, SITE_TITLE, support_email } from "../../../config.js";
 import { sendEmailWithTemplate } from "../../../email/mailer.js";
 import { dbQuery, TABLES } from "../../../models/index.js";
 import tokenEncodedCrypto, { wrappedCryptoToken } from "../../../utils/crypto.js";
-import { encrypt } from "../../../utils/encrypted.js";
+import { decrypt, encrypt } from "../../../utils/encrypted.js";
 import { copyFile } from "../../../utils/fileExists.js";
 import { AuthorizationBasicAuthUser } from "./basicAuth.js";
 import { google } from "./google.js";
@@ -391,7 +390,7 @@ auth.post('/refresh', AuthorizationBasicAuthUser(), async (ctx) => {
 let passwordReset = new Map();
 
 // !done ✅
-auth.post('/password-reset', [getConnInfo(), async (ctx, next) => {
+auth.post('/password-reset', async (ctx, next) => {
     let { email, role } = await ctx.req.json();
     const { success, result: user } = await dbQuery(find(role === 'trainer' ? TABLES.TRAINERS.trainers : TABLES.CLIENTS.clients, {
         where: `email = ${sanitize(email)}`,
@@ -432,7 +431,7 @@ auth.post('/password-reset', [getConnInfo(), async (ctx, next) => {
         },
     })(ctx, next) as Response;
 
-}], async (ctx) => {
+}, async (ctx) => {
     let { email, fullname, role } = ctx.forget_password;
 
     // Add expiry time (now + 5 minutes)
@@ -511,66 +510,64 @@ auth.post('/password-reset-verify', async (ctx) => {
 
 let emailVerifiedStorage = new Map();
 // !done
-auth.post('/send-verification-email', [
-    getConnInfo(),
-    async (ctx, next) => {
-        // request থেকে email আর role বের করা
-        let { email, role } = await ctx.req.json();
-        const { success, result: user } = await dbQuery(
-            find(
-                role === 'trainer' ? TABLES.TRAINERS.trainers : TABLES.CLIENTS.clients,
-                {
-                    where: `email = ${sanitize(email)}`,
-                    limitSkip: { limit: 1 }
-                }
-            )
-        );
+auth.post('/send-verification-email', async (ctx, next) => {
+    // request থেকে email আর role বের করা
+    let { email, role } = await ctx.req.json();
+    const { success, result: user } = await dbQuery(
+        find(
+            role === 'trainer' ? TABLES.TRAINERS.trainers : TABLES.CLIENTS.clients,
+            {
+                where: `email = ${sanitize(email)}`,
+                limitSkip: { limit: 1 }
+            }
+        )
+    );
 
-        if (!user || user.length === 0) {
-            return ctx.json({
-                success: false,
-                message: "Email not registered. Please sign up first."
-            });
-        }
+    if (!user || user.length === 0) {
+        return ctx.json({
+            success: false,
+            message: "Email not registered. Please sign up first."
+        });
+    }
 
-        let { login_type, fullname, email_verified } = user?.[0];
+    let { login_type, fullname, email_verified } = user?.[0];
 
-        if (login_type === 'google') {
-            return ctx.json({
-                success: false,
-                message: "Email already in use. Please log in with Google."
-            });
-        }
+    if (login_type === 'google') {
+        return ctx.json({
+            success: false,
+            message: "Email already in use. Please log in with Google."
+        });
+    }
 
-        if (email_verified) {
-            return ctx.json({
-                success: false,
-                message: "Email is already verified."
-            });
-        }
+    if (email_verified) {
+        return ctx.json({
+            success: false,
+            message: "Email is already verified."
+        });
+    }
 
-        // attach context
-        ctx.email_verification = { email, fullname, role };
+    // attach context
+    ctx.email_verification = { email, fullname, role };
 
-        // rate limiter
-        return await rateLimiter({
-            maxRequests: 1,
-            windowMs: 60_000, // 1 min
-            onError: (ctx, r, error) => {
-                return ctx.json({ success: false, message: error?.message });
-            },
-            storage: {
-                get: (key) => emailVerifiedStorage.get(key),
-                set: (key, value) => emailVerifiedStorage.set(key, value),
-                clearExpired: () => {
-                    const now = Date.now();
-                    for (const [key, entry] of emailVerifiedStorage.entries()) {
-                        if (now >= entry.resetTime) emailVerifiedStorage.delete(key);
-                    }
+    // rate limiter
+    return await rateLimiter({
+        maxRequests: 1,
+        windowMs: 60_000, // 1 min
+        onError: (ctx, r, error) => {
+            return ctx.json({ success: false, message: error?.message });
+        },
+        storage: {
+            get: (key) => emailVerifiedStorage.get(key),
+            set: (key, value) => emailVerifiedStorage.set(key, value),
+            clearExpired: () => {
+                const now = Date.now();
+                for (const [key, entry] of emailVerifiedStorage.entries()) {
+                    if (now >= entry.resetTime) emailVerifiedStorage.delete(key);
                 }
             }
-        })(ctx, next) as Response;
-    }],
+        }
+    })(ctx, next) as Response;
+},
     async (ctx) => {
         const { email, fullname, role } = ctx.email_verification;
 
@@ -611,55 +608,55 @@ auth.post('/send-verification-email', [
     }
 );
 
-auth.put('/password-reset-update', async (ctx) => {
-    const { tkn, email, confirmPassword, newPassword, name } = await ctx.req.json();
+// auth.put('/password-reset-update', async (ctx) => {
+//     const { tkn, email, confirmPassword, newPassword, name } = await ctx.req.json();
 
-    // Check if token is valid
-    let { success, decrypted } = decrypt(tkn?.replaceAll(" ", "+"), process.env.OTP_ENCRYPTION_KEY!);
-    if (!success) {
-        return ctx.json({ success: false, type: 'InvalidToken', message: "The reset token is invalid or expired." });
-    }
+//     // Check if token is valid
+//     let { success, decrypted } = decrypt(tkn?.replaceAll(" ", "+"), process.env.OTP_ENCRYPTION_KEY!);
+//     if (!success) {
+//         return ctx.json({ success: false, type: 'InvalidToken', message: "The reset token is invalid or expired." });
+//     }
 
-    // Check if new password and confirmation match
-    if (confirmPassword !== newPassword) {
-        return ctx.json({ success: false, type: 'PasswordMismatch', message: "Passwords do not match." });
-    }
+//     // Check if new password and confirmation match
+//     if (confirmPassword !== newPassword) {
+//         return ctx.json({ success: false, type: 'PasswordMismatch', message: "Passwords do not match." });
+//     }
 
-    // Optional: validate email format or existence here
-    let { result: user } = await db.findOne(table_schema.user_details, {
-        where: db.condition({ email })
-    }).execute();
+//     // Optional: validate email format or existence here
+//     let { result: user } = await db.findOne(table_schema.user_details, {
+//         where: db.condition({ email })
+//     }).execute();
 
-    if (!user || user.length === 0) {
-        return ctx.json({ success: false, type: 'UserNotFound', message: "No account associated with this email." });
-    }
-    let { hash, salt } = await wrappedCryptoToken({
-        wrappedCryptoString: newPassword,
-    })
+//     if (!user || user.length === 0) {
+//         return ctx.json({ success: false, type: 'UserNotFound', message: "No account associated with this email." });
+//     }
+//     let { hash, salt } = await wrappedCryptoToken({
+//         wrappedCryptoString: newPassword,
+//     })
 
-    await sendEmail({
-        to: email,
-        templateName: 'password-reset-success',
-        subject: "Password Updated Successfully - PaperNxt",
-        templateData: {
-            name: name,
-        }
-    });
+//     await sendEmail({
+//         to: email,
+//         templateName: 'password-reset-success',
+//         subject: "Password Updated Successfully - PaperNxt",
+//         templateData: {
+//             name: name,
+//         }
+//     });
 
-    let { success: passwordSuccess, result, error, errno } = await db.update(table_schema.user_details, {
-        values: {
-            hashed: hash,
-            salt: salt,
-        },
-        where: db.condition({ email })
-    }).execute();
-    if (passwordSuccess && result && result.affectedRows > 0) {
-        return ctx.json({ success: true, message: "Your password has been successfully updated." });
-    }
-    else {
-        return ctx.json({ success: false, message: "Failed to update your password. Please try again." });
-    }
-});
+//     let { success: passwordSuccess, result, error, errno } = await db.update(table_schema.user_details, {
+//         values: {
+//             hashed: hash,
+//             salt: salt,
+//         },
+//         where: db.condition({ email })
+//     }).execute();
+//     if (passwordSuccess && result && result.affectedRows > 0) {
+//         return ctx.json({ success: true, message: "Your password has been successfully updated." });
+//     }
+//     else {
+//         return ctx.json({ success: false, message: "Failed to update your password. Please try again." });
+//     }
+// });
 
 // !done
 auth.get('/logout', async (ctx) => {

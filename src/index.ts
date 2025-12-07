@@ -9,13 +9,13 @@ import { v2 } from "./routes/v2/index.js";
 import { websocket } from "./routes/websocket/index.js";
 const app = new TezX();
 
+app.use(corsPolicy);
 
-app.use(corsPolicy)
-app.use(async (_, next) => {
-  // console.log(_.req.header())
-  await next();
-  console.log(_.headers)
-})
+// app.use(async (_, next) => {
+//   // console.log(_.req.header())
+//   await next();
+//   console.log(_.headers)
+// })
 app.use([logger({ enabled: process.env.NODE_ENV === "development" })]);
 
 app.get("/", (ctx) => {

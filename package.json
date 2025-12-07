@@ -31,7 +31,7 @@
     "nodemailer": "^7.0.6",
     "npm": "^11.6.1",
     "razorpay": "^2.9.6",
-    "tezx": "^4.0.2",
+    "tezx": "^4.0.7",
     "typescript": "^5.8.2"
   },
   "devDependencies": {

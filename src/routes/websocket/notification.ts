@@ -99,9 +99,9 @@ notifications.get(
                     ws.send(JSON.stringify({ type: "error", message: "Bad payload" }));
                 }
             },
-            close(ws, { code, reason }) {
+            close(ws, p) {
                 clients.delete(userId!);
-                console.log(`Closed: ${userId}`, code, reason);
+                console.log(`Closed: ${userId}`, p?.code, p?.reason);
             },
         };
     }) as unknown as Callback
