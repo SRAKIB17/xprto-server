@@ -18,13 +18,13 @@ import { dbQuery, TABLES } from "../models/index.js";
  * 14. xprto (pvc) kyc verfied status -> from admin theke
  * 15. assign client
  * 16. new booking for client 
- * --- 'pending',
-            'accepted',
-            'confirmed',
-            'rejected',
-            'cancelled',
-            'rescheduled',
-            'completed' egulor protitar ekta kore notitification generate hobe
+ * !--- 'pending',
+   * !        'accepted',
+   * !        'confirmed',
+   * !        'rejected',
+   * !        'cancelled',
+   * !        'rescheduled',
+   * !        'completed' egulor protitar ekta kore notitification generate hobe
  *! 17. subscription 
  * 18. session
  */
