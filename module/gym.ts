@@ -134,6 +134,12 @@ export const GYM_API = {
     // job_feed.sql dekhbe + code match kore,, query gulo-> select + input+ listing er modde ekta button thakbe view applicant dekhar jonno
     JOB_FEED: {
         GET: (params: Record<string, string>) => concat(`/v2/protected/gym/job-feed?${QueryToString(params)}`),
+        APPLICATIONS: {
+            UPDATE: {
+                PUT: (job_id: number, id: number) => concat(`/v2/protected/gym/job-feed/applications/${job_id}/update/${id}`),
+            },
+            GET: (job_id: number, params: Record<string, string>) => concat(`/v2/protected/gym/job-feed/applications/${job_id}?${QueryToString(params)}`),
+        }
     }
 }
 
@@ -249,6 +255,13 @@ export const ADMIN_API = {
     // job_feed.sql dekhbe + code match kore,, query gulo-> select + input+ listing er modde ekta button thakbe view applicant dekhar jonno
     JOB_FEED: {
         GET: (params: Record<string, string>) => concat(`/v2/protected/admin/job-feed?${QueryToString(params)}`),
+        APPLICATIONS: {
+            UPDATE: {
+                PUT: (job_id: number, id: number) => concat(`/v2/protected/gym/job-feed/applications/${job_id}/update/${id}`),
+            },
+            GET: (job_id: number, params: Record<string, string>) => concat(`/v2/protected/gym/job-feed/applications/${job_id}?${QueryToString(params)}`),
+        },
+
         POST: concat(`/v2/protected/admin/job-feed`),
         PUT: (job_id: number) => concat(`/v2/protected/admin/job-feed/${job_id}`),
         DELETE: (job_id: number) => concat(`/v2/protected/admin/job-feed/${job_id}`),
