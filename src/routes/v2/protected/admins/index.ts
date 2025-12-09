@@ -7,6 +7,7 @@ import pushNotification from "./push-notification.js";
 import trainerAdmin from "./trainers/index.js";
 import payoutHistory from "./payout-history.js";
 import adminList from "./admins/index.js";
+import adminAbuseReport from "./abuse-report.js";
 
 const adminV2 = new Router();
 adminV2.use(AuthorizationBasicAuthUser());
@@ -24,6 +25,7 @@ adminV2.use('/gyms', gymAdmin);
 adminV2.use('/trainers', trainerAdmin);
 adminV2.use('/clients', clientAdmin);
 adminV2.use('/admins-list', adminList);
+adminV2.use('/abuse-report', adminAbuseReport);
 adminV2.use(createTransaction);
 adminV2.use(payoutHistory)
 

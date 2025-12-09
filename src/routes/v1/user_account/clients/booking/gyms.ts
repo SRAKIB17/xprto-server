@@ -5,7 +5,7 @@ import { dbQuery, TABLES } from "../../../../../models/index.js";
 import { performWalletTransaction } from "../../../../../utils/createWalletTransaction.js";
 import { generateTxnID } from "../../../../../utils/generateTxnID.js";
 import { adminWallet } from "../../../../../config.js";
-import paginationHandler from "tezx/middleware/pagination.js";
+import { paginationHandler } from "tezx/middleware";
 
 // import user_account_document_flag from "./flag-document.js";
 const gymsBooking = new Router({

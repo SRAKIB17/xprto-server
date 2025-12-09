@@ -1,4 +1,4 @@
-import { destroy, find, sanitize } from "@tezx/sqlx/mysql";
+import { destroy, find, sanitize, update } from "@tezx/sqlx/mysql";
 import { Router } from "tezx";
 import { paginationHandler } from "tezx/middleware";
 import { dbQuery, TABLES } from "../../../../../models/index.js";
@@ -64,14 +64,33 @@ gymTrainers.get("/:trainer_id/document", async (ctx) => {
     );
     return ctx.json({ success, data: result });
 });
+
 gymTrainers.delete("/:trainer_id/remove-from-gym", async (ctx) => {
     const { user_id } = ctx.auth?.user_info || {};
     const trainer_id = ctx.req.params.trainer_id;
-    const { success, result } = await dbQuery(
+
+    if (!user_id) return ctx.json({ success: false, message: "Unauthorized" });
+
+    // Remove trainer from gym
+    const { success, result } = await dbQuery<any>(
         destroy(`${TABLES.MEMBERSHIP_JOIN.TRAINER_GYMS} as m`, {
             where: `m.trainer_id = ${sanitize(trainer_id)} AND m.gym_id = ${sanitize(user_id)}`,
         })
     );
-    return ctx.json({ success, data: result });
-})
+
+    if (success && result?.affectedRows) {
+        // Optionally update trainer (example: set gym_assigned = 0)
+        const { success: updSuccess } = await dbQuery(
+            update(TABLES.TRAINERS.trainers, {
+                values: { xprto: 0 },
+                where: `trainer_id = ${sanitize(trainer_id)}`
+            })
+        );
+
+        return ctx.json({ success: updSuccess, data: result });
+    }
+
+    return ctx.json({ success: false, message: "No trainer removed", data: result });
+});
+
 export default gymTrainers;

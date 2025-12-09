@@ -125,6 +125,12 @@ export const GYM_API = {
         },
         DELETE: (txn_id: number) => concat(`/v2/protected/gym/create-transaction/${txn_id}`),
         POST: concat(`/v2/protected/gym/create-transaction`)
+    },
+    // 9.12.2025
+    //  ekhane notifitionct implement hobe,,push notifiy korte parbe + ekta button thkbe details page e jaoar jonno. + delete button
+    ABUSE_REPORT: {
+        GET: concat(`/v2/protected/admin/abuse-report/`),
+        DELETE: (id: number) => concat(`/v2/protected/admin/abuse-report/${id}`)
     }
 }
 
@@ -230,6 +236,13 @@ export const ADMIN_API = {
         LIST: {
             GET: concat('/v2/protected/admin/admins-list')
         }
+    },
+    // 9.12.2025
+    //  ekhane notifitionct implement hobe,,push notifiy korte parbe + ekta button thkbe details page e jaoar jonno. + delete button
+    ABUSE_REPORT: {
+        GET: (role: 'trainer' | 'gym') => concat(`/v2/protected/admin/abuse-report/${role}`),
+        DELETE: (role: 'trainer' | 'gym', id: number) => concat(`/v2/protected/admin/abuse-report/${role}/${id}`)
     }
 }
+
 console.log(GYM_API)
