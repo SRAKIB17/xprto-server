@@ -367,7 +367,7 @@ xprtoJobFeed.post('/:id/apply', async (ctx) => {
             for (const att of attachment) {
                 // ধরে নিচ্ছি att হচ্ছে client থেকে আসা temp path বা file name
                 const fileName = filename(att);
-                let check = await copyFile(att, DirectoryServe.jobAttachments(fileName), true);
+                let check = await copyFile(att, DirectoryServe.jobApplications(fileName), true);
                 if (check) {
                     finalAttachments.push(`/${fileName}`);
                 }

@@ -59,20 +59,28 @@ export async function copyFile(src: string, dest: string, unlinkSrc?: boolean): 
         return false;
     }
 }
+import path from "path";
 
-// export async function deleteFile(filePath: string): Promise<boolean> {
-//     try {
-//         await fs.unlink(filePath);
-//         return true;
-//     }
-//     catch (err: any) {
-//         if (err.code === "ENOENT") {
-//             console.warn(`⚠️ File not found: ${filePath}`);
-//             return false;
-//         }
-//         throw err;
-//     }
-// }
+/**
+ * Remove a file safely
+ * @param filePath Absolute or relative path to the file
+ * @returns Promise<boolean> - true if file deleted, false if file doesn't exist
+ */
+export async function removeFile(filePath: string): Promise<boolean> {
+    try {
+        const resolvedPath = path.resolve(filePath);
+        await fs.unlink(resolvedPath);
+        return true;
+    } catch (err: any) {
+        if (err.code === "ENOENT") {
+            // File doesn't exist
+            return false;
+        }
+        console.error(`Failed to remove file ${filePath}:`, err);
+        return false;
+    }
+}
+
 
 export async function safeUnlink(file: string) {
     try {

@@ -128,8 +128,12 @@ export const GYM_API = {
     // 9.12.2025
     //  ekhane notifitionct implement hobe,,push notifiy korte parbe + ekta button thkbe details page e jaoar jonno. + delete button
     ABUSE_REPORT: {
-        GET: concat(`/v2/protected/admin/abuse-report/`),
-        DELETE: (id: number) => concat(`/v2/protected/admin/abuse-report/${id}`)
+        GET: (params: Record<string, string>) => concat(`/v2/protected/gym/abuse-report?${QueryToString(params)}`),
+        DELETE: (id: number) => concat(`/v2/protected/gym/abuse-report/${id}`)
+    },
+    // job_feed.sql dekhbe + code match kore,, query gulo-> select + input+ listing er modde ekta button thakbe view applicant dekhar jonno
+    JOB_FEED: {
+        GET: (params: Record<string, string>) => concat(`/v2/protected/gym/job-feed?${QueryToString(params)}`),
     }
 }
 
@@ -239,8 +243,15 @@ export const ADMIN_API = {
     // 9.12.2025
     //  ekhane notifitionct implement hobe,,push notifiy korte parbe + ekta button thkbe details page e jaoar jonno. + delete button
     ABUSE_REPORT: {
-        GET: (role: 'trainer' | 'gym') => concat(`/v2/protected/admin/abuse-report/${role}`),
+        GET: (role: 'trainer' | 'gym', params: Record<string, string>) => concat(`/v2/protected/admin/abuse-report/${role}?${QueryToString(params)}`),
         DELETE: (role: 'trainer' | 'gym', id: number) => concat(`/v2/protected/admin/abuse-report/${role}/${id}`)
+    },
+    // job_feed.sql dekhbe + code match kore,, query gulo-> select + input+ listing er modde ekta button thakbe view applicant dekhar jonno
+    JOB_FEED: {
+        GET: (params: Record<string, string>) => concat(`/v2/protected/admin/job-feed?${QueryToString(params)}`),
+        POST: concat(`/v2/protected/admin/job-feed`),
+        PUT: (job_id: number) => concat(`/v2/protected/admin/job-feed/${job_id}`),
+        DELETE: (job_id: number) => concat(`/v2/protected/admin/job-feed/${job_id}`),
     }
 }
 

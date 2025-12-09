@@ -60,7 +60,8 @@ export const DirectoryServe = {
         chat: (pathname: string) => path.join(path.resolve(), "uploads", "thumbnail", "chats", filename(pathname))
     },
     supportTicket: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "support-tickets", filename(pathname)),
-    jobAttachments: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "job-applications", filename(pathname)),
+    jobApplications: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "job-applications", filename(pathname)),
+    jobAttachments: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "job-attachments", filename(pathname)),
     LeaveRequestAttachments: (pathname: string) => path.join(path.resolve(), "uploads", "attachments", "leave-request", filename(pathname)),
     avatar: (role: string, pathname: string) => path.join(path.resolve(), "uploads", "avatars", role, "kyc", filename(pathname)),
     logo: (role: string, pathname: string) => path.join(path.resolve(), "uploads", "logo", role, "kyc", filename(pathname)),

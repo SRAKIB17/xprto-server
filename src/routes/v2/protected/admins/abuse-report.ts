@@ -52,7 +52,6 @@ adminAbuseReport.get(
             });
 
             const { success, result, error } = await dbQuery<any[]>(`${sql}${count}`);
-            console.log(error);
 
             if (!success) {
                 return { data: [], total: 0 };
