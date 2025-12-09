@@ -11,7 +11,6 @@ export function QueryToString(params: Record<string, any>) {
     return new URLSearchParams(x).toString();
 }
 
-
 /**
  * combine korte hobe shob
  * v1 -> change hobe pore
@@ -245,4 +244,4 @@ export const ADMIN_API = {
     }
 }
 
-console.log(GYM_API)
+console.log(GYM_API.ABUSE_REPORT.DELETE)
