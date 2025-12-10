@@ -78,7 +78,6 @@ export const TABLES = {
         memberships: concat('chat_room_memberships'),
         messages: concat('chat_messages')
     }
-
 } as const;
 // ('client', 'gym', 'trainer', 'admin') 
 // 👉 type এর জন্য

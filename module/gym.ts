@@ -133,12 +133,23 @@ export const GYM_API = {
     },
     // job_feed.sql dekhbe + code match kore,, query gulo-> select + input+ listing er modde ekta button thakbe view applicant dekhar jonno
     JOB_FEED: {
+        STATUS_CHANGE: (job_id: number, status: 'draft' | 'published' | 'closed' | 'archived') => concat(`/v2/protected/gym/job-feed/job/${job_id}/status/${status}`),
         GET: (params: Record<string, string>) => concat(`/v2/protected/gym/job-feed?${QueryToString(params)}`),
         APPLICATIONS: {
             UPDATE: {
                 PUT: (job_id: number, id: number) => concat(`/v2/protected/gym/job-feed/applications/${job_id}/update/${id}`),
             },
             GET: (job_id: number, params: Record<string, string>) => concat(`/v2/protected/gym/job-feed/applications/${job_id}?${QueryToString(params)}`),
+        }
+    },
+    GYM_SESSIONS: {
+        CREATE: {
+            POST: concat("/v2/protected/gym/my-sessions"),
+        },
+        GET: concat("/v2/protected/gym/my-sessions"),
+        DELETE: (session_id: number) => concat(`/v2/protected/gym/my-sessions/${session_id}`),
+        UPDATE: {
+            PUT: (session_id: number) => concat(`/v2/protected/gym/my-sessions/${session_id}`),
         }
     }
 }
@@ -209,6 +220,9 @@ export const ADMIN_API = {
             },
             DOCUMENTS: {
                 GET: concat(`/v2/protected/admin/gyms/${gym_id}/documents`)
+            },
+            SESSIONS: {
+                GET: concat(`/v2/protected/admin/gyms/${gym_id}/sessions`)
             }
         })
     },
@@ -255,6 +269,7 @@ export const ADMIN_API = {
     // job_feed.sql dekhbe + code match kore,, query gulo-> select + input+ listing er modde ekta button thakbe view applicant dekhar jonno
     JOB_FEED: {
         GET: (params: Record<string, string>) => concat(`/v2/protected/admin/job-feed?${QueryToString(params)}`),
+        STATUS_CHANGE: (job_id: number, status: 'draft' | 'published' | 'closed' | 'archived') => concat(`/v2/protected/admin/job-feed/job/${job_id}/status/${status}`),
         APPLICATIONS: {
             UPDATE: {
                 PUT: (job_id: number, id: number) => concat(`/v2/protected/gym/job-feed/applications/${job_id}/update/${id}`),

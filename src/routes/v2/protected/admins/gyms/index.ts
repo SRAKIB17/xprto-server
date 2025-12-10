@@ -27,4 +27,17 @@ gymAdmin.get("/:gym_id/membership-plans", async (ctx) => {
     return ctx.json(await dbQuery(sql));
 });
 
+gymAdmin.get("/:gym_id/sessions", async (ctx) => {
+    const { gym_id } = ctx.req.params;
+
+    const sql = find(`${TABLES.GYMS.SESSIONS}`, {
+        columns: `*`,
+        where: `gym_id = ${sanitize(gym_id)}`,
+        sort: {
+            session_id: -1,
+        }
+    });
+    return ctx.json(await dbQuery(sql));
+});
+
 export default gymAdmin;

@@ -7,6 +7,7 @@ import gymMembershipPlans from "./membership-plans.js";
 import pushNotification from "./push-notification.js";
 import gymTrainers from "./trainers/index.js";
 import jobFeedGym from "./job-feed-gym.js";
+import gymSessions from "./gym-sessions.js";
 
 const gymV2 = new Router();
 gymV2.use(AuthorizationBasicAuthUser());
@@ -24,6 +25,7 @@ gymV2.use('/notifications', pushNotification);
 gymV2.use('trainers', gymTrainers);
 gymV2.use('/abuse-report', gymAbuseReport);
 gymV2.use('/job-feed', jobFeedGym);
+gymV2.use('/my-sessions', gymSessions);
 
 gymV2.use(createTransaction);
 gymV2.use(gymDocuments);

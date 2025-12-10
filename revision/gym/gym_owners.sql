@@ -83,25 +83,6 @@ CREATE TABLE
         CONSTRAINT chk_subscription_dates_gyms CHECK (subscription_end >= subscription_start)
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
--- Gym feedback table
-CREATE TABLE
-    gym_feedbacks (
-        feedback_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        gym_id BIGINT UNSIGNED NOT NULL,
-        client_id BIGINT UNSIGNED DEFAULT NULL, -- Client giving the feedback
-        trainer_id BIGINT UNSIGNED DEFAULT NULL, -- Trainer giving the feedback
-        rating TINYINT UNSIGNED NOT NULL CHECK (rating BETWEEN 1 AND 5),
-        comment TEXT DEFAULT NULL,
-        reply TEXT DEFAULT NULL,
-        video_url VARCHAR(255) DEFAULT NULL,
-        feedback_type ENUM ('client', 'trainer') NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (gym_id) REFERENCES gyms (gym_id) ON DELETE CASCADE,
-        FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE SET NULL,
-        FOREIGN KEY (trainer_id) REFERENCES trainers (trainer_id) ON DELETE SET NULL
-    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
 -- tagline, description, webiste, operating hours, social media(facebook, instagram, twitter/x, facilities
 -- পারফরম্যান্স ইনডেক্স
 CREATE INDEX idx_gym_owners_status ON gym_owners (status);
@@ -111,20 +92,6 @@ CREATE INDEX idx_gym_owners_subscription_end ON gym_owners (subscription_end);
 CREATE INDEX idx_gym_owners_city ON gym_owners (city);
 
 CREATE INDEX idx_gym_owners_plan ON gym_owners (subscription_plan);
-
--- !not implement
-CREATE TABLE
-    gym_unavailability (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        gym_id BIGINT UNSIGNED NOT NULL,
-        year INT NOT NULL,
-        month INT NOT NULL,
-        reason TEXT DEFAULT NULL,
-        day INT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE (gym_id, year, month, day),
-        FOREIGN KEY (gym_id) REFERENCES gyms (gym_id) ON DELETE CASCADE ON UPDATE CASCADE
-    );
 
 ```
 INSERT INTO gym_unavailability (gym_id, year, month, day, reason)

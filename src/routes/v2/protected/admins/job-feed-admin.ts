@@ -53,6 +53,73 @@ jobFeedAdmin.get(
     })
 );
 
+jobFeedAdmin.put("/:job_id/status/:status", async (ctx) => {
+    try {
+        const { job_id, status } = ctx.req.params;
+        const body = await ctx.req.json();
+        const { reason } = body;
+        // allowed status list
+        const allowedStatuses = ["draft", "published", "closed", "archived"];
+        if (!allowedStatuses.includes(status)) {
+            return ctx.status(400).json({ error: "Invalid status" });
+        }
+
+        // Auth
+        let { role, user_info } = ctx.auth ?? {};
+        const decision_by = user_info?.user_id ?? null;
+        const decision_role = "admin";
+
+        // ================================
+        // Check job exists
+        // ================================
+        const checkSql = `
+                SELECT job_id, status 
+                FROM job_posts 
+                WHERE job_id = ${sanitize(job_id)} AND gym_id = ${sanitize(decision_by)}
+                LIMIT 1;
+            `;
+
+        const { success: found, result: jobRows } = await dbQuery<any[]>(checkSql);
+
+        if (!found || jobRows?.length === 0) {
+            return ctx.status(404).json({ error: "Job post not found" });
+        }
+
+        // ================================
+        // Build update SQL
+        // ================================
+        const updateSql = update(TABLES.GYMS.job_posts, {
+            values: {
+                decision_by: decision_by,
+                decision_reason: reason,
+                decision_role: decision_role,
+                decision_at: mysql_datetime()
+            },
+            where: `job_id = ${sanitize(job_id)}`
+        })
+
+        const { success, error } = await dbQuery(updateSql);
+
+        if (!success) {
+            console.error(error);
+            return ctx.status(500).json({ error: "Status update failed" });
+        }
+
+        return ctx.json({
+            success: true,
+            message: "Job status updated",
+            job_id,
+            new_status: status,
+            decision_by,
+            decision_role,
+        });
+    } catch (err) {
+        console.error(err);
+        return ctx.status(500).json({ error: "Server error" });
+    }
+}
+);
+
 jobFeedAdmin.get("/applications/:job_id",
     paginationHandler({
         getDataSource: async (ctx, { page, limit, offset }) => {
